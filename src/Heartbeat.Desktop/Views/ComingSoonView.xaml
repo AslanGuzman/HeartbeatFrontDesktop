@@ -6,13 +6,17 @@
              xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:PageViewModel}"
-             IsTabStop="False">
+             Style="{StaticResource PageViewStyle}">
 
     <!-- Vista provisional compartida por las pantallas que todavía no están implementadas -->
-    <StackPanel Margin="32">
+    <StackPanel>
         <TextBlock Text="{Binding Title}" Style="{StaticResource TitleTextStyle}" />
-        <TextBlock Text="{Binding Description}"
-                   Style="{StaticResource SecondaryTextStyle}"
-                   Margin="0,6,0,0" />
+        <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,16,0,0" HorizontalAlignment="Left" MaxWidth="560">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE946;" Style="{StaticResource IconTextStyle}" FontSize="20"
+                           Foreground="{DynamicResource BrandBlueBrush}" Margin="0,0,14,0" VerticalAlignment="Top" />
+                <TextBlock Text="{Binding Description}" Style="{StaticResource BodyTextStyle}" MaxWidth="470" />
+            </StackPanel>
+        </ContentControl>
     </StackPanel>
 </UserControl>

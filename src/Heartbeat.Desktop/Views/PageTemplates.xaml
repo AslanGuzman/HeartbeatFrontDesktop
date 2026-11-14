@@ -14,13 +14,13 @@
         <views:DashboardView />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:CheckUpViewModel}">
-        <views:ComingSoonView />
+        <views:CheckUpView />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:HistoryViewModel}">
-        <views:ComingSoonView />
+        <views:HistoryView />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:MessagesViewModel}">
-        <views:ComingSoonView />
+        <views:MessagesView />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
         <views:ComingSoonView />

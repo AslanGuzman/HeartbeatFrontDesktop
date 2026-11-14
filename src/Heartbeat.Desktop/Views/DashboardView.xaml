@@ -1,68 +1,112 @@
 <UserControl x:Class="Heartbeat.Desktop.Views.DashboardView"
-                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
-                mc:Ignorable="d"
-                d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}"
-                IsTabStop="False">
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}"
+             Style="{StaticResource PageViewStyle}">
 
-    <StackPanel Margin="32">
-        <TextBlock Text="{Binding Title}" Style="{StaticResource TitleTextStyle}" />
-        <TextBlock Text="{Binding Description}"
-                   Style="{StaticResource SecondaryTextStyle}"
-                   Margin="0,6,0,28" />
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <!-- Encabezado -->
+            <DockPanel Margin="0,0,14,18">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <!-- Estado general: color + texto (NR-01) -->
+                    <Border CornerRadius="999" Padding="14,7" Background="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
+                                     Fill="{Binding OverallStatus, Converter={StaticResource StatusToBrush}}" />
+                            <TextBlock Text="{Binding OverallText}" FontSize="12.5" FontWeight="SemiBold" Margin="8,0,0,0"
+                                       Foreground="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock Text="{Binding Greeting}" Style="{StaticResource TitleTextStyle}" />
+                    <TextBlock Text="{Binding DateText}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,0" />
+                </StackPanel>
+            </DockPanel>
 
-        <!-- Leyenda de la paleta de estado (NR-01): sirve de referencia hasta que el dashboard real use estos colores -->
-        <TextBlock Text="Paleta de estado"
-                   FontSize="16"
-                   FontWeight="SemiBold"
-                   Margin="0,0,0,12" />
-        <StackPanel Orientation="Horizontal" AutomationProperties.Name="Leyenda de estados de salud">
-            <Border Style="{StaticResource StatusChipStyle}" Background="{DynamicResource StatusNormalBrush}">
-                <TextBlock Text="Normal" />
-            </Border>
-            <Border Style="{StaticResource StatusChipStyle}" Background="{DynamicResource StatusWatchBrush}">
-                <TextBlock Text="Vigilancia" />
-            </Border>
-            <Border Style="{StaticResource StatusChipStyle}" Background="{DynamicResource StatusCriticalBrush}">
-                <TextBlock Text="Crítico" />
-            </Border>
+            <!-- Los seis indicadores en una pantalla (MR-05) -->
+            <ItemsControl ItemsSource="{Binding Cards}" AutomationProperties.Name="Indicadores de salud">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ContentControl Style="{StaticResource HoverCardStyle}" Width="310" Margin="0,0,14,14">
+                            <StackPanel>
+                                <DockPanel>
+                                    <!-- «i»: abre el panel de información de este indicador -->
+                                    <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource IconButtonStyle}"
+                                            Command="{Binding DataContext.ShowInfoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                            CommandParameter="{Binding Id}"
+                                            ToolTip="Por qué importa, cómo medirlo y fuentes"
+                                            AutomationProperties.Name="{Binding Name, StringFormat=Información de {0}}" />
+                                    <Border Width="40" Height="40" CornerRadius="12"
+                                            Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                                        <TextBlock Text="{Binding Glyph}" Style="{StaticResource IconTextStyle}" FontSize="18"
+                                                   HorizontalAlignment="Center"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SectionHeadingStyle}"
+                                               Margin="12,0,8,0" VerticalAlignment="Center" />
+                                </DockPanel>
+
+                                <DockPanel Margin="0,14,0,0">
+                                    <!-- Chip de estado: color + texto (NR-01) -->
+                                    <Border DockPanel.Dock="Right" CornerRadius="999" Padding="10,4" VerticalAlignment="Center"
+                                            Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                                        <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding ValueText}" FontSize="26" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </DockPanel>
+                                <TextBlock Text="{Binding TakenAtText}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,0" />
+
+                                <!-- Onda decorativa teñida por estado -->
+                                <Path Data="M0,26 C30,4 55,40 90,16 C115,0 135,30 160,14 L160,40 L0,40 Z"
+                                      Stretch="Fill" Height="30" Margin="0,10,0,0" Opacity="0.14"
+                                      Fill="{Binding Status, Converter={StaticResource StatusToBrush}}" />
+
+                                <!-- Guía por estado (MR-04) -->
+                                <TextBlock Text="{Binding Guidance}" Style="{StaticResource BodyTextStyle}" FontSize="13" Margin="0,10,0,0" />
+                            </StackPanel>
+                        </ContentControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Fuentes y referencias de todos los indicadores -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,4,14,10">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Center"
+                            Content="Ver todas las fuentes y referencias" Command="{Binding ShowInfoCommand}" />
+                    <StackPanel>
+                        <TextBlock Text="Información de los indicadores" Style="{StaticResource SectionHeadingStyle}" />
+                        <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,12,0"
+                                   Text="Por qué importa cada medición, cómo hacerla y sus riesgos, con las fuentes de NASA y de otras agencias." />
+                    </StackPanel>
+                </DockPanel>
+            </ContentControl>
+
+            <!-- Tendencias: espacio reservado -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,14,10">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="&#xE9D2;" Style="{StaticResource IconTextStyle}" FontSize="34"
+                               Foreground="{DynamicResource BrandBlueSoftBrush}" Margin="12,0,6,0" />
+                    <StackPanel>
+                        <TextBlock Text="Tendencias" Style="{StaticResource SectionHeadingStyle}" />
+                        <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,0"
+                                   Text="Próximamente: la evolución de cada indicador en el tiempo. En misiones largas la tendencia importa más que una lectura suelta." />
+                    </StackPanel>
+                </DockPanel>
+            </ContentControl>
         </StackPanel>
-
-        <!-- Información y fuentes por indicador (DK-INFO): cada botón abre el panel ya en ese indicador -->
-        <TextBlock Text="Información de los indicadores"
-                   FontSize="16"
-                   FontWeight="SemiBold"
-                   Margin="0,32,0,4" />
-        <TextBlock Text="Por qué importa cada medición, cómo hacerla, sus riesgos y las fuentes NASA y de otras agencias."
-                   Style="{StaticResource SecondaryTextStyle}"
-                   Margin="0,0,0,12" />
-        <ItemsControl ItemsSource="{Binding Indicators}"
-                      AutomationProperties.Name="Indicadores con información">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <WrapPanel />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Button Style="{StaticResource SecondaryButtonStyle}"
-                            Margin="0,0,12,12"
-                            Command="{Binding DataContext.ShowInfoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                            CommandParameter="{Binding Id}"
-                            AutomationProperties.Name="{Binding Name, StringFormat=Información de {0}}">
-                        <TextBlock>
-                            <Run Text="{Binding Name, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding Unit, Mode=OneWay}" />
-                        </TextBlock>
-                    </Button>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <Button Style="{StaticResource SecondaryButtonStyle}"
-                HorizontalAlignment="Left"
-                Content="Ver todas las fuentes y referencias"
-                Command="{Binding ShowInfoCommand}" />
-    </StackPanel>
+    </ScrollViewer>
 </UserControl>
