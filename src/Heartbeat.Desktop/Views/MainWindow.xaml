@@ -8,104 +8,154 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:MainWindowViewModel}"
         Title="Heartbeat"
-        Width="1180" Height="740"
+        Width="1200" Height="760"
         MinWidth="1000" MinHeight="660"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource BackgroundBrush}"
-        Foreground="{DynamicResource TextPrimaryBrush}"
+        WindowStyle="None"
+        Background="{DynamicResource SurfaceBrush}"
+        Foreground="{DynamicResource TextBodyBrush}"
         FontFamily="{DynamicResource UiFont}"
         FontSize="{DynamicResource BodyFontSize}"
         UseLayoutRounding="True">
 
-    <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-    </Window.Resources>
+    <!-- Chrome propio: la franja superior (56 px) arrastra la ventana; sus botones se marcan como interactivos -->
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="56" ResizeBorderThickness="6" GlassFrameThickness="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <!-- Al maximizar, una ventana sin borde se pasa del área de trabajo: Root compensa ese desborde -->
+    <Grid x:Name="Root">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <!-- Aviso médico: visible en todas las pantallas, también en el login -->
-        <Border Grid.Row="0"
-                Background="{DynamicResource SurfaceRaisedBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="16,8">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Style="{StaticResource IconTextStyle}"
-                           Text="&#xE946;"
-                           Foreground="{DynamicResource AccentBrush}"
-                           FontSize="16"
-                           Margin="0,0,10,0" />
-                <TextBlock Text="{Binding DisclaimerText}"
-                           FontSize="{DynamicResource CaptionFontSize}"
-                           FontWeight="SemiBold"
-                           VerticalAlignment="Center"
-                           AutomationProperties.AutomationId="MedicalDisclaimer" />
-            </StackPanel>
+        <!-- ===== Rail de navegación (azul de marca); se oculta en el login ===== -->
+        <Border Grid.Column="0" Width="76" Background="{DynamicResource BrandBlueBrush}"
+                Visibility="{Binding IsNavigationVisible, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel>
+                <!-- Logo con latido -->
+                <Grid DockPanel.Dock="Top" Height="56">
+                    <TextBlock Text="&#xEB52;" FontFamily="{DynamicResource IconFont}" FontSize="22" Foreground="White"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               RenderTransformOrigin="0.5,0.5" AutomationProperties.Name="Heartbeat">
+                        <TextBlock.RenderTransform>
+                            <ScaleTransform ScaleX="1" ScaleY="1" />
+                        </TextBlock.RenderTransform>
+                        <TextBlock.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                         To="1.18" Duration="0:0:0.55" BeginTime="0:0:0.4" />
+                                        <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                         To="1.18" Duration="0:0:0.55" BeginTime="0:0:0.4" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </TextBlock.Triggers>
+                    </TextBlock>
+                </Grid>
+
+                <!-- Abajo: información de indicadores y cerrar sesión -->
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,14" HorizontalAlignment="Center">
+                    <Button Content="&#xE946;" Style="{StaticResource RailButtonStyle}"
+                            Command="{Binding ShowInfoCommand}"
+                            ToolTip="Información y fuentes de los indicadores"
+                            AutomationProperties.Name="Información y fuentes de los indicadores" />
+                    <Button Content="&#xE7E8;" Style="{StaticResource RailDangerButtonStyle}"
+                            Command="{Binding SignOutCommand}"
+                            ToolTip="Cerrar sesión"
+                            AutomationProperties.Name="Cerrar sesión" />
+                </StackPanel>
+
+                <!-- Pantallas -->
+                <ItemsControl ItemsSource="{Binding NavigationItems}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                              AutomationProperties.Name="Navegación principal">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Content="{Binding Glyph}"
+                                    Style="{StaticResource RailItemButtonStyle}"
+                                    Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="{Binding Title}"
+                                    AutomationProperties.Name="{Binding Title}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </DockPanel>
         </Border>
 
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <!-- ===== Lado derecho: barra superior, contenido y pie ===== -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="56" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-            <!-- Menú lateral: oculto en el login -->
-            <Border Grid.Column="0"
-                    Width="220"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
-                    BorderThickness="0,0,1,0"
-                    Padding="12,16"
-                    Visibility="{Binding IsNavigationVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <DockPanel LastChildFill="False">
-                    <TextBlock DockPanel.Dock="Top"
-                               Text="Heartbeat"
-                               FontSize="20"
-                               FontWeight="Bold"
-                               Margin="14,0,0,20" />
+            <!-- Barra superior -->
+            <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0,8,0">
+                <DockPanel VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Heartbeat" FontSize="17" FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" Margin="14,0" />
+                        <TextBlock Text="Monitoreo de salud de la tripulación" Style="{StaticResource CaptionTextStyle}"
+                                   VerticalAlignment="Center" TextWrapping="NoWrap" />
+                    </StackPanel>
 
-                    <Button DockPanel.Dock="Bottom"
-                            Style="{StaticResource NavButtonStyle}"
-                            Command="{Binding SignOutCommand}"
-                            AutomationProperties.Name="Cerrar sesión">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Style="{StaticResource IconTextStyle}" Text="&#xE7E8;" Width="24" Margin="0,0,12,0" />
-                            <TextBlock Text="Cerrar sesión" VerticalAlignment="Center" />
-                        </StackPanel>
-                    </Button>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <!-- Interruptor del enlace (MR-10 / MR-11) -->
+                        <ToggleButton IsChecked="{Binding IsLinkEnabled}" Style="{StaticResource SwitchStyle}"
+                                      Content="Enlace con la Tierra" Margin="0,0,18,0"
+                                      WindowChrome.IsHitTestVisibleInChrome="True"
+                                      Visibility="{Binding IsNavigationVisible, Converter={StaticResource BoolToVisibility}}"
+                                      ToolTip="Simula la disponibilidad del enlace. Apagado, la app funciona como sin conexión y acumula lo pendiente."
+                                      AutomationProperties.Name="Enlace con la Tierra" />
 
-                    <ItemsControl DockPanel.Dock="Top"
-                                  ItemsSource="{Binding NavigationItems}"
-                                  IsTabStop="False"
-                                  AutomationProperties.Name="Navegación principal">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type vm:NavigationItemViewModel}">
-                                <Button Style="{StaticResource NavItemButtonStyle}"
-                                        Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                        CommandParameter="{Binding}"
-                                        AutomationProperties.Name="{Binding Title}">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Style="{StaticResource IconTextStyle}" Text="{Binding Glyph}" Width="24" Margin="0,0,12,0" />
-                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        <!-- Usuario -->
+                        <Border Background="{DynamicResource BrandBlueSoftBrush}" CornerRadius="999" Padding="12,5" Margin="0,0,14,0"
+                                Visibility="{Binding IsNavigationVisible, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE77B;" Style="{StaticResource IconTextStyle}" FontSize="12"
+                                           Foreground="{DynamicResource BrandBlueBrush}" />
+                                <TextBlock Text="{Binding CurrentUserName}" FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource BrandBlueBrush}" Margin="7,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Botones de ventana -->
+                        <Button Content="&#xE921;" Style="{StaticResource WindowButtonStyle}" Click="Minimize_Click"
+                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Minimizar" AutomationProperties.Name="Minimizar" />
+                        <Button x:Name="MaximizeButton" Content="&#xE922;" Style="{StaticResource WindowButtonStyle}" Click="MaximizeRestore_Click"
+                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Maximizar" AutomationProperties.Name="Maximizar" />
+                        <Button Content="&#xE8BB;" Style="{StaticResource WindowCloseButtonStyle}" Click="Close_Click"
+                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Cerrar" AutomationProperties.Name="Cerrar" />
+                    </StackPanel>
                 </DockPanel>
             </Border>
 
-            <!-- Página actual; la vista se elige en Views/PageTemplates.xaml -->
-            <ContentControl Grid.Column="1"
-                            Content="{Binding CurrentPage}"
-                            IsTabStop="False" />
-        </Grid>
+            <!-- Contenido de la página actual (cada ViewModel se dibuja con su vista; ver PageTemplates.xaml) -->
+            <Border Grid.Row="1" Background="{DynamicResource BackgroundBrush}">
+                <ContentControl Content="{Binding CurrentPage}" Margin="28" IsTabStop="False" />
+            </Border>
 
-        <views:StatusBarView Grid.Row="2" DataContext="{Binding StatusBar}" />
+            <!-- Pie: estado de conexión y sincronización a la izquierda, aviso médico a la derecha (siempre visible) -->
+            <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="20,8">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="&#xE946;" Style="{StaticResource IconTextStyle}" FontSize="12"
+                                   Foreground="{DynamicResource BrandBlueBrush}" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding DisclaimerText}" FontSize="{DynamicResource CaptionFontSize}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center"
+                                   AutomationProperties.AutomationId="MedicalDisclaimer" />
+                    </StackPanel>
+                    <views:StatusBarView DataContext="{Binding StatusBar}" HorizontalAlignment="Left" />
+                </DockPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

@@ -100,7 +100,7 @@
                                     ToolTip="{Binding Url.AbsoluteUri}"
                                     AutomationProperties.Name="{Binding Title}"
                                     AutomationProperties.HelpText="{Binding Url.AbsoluteUri}">
-                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap" TextDecorations="Underline" />
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

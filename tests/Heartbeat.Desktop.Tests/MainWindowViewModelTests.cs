@@ -47,14 +47,16 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Continue_on_login_opens_the_dashboard_and_shows_the_menu()
+    public void Signing_in_opens_the_dashboard_shows_the_menu_and_the_user_name()
     {
         LoginViewModel login = _navigation.NavigateTo<LoginViewModel>();
+        login.Username = "ana";
 
-        login.ContinueCommand.Execute(null);
+        login.SignInCommand.Execute("demo123");
 
         Assert.IsType<DashboardViewModel>(_window.CurrentPage);
         Assert.True(_window.IsNavigationVisible);
+        Assert.Equal("Ana Rivera", _window.CurrentUserName);
     }
 
     [Fact]
@@ -72,14 +74,45 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Sign_out_returns_to_login()
+    public void Sign_out_returns_to_login_and_closes_the_session()
     {
-        _navigation.NavigateTo<DashboardViewModel>();
+        LoginViewModel login = _navigation.NavigateTo<LoginViewModel>();
+        login.Username = "ana";
+        login.SignInCommand.Execute("demo123");
 
         _window.SignOutCommand.Execute(null);
 
         Assert.IsType<LoginViewModel>(_window.CurrentPage);
         Assert.False(_window.IsNavigationVisible);
+        Assert.Equal(string.Empty, _window.CurrentUserName);
+        Assert.Null(_provider.GetRequiredService<Heartbeat.Desktop.Services.ISessionContext>().CurrentUser);
+    }
+
+    [Fact]
+    public void The_link_switch_turns_the_simulated_link_on_and_off()
+    {
+        Heartbeat.Desktop.Services.ISimulatedLink link = _provider.GetRequiredService<Heartbeat.Desktop.Services.ISimulatedLink>();
+        List<string?> changed = [];
+        _window.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
+
+        _window.IsLinkEnabled = false;
+
+        Assert.False(link.IsLinkEnabled);
+        Assert.Contains(nameof(MainWindowViewModel.IsLinkEnabled), changed);
+    }
+
+    [Fact]
+    public void Show_info_opens_the_indicator_panel()
+    {
+        FakeIndicatorInfoPresenter presenter = new();
+        ServiceCollection services = new();
+        services.AddHeartbeatDesktop();
+        services.AddSingleton<Heartbeat.Desktop.Info.IIndicatorInfoPresenter>(presenter);
+        using ServiceProvider provider = services.BuildServiceProvider();
+
+        provider.GetRequiredService<MainWindowViewModel>().ShowInfoCommand.Execute(null);
+
+        Assert.Equal([(string?)null], presenter.Shown);
     }
 
     [Fact]
