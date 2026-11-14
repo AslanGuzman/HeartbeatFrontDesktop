@@ -14,7 +14,7 @@ public sealed class NavigationServiceTests : IDisposable
     {
         ServiceCollection services = new();
         services.AddTransient<DisposablePageViewModel>();
-        services.AddTransient<DashboardViewModel>();
+        services.AddTransient<HistoryViewModel>();
         services.AddTransient<FailingPageViewModel>();
         _provider = services.BuildServiceProvider();
         _navigation = new NavigationService(_provider);
@@ -34,7 +34,7 @@ public sealed class NavigationServiceTests : IDisposable
         int raised = 0;
         _navigation.CurrentPageChanged += (_, _) => raised++;
 
-        DashboardViewModel page = _navigation.NavigateTo<DashboardViewModel>();
+        HistoryViewModel page = _navigation.NavigateTo<HistoryViewModel>();
 
         Assert.Same(page, _navigation.CurrentPage);
         Assert.Equal(1, raised);
@@ -56,7 +56,7 @@ public sealed class NavigationServiceTests : IDisposable
     {
         DisposablePageViewModel first = _navigation.NavigateTo<DisposablePageViewModel>();
 
-        _navigation.NavigateTo<DashboardViewModel>();
+        _navigation.NavigateTo<HistoryViewModel>();
 
         Assert.True(first.IsDisposed);
     }

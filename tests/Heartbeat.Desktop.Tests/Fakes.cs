@@ -1,3 +1,4 @@
+using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
 
@@ -30,6 +31,26 @@ internal sealed class FakeSyncStatusProvider : ISyncStatusProvider
         PendingCount = pendingCount;
         Changed?.Invoke(this, EventArgs.Empty);
     }
+}
+
+internal sealed class FakeUrlLauncher(bool succeeds = true) : IUrlLauncher
+{
+    public List<Uri> Opened { get; } = [];
+
+    public bool Succeeds { get; set; } = succeeds;
+
+    public bool TryOpen(Uri url)
+    {
+        Opened.Add(url);
+        return Succeeds;
+    }
+}
+
+internal sealed class FakeIndicatorInfoPresenter : IIndicatorInfoPresenter
+{
+    public List<string?> Shown { get; } = [];
+
+    public void Show(string? indicatorId = null) => Shown.Add(indicatorId);
 }
 
 internal sealed class ImmediateSynchronizationContext : SynchronizationContext

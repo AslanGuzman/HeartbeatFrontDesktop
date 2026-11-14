@@ -1,3 +1,4 @@
+using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
@@ -18,6 +19,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IConnectivityService, NetworkConnectivityService>();
         services.AddSingleton<ISyncStatusProvider, NoSyncStatusProvider>();
+
+        // Panel de información y fuentes por indicador (DK-INFO).
+        services.AddSingleton<IIndicatorInfoProvider, ReferenceRangesInfoProvider>();
+        services.AddSingleton<IUrlLauncher, ShellUrlLauncher>();
+        services.AddSingleton<IIndicatorInfoPresenter, IndicatorInfoWindowPresenter>();
+        services.AddTransient<IndicatorInfoViewModel>();
 
         // Ventana principal.
         services.AddSingleton<StatusBarViewModel>();

@@ -56,6 +56,8 @@ dotnet run --project src/Heartbeat.Desktop/Heartbeat.Desktop.csproj
 - **Tema** en `Themes/`: verde / ámbar / rojo significan normal / watch / critical (NR-01) y no se usan para nada más; el estado nunca se comunica solo con color.
 - **Barra de estado**: en línea / sin conexión, último sync y pendientes. Se alimenta de `IConnectivityService` e `ISyncStatusProvider`; el motor de sync (#32) sustituirá la implementación provisional.
 
+- **Panel de información y fuentes** (`Info/`): por indicador explica por qué importa, cómo medir y riesgos, y lista las fuentes NASA / agencias con enlaces que abren en el navegador. El contenido sale de `reference-ranges.json` (copia embebida en `Heartbeat.Shared`) a través de `IIndicatorInfoProvider`, con lectura estricta: una fuente no definida o con URL que no sea http(s) hace fallar las pruebas en vez de mostrar una ficha incompleta. Se abre en una ventana aparte, no modal y única, con `IIndicatorInfoPresenter.Show(indicatorId)`; el dashboard ya lo usa, y **el formulario de check-up (#30) solo tiene que inyectar `IIndicatorInfoPresenter` y llamar a `Show("heartRate")` desde su botón de ayuda** (al ser otra ventana, no se pierde lo escrito en el formulario).
+
 ### Añadir una pantalla
 
 1. Crear `XxxViewModel : PageViewModel` y registrarlo con `AddTransient` en `ServiceCollectionExtensions`.
