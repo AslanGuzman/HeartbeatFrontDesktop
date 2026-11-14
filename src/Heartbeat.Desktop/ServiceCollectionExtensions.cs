@@ -1,4 +1,5 @@
 using Heartbeat.Desktop.Data;
+using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
