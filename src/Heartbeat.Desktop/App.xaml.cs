@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Markup;
 
+using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Views;
@@ -32,6 +33,8 @@ public partial class App : Application
         base.OnStartup(e);
 
         await _host.StartAsync();
+
+        LocalDatabase.Initialize(_host.Services);
 
         MainWindow window = _host.Services.GetRequiredService<MainWindow>();
         this.MainWindow = window;
