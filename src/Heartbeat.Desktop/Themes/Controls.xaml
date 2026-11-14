@@ -222,6 +222,37 @@
         </Setter>
     </Style>
 
+    <!-- Opción de una escala (por ejemplo, el estado de ánimo): el DataContext lleva IsSelected -->
+    <Style x:Key="ChoiceButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Padding" Value="4,8" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource InputBorderBrush}"
+                            BorderThickness="1.5" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrandBlueSoftBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrandBlueBrush}" />
+                        </Trigger>
+                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource BrandBlueBrush}" />
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource BrandBlueBrush}" />
+                            <Setter Property="Foreground" Value="White" />
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Botón redondo con icono (por ejemplo, el «i» de información de cada indicador) -->
     <Style x:Key="IconButtonStyle" TargetType="Button">
         <Setter Property="Width" Value="30" />

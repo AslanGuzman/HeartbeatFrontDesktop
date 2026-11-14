@@ -14,8 +14,7 @@ public sealed class LoginViewModelTests : IDisposable
 
     public LoginViewModelTests()
     {
-        ServiceCollection services = new();
-        services.AddHeartbeatDesktop();
+        ServiceCollection services = TestContainer.Services(out _);
         _provider = services.BuildServiceProvider();
         _navigation = _provider.GetRequiredService<INavigationService>();
         _login = _navigation.NavigateTo<LoginViewModel>();

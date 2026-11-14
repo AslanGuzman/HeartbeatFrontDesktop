@@ -14,9 +14,9 @@ public sealed class DemoAuthenticator : IAuthenticator
 
     public static IReadOnlyList<SessionUser> Accounts { get; } =
     [
-        new SessionUser("ana", "Ana Rivera"),
-        new SessionUser("luis", "Luis Ortega"),
-        new SessionUser("mara", "Mara Sokolova"),
+        new SessionUser(Guid.Parse("0197c2a0-0000-7000-8000-000000000001"), "ana", "Ana Rivera"),
+        new SessionUser(Guid.Parse("0197c2a0-0000-7000-8000-000000000002"), "luis", "Luis Ortega"),
+        new SessionUser(Guid.Parse("0197c2a0-0000-7000-8000-000000000003"), "mara", "Mara Sokolova"),
     ];
 
     public bool TryAuthenticate(string userName, string password, [NotNullWhen(true)] out SessionUser? user)

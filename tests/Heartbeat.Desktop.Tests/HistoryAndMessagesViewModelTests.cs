@@ -49,7 +49,7 @@ public sealed class HistoryViewModelTests
         HistoryViewModel history = new(world.Store, world.Session, world.Info);
         Assert.All(history.CheckUps, row => Assert.Equal("Sincronizado", row.SyncText));
 
-        world.Store.AddCheckUp("mara", [new(IndicatorType.HeartRate, 70)], world.Evaluator.Evaluate([new ReadingInput(IndicatorType.HeartRate, 70)]));
+        world.Store.AddCheckUp(TestWorld.IdOf("mara"), [new(IndicatorType.HeartRate, 70)], world.Evaluator.Evaluate([new ReadingInput(IndicatorType.HeartRate, 70)]));
 
         Assert.Equal("Pendiente de sincronizar", history.CheckUps[0].SyncText);
 
@@ -65,7 +65,7 @@ public sealed class HistoryViewModelTests
         HistoryViewModel history = new(world.Store, world.Session, world.Info);
         history.Dispose();
 
-        world.Store.AddCheckUp("mara", [new(IndicatorType.HeartRate, 70)], world.Evaluator.Evaluate([new ReadingInput(IndicatorType.HeartRate, 70)]));
+        world.Store.AddCheckUp(TestWorld.IdOf("mara"), [new(IndicatorType.HeartRate, 70)], world.Evaluator.Evaluate([new ReadingInput(IndicatorType.HeartRate, 70)]));
 
         Assert.Single(history.CheckUps);
     }
@@ -126,7 +126,7 @@ public sealed class MessagesViewModelTests
     public void Messages_are_listed_newest_first_and_only_for_the_signed_in_astronaut()
     {
         TestWorld world = new("ana");
-        world.Store.QueueMessage("luis", "de luis");
+        world.Store.QueueMessage(TestWorld.IdOf("luis"), "de luis");
         MessagesViewModel vm = new(world.Store, world.Session);
         vm.NewMessage = "primero";
         vm.QueueCommand.Execute(null);

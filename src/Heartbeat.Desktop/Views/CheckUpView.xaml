@@ -34,7 +34,7 @@
                 <StackPanel>
                     <TextBlock Text="Check-up de rutina" Style="{StaticResource TitleTextStyle}" />
                     <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,6,0,18"
-                               Text="Registra las seis lecturas en una sola sesión. Se evalúan en tu equipo aunque no haya enlace." />
+                               Text="Registra de 1 a 6 indicadores en una sola sesión; deja en blanco los que no midas hoy. Se evalúan en tu equipo aunque no haya enlace." />
 
                     <UniformGrid Columns="2">
                         <StackPanel Margin="0,0,12,14">
@@ -95,22 +95,46 @@
                         </StackPanel>
                     </UniformGrid>
 
-                    <DockPanel Margin="0,2,0,6">
+                    <!-- Sueño también con deslizador (paso de 0,5 h); sigue al campo de texto y viceversa -->
+                    <DockPanel Margin="0,-4,0,14">
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding SleepSlider, StringFormat={}{0:0.#} h}" FontSize="12"
+                                   Visibility="{Binding SleepHours, Converter={StaticResource NonEmptyToVisibility}}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrandBlueBrush}" Width="46" TextAlignment="Right" VerticalAlignment="Center" />
+                        <Slider Minimum="0" Maximum="24" TickFrequency="0.5" IsSnapToTickEnabled="True" SmallChange="0.5" LargeChange="1"
+                                Value="{Binding SleepSlider}" Style="{StaticResource MoodSliderStyle}" VerticalAlignment="Center"
+                                AutomationProperties.Name="Horas de sueño con deslizador, de 0 a 24 en pasos de media hora" />
+                    </DockPanel>
+
+                    <DockPanel Margin="0,2,0,8">
                         <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
                                 CommandParameter="mood" AutomationProperties.Name="Información de estado de ánimo" />
-                        <TextBlock Text="ESTADO DE ÁNIMO · 1 muy mal — 5 muy bien" Style="{StaticResource FieldLabelStyle}" />
+                        <TextBlock Text="ESTADO DE ÁNIMO · opcional (vuelve a pulsar para quitarlo)" Style="{StaticResource FieldLabelStyle}" />
                     </DockPanel>
-                    <DockPanel>
-                        <Border DockPanel.Dock="Right" Background="{DynamicResource BrandBlueSoftBrush}" CornerRadius="10"
-                                Width="42" Height="34" Margin="14,0,0,0">
-                            <TextBlock Text="{Binding Mood, StringFormat={}{0:0}}" FontSize="16" FontWeight="SemiBold"
-                                       Foreground="{DynamicResource BrandBlueBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <Slider Minimum="1" Maximum="5" TickFrequency="1" IsSnapToTickEnabled="True"
-                                Value="{Binding Mood}" Style="{StaticResource MoodSliderStyle}" VerticalAlignment="Center"
-                                AutomationProperties.Name="Estado de ánimo de 1 a 5" />
-                    </DockPanel>
+                    <ItemsControl ItemsSource="{Binding MoodOptions}" AutomationProperties.Name="Estado de ánimo">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Style="{StaticResource ChoiceButtonStyle}" Margin="0,0,8,0"
+                                        Command="{Binding DataContext.SelectMoodCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding Value}"
+                                        AutomationProperties.Name="{Binding Label, StringFormat=Estado de ánimo: {0}}">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Value}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                                        <TextBlock Text="{Binding Label}" FontSize="11" HorizontalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="NOTA · opcional" Style="{StaticResource FieldLabelStyle}" Margin="0,16,0,4" />
+                    <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
+                             MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" VerticalContentAlignment="Top"
+                             AutomationProperties.Name="Nota opcional del check-up, hasta 500 caracteres" />
 
                     <Button Content="Guardar check-up" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" Margin="0,20,0,0" />
 

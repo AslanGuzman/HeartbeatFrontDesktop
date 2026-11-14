@@ -11,7 +11,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="780" HorizontalAlignment="Left">
             <TextBlock Text="Historial de check-ups" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
-            <TextBlock Text="Cada check-up guarda sus seis lecturas con un solo instante." Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,18" />
+            <TextBlock Text="Cada check-up guarda sus lecturas (de 1 a 6) con un solo instante." Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,18" />
 
             <!-- Sin check-ups todavía -->
             <ContentControl Style="{StaticResource HoverCardStyle}"

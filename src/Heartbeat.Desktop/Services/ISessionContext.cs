@@ -1,7 +1,7 @@
 namespace Heartbeat.Desktop.Services;
 
-/// <summary>Astronauta con la sesión abierta.</summary>
-public sealed record SessionUser(string UserName, string DisplayName)
+/// <summary>Astronauta con la sesión abierta. <c>Id</c> es el AstronautId del contrato: filtra todos los datos locales (MR-12).</summary>
+public sealed record SessionUser(Guid Id, string UserName, string DisplayName)
 {
     /// <summary>Primer nombre, para el saludo.</summary>
     public string FirstName => DisplayName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? DisplayName;

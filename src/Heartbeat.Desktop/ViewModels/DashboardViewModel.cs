@@ -27,18 +27,31 @@ public sealed partial class DashboardViewModel : PageViewModel
         _infoPresenter = infoPresenter;
 
         SessionUser? user = session.CurrentUser;
-        IReadOnlyList<CheckUpRecord> checkUps = user is null ? [] : store.GetCheckUps(user.UserName);
-        CheckUpRecord? latest = checkUps.FirstOrDefault();
+        IReadOnlyList<CheckUpRecord> checkUps = user is null ? [] : store.GetCheckUps(user.Id);
+
+        // Un check-up puede omitir indicadores (1 a 6 lecturas): cada tarjeta muestra la lectura más reciente de su indicador.
+        List<IndicatorCardViewModel> cards = [];
+        List<HealthStatus> latest = [];
+        foreach (IndicatorType type in Enum.GetValues<IndicatorType>())
+        {
+            CheckUpRecord? source = checkUps.FirstOrDefault(c => c.Readings.Any(r => r.Input.Indicator == type));
+            ReadingRecord? reading = source?.Readings.First(r => r.Input.Indicator == type);
+            if (reading is not null)
+            {
+                latest.Add(reading.Evaluation.Status);
+            }
+
+            cards.Add(BuildCard(type, source, reading, info));
+        }
 
         Greeting = user is null ? "Hola" : $"Hola, {user.FirstName}";
         DateText = clock.GetLocalNow().ToString("dddd, d 'de' MMMM", CultureInfo.CurrentCulture);
-        HasData = latest is not null;
-        OverallStatus = latest?.OverallStatus;
-        OverallText = latest is null
-            ? "Sin mediciones todavía"
-            : $"Estado general: {StatusPalette.Name(latest.OverallStatus)}";
-
-        Cards = Enum.GetValues<IndicatorType>().Select(type => BuildCard(type, latest, info)).ToList();
+        HasData = latest.Count > 0;
+        OverallStatus = HasData ? latest.Max() : null;
+        OverallText = OverallStatus is { } overall
+            ? $"Estado general: {StatusPalette.Name(overall)}"
+            : "Sin mediciones todavía";
+        Cards = cards;
     }
 
     public override string Title => "Dashboard";
@@ -60,14 +73,13 @@ public sealed partial class DashboardViewModel : PageViewModel
     [RelayCommand]
     private void ShowInfo(string? indicatorId) => _infoPresenter.Show(indicatorId);
 
-    private static IndicatorCardViewModel BuildCard(IndicatorType type, CheckUpRecord? latest, IIndicatorInfoProvider info)
+    private static IndicatorCardViewModel BuildCard(IndicatorType type, CheckUpRecord? source, ReadingRecord? reading, IIndicatorInfoProvider info)
     {
         string id = IndicatorPresentation.IdOf(type);
         string name = info.Find(id)?.Name ?? id;
         string glyph = IndicatorPresentation.GlyphOf(type);
-        ReadingRecord? reading = latest?.Readings.FirstOrDefault(r => r.Input.Indicator == type);
 
-        if (latest is null || reading is null)
+        if (source is null || reading is null)
         {
             return new IndicatorCardViewModel(
                 id, glyph, name, null, StatusPalette.Name(null), "—", string.Empty,
@@ -81,7 +93,7 @@ public sealed partial class DashboardViewModel : PageViewModel
             reading.Evaluation.Status,
             StatusPalette.Name(reading.Evaluation.Status),
             IndicatorPresentation.FormatValue(reading.Input),
-            string.Create(CultureInfo.CurrentCulture, $"Última medición: {latest.RecordedAt.ToLocalTime():g}"),
+            string.Create(CultureInfo.CurrentCulture, $"Última medición: {source.RecordedAt.ToLocalTime():g}"),
             IndicatorPresentation.GuidanceOf(reading.Evaluation),
             true);
     }
