@@ -1,0 +1,34 @@
+<UserControl x:Class="Heartbeat.Desktop.Views.DashboardView"
+                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+                mc:Ignorable="d"
+                d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}"
+                IsTabStop="False">
+
+    <StackPanel Margin="32">
+        <TextBlock Text="{Binding Title}" Style="{StaticResource TitleTextStyle}" />
+        <TextBlock Text="{Binding Description}"
+                   Style="{StaticResource SecondaryTextStyle}"
+                   Margin="0,6,0,28" />
+
+        <!-- Leyenda de la paleta de estado (NR-01): sirve de referencia hasta que el dashboard real use estos colores -->
+        <TextBlock Text="Paleta de estado"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,12" />
+        <StackPanel Orientation="Horizontal" AutomationProperties.Name="Leyenda de estados de salud">
+            <Border Style="{StaticResource StatusChipStyle}" Background="{DynamicResource StatusNormalBrush}">
+                <TextBlock Text="Normal" />
+            </Border>
+            <Border Style="{StaticResource StatusChipStyle}" Background="{DynamicResource StatusWatchBrush}">
+                <TextBlock Text="Vigilancia" />
+            </Border>
+            <Border Style="{StaticResource StatusChipStyle}" Background="{DynamicResource StatusCriticalBrush}">
+                <TextBlock Text="Crítico" />
+            </Border>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

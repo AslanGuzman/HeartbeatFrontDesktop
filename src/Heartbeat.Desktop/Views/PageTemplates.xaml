@@ -1,0 +1,29 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+                    xmlns:views="clr-namespace:Heartbeat.Desktop.Views">
+
+    <!--
+        Asocia cada ViewModel de pantalla con su vista (navegación ViewModel primero).
+        Al implementar una pantalla real, se cambia aquí su vista y se elimina el marcador ComingSoonView.
+    -->
+    <DataTemplate DataType="{x:Type vm:LoginViewModel}">
+        <views:LoginView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+        <views:DashboardView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:CheckUpViewModel}">
+        <views:ComingSoonView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:HistoryViewModel}">
+        <views:ComingSoonView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:MessagesViewModel}">
+        <views:ComingSoonView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
+        <views:ComingSoonView />
+    </DataTemplate>
+
+</ResourceDictionary>

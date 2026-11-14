@@ -1,0 +1,65 @@
+<UserControl x:Class="Heartbeat.Desktop.Views.StatusBarView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:StatusBarViewModel}"
+             IsTabStop="False">
+
+    <Border Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,1,0,0"
+            Padding="16,8">
+        <DockPanel>
+            <!-- Los pendientes se resaltan con el color de acento: el verde/ámbar/rojo queda reservado al estado de salud (NR-01) -->
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding PendingText}"
+                       FontSize="{DynamicResource CaptionFontSize}"
+                       AutomationProperties.AutomationId="PendingCount">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasPending}" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock DockPanel.Dock="Right"
+                       Text="{Binding LastSyncText}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       FontSize="{DynamicResource CaptionFontSize}"
+                       Margin="0,0,24,0"
+                       AutomationProperties.AutomationId="LastSync" />
+
+            <StackPanel Orientation="Horizontal">
+                <!-- Segoe MDL2 Assets: E839 = conectado, EB5E = sin conexión -->
+                <TextBlock FontSize="{DynamicResource CaptionFontSize}" Margin="0,0,8,0">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource IconTextStyle}">
+                            <Setter Property="Text" Value="&#xEB5E;" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsOnline}" Value="True">
+                                    <Setter Property="Text" Value="&#xE839;" />
+                                    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Text="{Binding ConnectionText}"
+                           FontSize="{DynamicResource CaptionFontSize}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           AutomationProperties.AutomationId="ConnectionState" />
+            </StackPanel>
+        </DockPanel>
+    </Border>
+</UserControl>
