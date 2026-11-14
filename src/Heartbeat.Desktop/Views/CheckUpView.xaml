@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             xmlns:views="clr-namespace:Heartbeat.Desktop.Views"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:CheckUpViewModel}"
              Style="{StaticResource PageViewStyle}">
@@ -20,14 +21,16 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid MaxWidth="1000" HorizontalAlignment="Left">
+        <Grid MaxWidth="1200" HorizontalAlignment="Left">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="11*" />
-                <ColumnDefinition Width="9*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="500" />
             </Grid.ColumnDefinitions>
 
+            <!-- Formulario y resultado de la evaluación -->
+            <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Top">
             <!-- Formulario -->
-            <ContentControl Grid.Column="0" Style="{StaticResource HoverCardStyle}" Margin="0,0,16,0" VerticalAlignment="Top">
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,14">
                 <StackPanel>
                     <TextBlock Text="Check-up de rutina" Style="{StaticResource TitleTextStyle}" />
                     <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,6,0,18"
@@ -120,7 +123,7 @@
             </ContentControl>
 
             <!-- Resultado de la evaluación -->
-            <StackPanel Grid.Column="1" VerticalAlignment="Top">
+            <StackPanel>
 
                 <!-- Escalamiento en críticos (MR-06) -->
                 <Border Background="{DynamicResource BrandRedBrush}" CornerRadius="14" Padding="16,12" Margin="0,0,0,14"
@@ -168,6 +171,10 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
+            </StackPanel>
+
+            <!-- Medidas corporales -->
+            <views:BodyPanelView Grid.Column="1" DataContext="{Binding Body}" VerticalAlignment="Top" />
         </Grid>
     </ScrollViewer>
 </UserControl>

@@ -42,6 +42,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IAuthenticator, DemoAuthenticator>();
         services.AddSingleton<IHealthRecordStore, DemoHealthRecordStore>();
         services.AddSingleton<ISyncStatusProvider, DemoSyncStatusProvider>();
+        services.AddSingleton<IBodyMeasurementStore, DemoBodyMeasurementStore>();
+        services.AddTransient<BodyMeasurementsViewModel>();
 
         // Panel de información y fuentes por indicador (DK-INFO).
         services.AddSingleton<IIndicatorInfoProvider, ReferenceRangesInfoProvider>();

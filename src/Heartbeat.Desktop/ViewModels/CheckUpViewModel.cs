@@ -30,8 +30,10 @@ public sealed partial class CheckUpViewModel : PageViewModel
         IHealthEvaluator evaluator,
         IIndicatorInfoProvider info,
         IIndicatorInfoPresenter infoPresenter,
-        IConnectivityService connectivity)
+        IConnectivityService connectivity,
+        BodyMeasurementsViewModel body)
     {
+        Body = body;
         _store = store;
         _session = session;
         _evaluator = evaluator;
@@ -49,6 +51,9 @@ public sealed partial class CheckUpViewModel : PageViewModel
     }
 
     public override string Title => "Check-up";
+
+    /// <summary>Panel de medidas corporales que acompaña al formulario.</summary>
+    public BodyMeasurementsViewModel Body { get; }
 
     [ObservableProperty]
     public partial string Systolic { get; set; }

@@ -6,7 +6,8 @@ namespace Heartbeat.Desktop.Tests;
 public sealed class CheckUpViewModelTests
 {
     private static CheckUpViewModel Create(TestWorld world) =>
-        new(world.Store, world.Session, world.Evaluator, world.Info, world.Presenter, world.Connectivity);
+        new(world.Store, world.Session, world.Evaluator, world.Info, world.Presenter, world.Connectivity,
+            new BodyMeasurementsViewModel(new Heartbeat.Desktop.Demo.DemoBodyMeasurementStore(world.Clock), world.Session));
 
     private static void Fill(CheckUpViewModel vm, string sys = "120", string dia = "78", string hr = "70", string sugar = "90",
         string temp = "36.6", string sleep = "7", double mood = 4)
