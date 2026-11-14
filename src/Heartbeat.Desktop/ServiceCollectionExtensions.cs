@@ -1,8 +1,10 @@
+using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Views;
 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Heartbeat.Desktop;
@@ -13,6 +15,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddHeartbeatDesktop(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+
+        // Base de datos local (SQLite) para funcionamiento offline.
+        services.AddDbContext<LocalDbContext>(options =>
+            options.UseSqlite("Data Source=heartbeat-desktop.db"));
 
         // Infraestructura de la interfaz.
         services.AddSingleton<INavigationService, NavigationService>();
