@@ -93,3 +93,17 @@ internal sealed class FailingPageViewModel : PageViewModel
 
     public override string Title => "Failing";
 }
+
+internal sealed class PlainPageViewModel : PageViewModel
+{
+    public override string Title => "Plain";
+}
+
+internal sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+{
+    public DateTimeOffset Now { get; set; } = now;
+
+    public override DateTimeOffset GetUtcNow() => Now;
+
+    public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
+}

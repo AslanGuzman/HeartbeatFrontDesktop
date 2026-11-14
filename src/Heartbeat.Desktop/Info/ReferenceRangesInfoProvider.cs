@@ -25,6 +25,18 @@ public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
         ["hostileClosedEnvironment"] = "Entorno cerrado y hostil",
     };
 
+    // Nombres en español mientras el contrato esté en inglés (AliaJimenez/HeartbeatBackend#79). Si el contrato
+    // ya trae el nombre traducido, borrar este diccionario y usar directamente el campo "name".
+    private static readonly Dictionary<string, string> SpanishNames = new(StringComparer.Ordinal)
+    {
+        ["bloodPressure"] = "Presión arterial",
+        ["heartRate"] = "Frecuencia cardíaca",
+        ["bloodSugar"] = "Glucosa",
+        ["bodyTemperature"] = "Temperatura corporal",
+        ["sleep"] = "Sueño",
+        ["mood"] = "Estado de ánimo",
+    };
+
     private readonly Dictionary<string, IndicatorInfo> _byId;
 
     public ReferenceRangesInfoProvider()
@@ -112,7 +124,7 @@ public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
 
         return new IndicatorInfo(
             id,
-            RequiredString(indicator, "name", where),
+            SpanishNames.GetValueOrDefault(id) ?? RequiredString(indicator, "name", where),
             RequiredString(indicator, "unit", where),
             hazardName,
             RequiredString(indicator, "whyItMatters", where),

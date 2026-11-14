@@ -4,48 +4,59 @@
                     xmlns:sys="clr-namespace:System;assembly=System.Runtime">
 
     <!--
-        Paleta de Heartbeat (tema oscuro, pensado para pantallas en cabina con poca luz).
+        Paleta de Heartbeat: blanco ~70 % (fondos y tarjetas), azul #110559 ~20 % (rail, botones, titulares)
+        y rojo #990E0E ~10 % (críticos, escalamiento, errores y cierre de ventana).
 
-        NR-01: verde / ámbar / rojo significan SIEMPRE normal / watch / critical y no se usan para nada más.
-        Por eso la conectividad usa el color de acento y los grises. El estado nunca se comunica solo con color:
-        cada chip lleva además su texto (Normal, Vigilancia, Crítico).
+        NR-01: el semáforo verde / ámbar / rojo significa SIEMPRE normal / watch / critical. Sus colores viven en
+        StatusPalette.cs (los usan los conversores de estado). Verde y ámbar no se usan para nada más; el rojo de marca
+        sí aparece en errores y acciones destructivas. El estado nunca se comunica solo con color: cada chip lleva texto.
     -->
 
-    <!-- Superficies y texto -->
-    <Color x:Key="BackgroundColor">#0B1220</Color>
-    <Color x:Key="SurfaceColor">#121B2E</Color>
-    <Color x:Key="SurfaceRaisedColor">#1A2540</Color>
-    <Color x:Key="BorderColor">#2A3757</Color>
-    <Color x:Key="TextPrimaryColor">#E8EEF9</Color>
-    <Color x:Key="TextSecondaryColor">#A3B3CF</Color>
-    <Color x:Key="AccentColor">#4DA3FF</Color>
-    <Color x:Key="OnAccentColor">#06121F</Color>
+    <!-- Marca -->
+    <Color x:Key="BrandBlueColor">#110559</Color>
+    <Color x:Key="BrandBlueHoverColor">#1C0F7E</Color>
+    <Color x:Key="BrandBlueSoftColor">#EEEDF8</Color>
+    <Color x:Key="BrandRedColor">#990E0E</Color>
+    <Color x:Key="BrandRedSoftColor">#F8EAEA</Color>
 
-    <!-- Estado de salud (NR-01) -->
-    <Color x:Key="StatusNormalColor">#34C759</Color>
-    <Color x:Key="StatusWatchColor">#FFB020</Color>
-    <Color x:Key="StatusCriticalColor">#FF4D4F</Color>
-    <Color x:Key="OnStatusColor">#0B1220</Color>
+    <!-- Superficies y texto (mismos nombres que usaban las pantallas anteriores) -->
+    <Color x:Key="BackgroundColor">#F7F8FC</Color>
+    <Color x:Key="SurfaceColor">#FFFFFF</Color>
+    <Color x:Key="SurfaceRaisedColor">#EEEDF8</Color>
+    <Color x:Key="BorderColor">#ECEDF5</Color>
+    <Color x:Key="InputBorderColor">#E1E3F0</Color>
+    <Color x:Key="TextPrimaryColor">#110559</Color>
+    <Color x:Key="TextBodyColor">#3A3E55</Color>
+    <Color x:Key="TextSecondaryColor">#6A6E86</Color>
+    <Color x:Key="AccentColor">#110559</Color>
+    <Color x:Key="OnAccentColor">#FFFFFF</Color>
+    <Color x:Key="RailTextColor">#B4AFE0</Color>
+    <Color x:Key="LinkColor">#3A2BC4</Color>
+
+    <SolidColorBrush x:Key="BrandBlueBrush" Color="{StaticResource BrandBlueColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="BrandBlueHoverBrush" Color="{StaticResource BrandBlueHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="BrandBlueSoftBrush" Color="{StaticResource BrandBlueSoftColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="BrandRedBrush" Color="{StaticResource BrandRedColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="BrandRedSoftBrush" Color="{StaticResource BrandRedSoftColor}" po:Freeze="True" />
 
     <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="SurfaceRaisedBrush" Color="{StaticResource SurfaceRaisedColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="InputBorderBrush" Color="{StaticResource InputBorderColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextBodyBrush" Color="{StaticResource TextBodyColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" po:Freeze="True" />
-
-    <SolidColorBrush x:Key="StatusNormalBrush" Color="{StaticResource StatusNormalColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="StatusWatchBrush" Color="{StaticResource StatusWatchColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="StatusCriticalBrush" Color="{StaticResource StatusCriticalColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="OnStatusBrush" Color="{StaticResource OnStatusColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="RailTextBrush" Color="{StaticResource RailTextColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="LinkBrush" Color="{StaticResource LinkColor}" po:Freeze="True" />
 
     <!-- Tipografía -->
     <FontFamily x:Key="UiFont">Segoe UI</FontFamily>
     <FontFamily x:Key="IconFont">Segoe MDL2 Assets</FontFamily>
     <sys:Double x:Key="BodyFontSize">14</sys:Double>
     <sys:Double x:Key="CaptionFontSize">12</sys:Double>
-    <sys:Double x:Key="TitleFontSize">28</sys:Double>
+    <sys:Double x:Key="TitleFontSize">26</sys:Double>
 
 </ResourceDictionary>

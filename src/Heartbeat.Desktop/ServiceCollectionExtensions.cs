@@ -1,9 +1,11 @@
 using Heartbeat.Desktop.Data;
+using Heartbeat.Desktop.Demo;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Views;
+using Heartbeat.Shared;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +14,7 @@ namespace Heartbeat.Desktop;
 
 public static class ServiceCollectionExtensions
 {
-    /// <summary>Registra la ventana principal, la navegación, los servicios de la barra de estado y todas las pantallas.</summary>
+    /// <summary>Registra la ventana principal, la navegación, los servicios y todas las pantallas.</summary>
     public static IServiceCollection AddHeartbeatDesktop(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
@@ -23,8 +25,23 @@ public static class ServiceCollectionExtensions
 
         // Infraestructura de la interfaz.
         services.AddSingleton<INavigationService, NavigationService>();
-        services.AddSingleton<IConnectivityService, NetworkConnectivityService>();
-        services.AddSingleton<ISyncStatusProvider, NoSyncStatusProvider>();
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<ISessionContext, SessionContext>();
+
+        // Conectividad: la red real más el interruptor "Enlace con la Tierra" para demostrar el modo offline.
+        services.AddSingleton<NetworkConnectivityService>();
+        services.AddSingleton<SimulatedLinkService>();
+        services.AddSingleton<IConnectivityService>(sp => sp.GetRequiredService<SimulatedLinkService>());
+        services.AddSingleton<ISimulatedLink>(sp => sp.GetRequiredService<SimulatedLinkService>());
+
+        // Reglas de evaluación compartidas con el backend (Heartbeat.Shared).
+        services.AddSingleton<IHealthEvaluator, HealthEvaluator>();
+
+        // Datos de demostración. Provisionales: se sustituyen por el login real (#27), la base local (#8) y el
+        // motor de sincronización (#32) registrando esas implementaciones en su lugar.
+        services.AddSingleton<IAuthenticator, DemoAuthenticator>();
+        services.AddSingleton<IHealthRecordStore, DemoHealthRecordStore>();
+        services.AddSingleton<ISyncStatusProvider, DemoSyncStatusProvider>();
 
         // Panel de información y fuentes por indicador (DK-INFO).
         services.AddSingleton<IIndicatorInfoProvider, ReferenceRangesInfoProvider>();
