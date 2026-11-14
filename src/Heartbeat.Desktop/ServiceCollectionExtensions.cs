@@ -1,4 +1,5 @@
 using Heartbeat.Desktop.Data;
+using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
@@ -18,7 +19,7 @@ public static class ServiceCollectionExtensions
 
         // Base de datos local (SQLite) para funcionamiento offline.
         services.AddDbContext<LocalDbContext>(options =>
-            options.UseSqlite("Data Source=heartbeat-desktop.db"));
+            options.UseSqlite(LocalDatabase.ConnectionString(LocalDatabase.DefaultPath)));
 
         // Infraestructura de la interfaz.
         services.AddSingleton<INavigationService, NavigationService>();
