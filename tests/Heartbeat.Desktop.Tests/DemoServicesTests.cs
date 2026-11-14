@@ -1,4 +1,5 @@
 using Heartbeat.Desktop.Converters;
+using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Demo;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
@@ -24,8 +25,8 @@ public sealed class DemoServicesTests
         int changes = 0;
         world.Sync.Changed += (_, _) => changes++;
 
-        world.Store.QueueMessage("ana", "uno");
-        world.Store.QueueMessage("ana", "dos");
+        world.Store.QueueMessage(TestWorld.IdOf("ana"), "uno");
+        world.Store.QueueMessage(TestWorld.IdOf("ana"), "dos");
 
         Assert.Equal(2, world.Sync.PendingCount);
         Assert.True(changes >= 2);
@@ -35,7 +36,7 @@ public sealed class DemoServicesTests
     public void Regaining_the_link_sends_everything_pending_and_updates_the_last_sync()
     {
         TestWorld world = new(online: false);
-        world.Store.QueueMessage("ana", "uno");
+        world.Store.QueueMessage(TestWorld.IdOf("ana"), "uno");
         world.Clock.Now = world.Clock.Now.AddHours(1);
 
         world.Connectivity.Set(true);
@@ -49,7 +50,7 @@ public sealed class DemoServicesTests
     {
         TestWorld world = new(online: true);
 
-        world.Store.QueueMessage("ana", "uno");
+        world.Store.QueueMessage(TestWorld.IdOf("ana"), "uno");
 
         Assert.Equal(0, world.Sync.PendingCount);
     }
@@ -59,10 +60,10 @@ public sealed class DemoServicesTests
     {
         TestWorld world = new();
 
-        Assert.Equal(3, world.Store.GetCheckUps("ana").Count);
-        Assert.Equal(2, world.Store.GetCheckUps("luis").Count);
-        Assert.Single(world.Store.GetCheckUps("mara"));
-        Assert.Empty(world.Store.GetCheckUps("nadie"));
+        Assert.Equal(3, world.Store.GetCheckUps(TestWorld.IdOf("ana")).Count);
+        Assert.Equal(2, world.Store.GetCheckUps(TestWorld.IdOf("luis")).Count);
+        Assert.Single(world.Store.GetCheckUps(TestWorld.IdOf("mara")));
+        Assert.Empty(world.Store.GetCheckUps(Guid.NewGuid()));
     }
 
     [Fact]
@@ -71,7 +72,7 @@ public sealed class DemoServicesTests
         TestWorld world = new();
 
         List<HealthStatus> seen = new[] { "ana", "luis", "mara" }
-            .SelectMany(u => world.Store.GetCheckUps(u))
+            .SelectMany(u => world.Store.GetCheckUps(TestWorld.IdOf(u)))
             .Select(c => c.OverallStatus)
             .Distinct()
             .Order()
@@ -85,11 +86,11 @@ public sealed class DemoServicesTests
     {
         QueueingSynchronizationContext ui = new();
         TestWorld world = new();
-        DemoHealthRecordStore store = new(world.Evaluator, world.Clock, ui);
+        LocalHealthRecordStore store = world.NewStore(ui);
         int raised = 0;
         store.Changed += (_, _) => raised++;
 
-        store.QueueMessage("ana", "uno");
+        store.QueueMessage(TestWorld.IdOf("ana"), "uno");
 
         Assert.Equal(0, raised);
         ui.RunPending();
@@ -115,7 +116,7 @@ public sealed class DemoServicesTests
         int changes = 0;
         session.Changed += (_, _) => changes++;
 
-        session.SignIn(new SessionUser("ana", "Ana Rivera"));
+        session.SignIn(new SessionUser(TestWorld.IdOf("ana"), "ana", "Ana Rivera"));
         Assert.Equal("ana", session.CurrentUser!.UserName);
         session.SignOut();
 

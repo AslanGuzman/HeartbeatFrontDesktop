@@ -6,7 +6,7 @@ namespace Heartbeat.Desktop.Services;
 public sealed record ReadingRecord(ReadingInput Input, ReadingEvaluation Evaluation);
 
 /// <summary>Un check-up: una sesión con sus lecturas y un único instante (MR-13).</summary>
-public sealed class CheckUpRecord(Guid id, DateTimeOffset recordedAt, HealthStatus overallStatus, IReadOnlyList<ReadingRecord> readings)
+public sealed class CheckUpRecord(Guid id, DateTimeOffset recordedAt, HealthStatus overallStatus, IReadOnlyList<ReadingRecord> readings, string? note = null)
 {
     public Guid Id { get; } = id;
 
@@ -15,6 +15,9 @@ public sealed class CheckUpRecord(Guid id, DateTimeOffset recordedAt, HealthStat
     public HealthStatus OverallStatus { get; } = overallStatus;
 
     public IReadOnlyList<ReadingRecord> Readings { get; } = readings;
+
+    /// <summary>Nota libre del astronauta (hasta 500 caracteres).</summary>
+    public string? Note { get; } = note;
 
     /// <summary>Cuándo llegó al servidor; <c>null</c> mientras está pendiente de sincronizar.</summary>
     public DateTimeOffset? SyncedAt { get; internal set; }
@@ -38,8 +41,8 @@ public sealed class MessageRecord(Guid id, string body, DateTimeOffset createdAt
 }
 
 /// <summary>
-/// Check-ups y mensajes del astronauta. Las pantallas solo conocen esta interfaz: la base SQLite (#8) y el motor
-/// de sincronización (#32) la sustituyen a la implementación de demostración.
+/// Check-ups y mensajes del astronauta. Las pantallas solo conocen esta interfaz; la implementación guarda en la
+/// base SQLite local y el motor de sincronización (#32) se encarga de enviar lo pendiente.
 /// </summary>
 public interface IHealthRecordStore
 {
@@ -50,14 +53,17 @@ public interface IHealthRecordStore
     DateTimeOffset? LastSyncedAt { get; }
 
     /// <summary>Check-ups del usuario, del más reciente al más antiguo.</summary>
-    IReadOnlyList<CheckUpRecord> GetCheckUps(string userName);
+    IReadOnlyList<CheckUpRecord> GetCheckUps(Guid astronautId);
 
     /// <summary>Mensajes del usuario, del más reciente al más antiguo.</summary>
-    IReadOnlyList<MessageRecord> GetMessages(string userName);
+    IReadOnlyList<MessageRecord> GetMessages(Guid astronautId);
 
-    CheckUpRecord AddCheckUp(string userName, IReadOnlyList<ReadingInput> inputs, CheckUpEvaluation evaluation);
+    /// <summary>
+    /// Guarda un check-up (1 a 6 lecturas, una por indicador, con un solo instante) como pendiente de sincronizar.
+    /// </summary>
+    CheckUpRecord AddCheckUp(Guid astronautId, IReadOnlyList<ReadingInput> inputs, CheckUpEvaluation evaluation, string? note = null);
 
-    MessageRecord QueueMessage(string userName, string body);
+    MessageRecord QueueMessage(Guid astronautId, string body);
 
     /// <summary>Marca como enviado todo lo pendiente. Devuelve cuántos elementos se enviaron.</summary>
     int MarkAllSynced(DateTimeOffset at);

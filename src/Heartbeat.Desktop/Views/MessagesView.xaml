@@ -18,7 +18,7 @@
                 <StackPanel>
                     <TextBox Text="{Binding NewMessage, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputStyle}" AcceptsReturn="True" TextWrapping="Wrap"
-                             MinHeight="84" VerticalContentAlignment="Top"
+                             MinHeight="84" MaxLength="4000" VerticalContentAlignment="Top"
                              AutomationProperties.Name="Mensaje para control de misión" />
                     <Button Content="Encolar / enviar" Command="{Binding QueueCommand}" HorizontalAlignment="Right"
                             Margin="0,12,0,0" Padding="20,9" />

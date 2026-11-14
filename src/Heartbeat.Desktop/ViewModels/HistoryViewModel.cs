@@ -39,7 +39,7 @@ public sealed class HistoryViewModel : PageViewModel, IDisposable
         CheckUps.Clear();
         if (_session.CurrentUser is { } user)
         {
-            foreach (CheckUpRecord checkUp in _store.GetCheckUps(user.UserName))
+            foreach (CheckUpRecord checkUp in _store.GetCheckUps(user.Id))
             {
                 CheckUps.Add(ToRow(checkUp));
             }

@@ -47,7 +47,7 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
             return;
         }
 
-        _store.QueueMessage(user.UserName, NewMessage);
+        _store.QueueMessage(user.Id, NewMessage);
         NewMessage = string.Empty;
         Reload();
     }
@@ -61,7 +61,7 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
         Messages.Clear();
         if (_session.CurrentUser is { } user)
         {
-            foreach (MessageRecord message in _store.GetMessages(user.UserName))
+            foreach (MessageRecord message in _store.GetMessages(user.Id))
             {
                 Messages.Add(new MessageRowViewModel(
                     message.Body,

@@ -1,0 +1,153 @@
+<UserControl x:Class="Heartbeat.Desktop.Views.BodyPanelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:BodyMeasurementsViewModel}"
+             IsTabStop="False"
+             GotKeyboardFocus="OnFieldFocused">
+
+    <UserControl.Resources>
+        <Color x:Key="OnPanelSoftColor">#B4AFE0</Color>
+        <SolidColorBrush x:Key="OnPanelSoftBrush" Color="{StaticResource OnPanelSoftColor}" />
+        <SolidColorBrush x:Key="RingBrush" Color="#9D93FF" />
+
+        <!-- Campo de medida sobre el panel azul -->
+        <Style x:Key="BodyInputStyle" TargetType="TextBox" BasedOn="{StaticResource InputStyle}">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="8,4" />
+            <Setter Property="Width" Value="78" />
+        </Style>
+    </UserControl.Resources>
+
+    <!-- Panel de marca azul: figura con aros a la izquierda y tarjetas de medidas a la derecha -->
+    <Border CornerRadius="22" Padding="22,20" Margin="0,0,0,10">
+        <Border.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#110559" Offset="0" />
+                <GradientStop Color="#1C0F7E" Offset="1" />
+            </LinearGradientBrush>
+        </Border.Background>
+        <Border.Effect>
+            <DropShadowEffect Color="#110559" BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.18" />
+        </Border.Effect>
+
+        <StackPanel>
+            <TextBlock Text="Medidas corporales" FontSize="18" FontWeight="SemiBold" Foreground="White" />
+            <TextBlock Margin="0,4,0,18" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource OnPanelSoftBrush}"
+                       Text="En microgravedad la columna se alarga y las piernas pierden volumen. Registra tus medidas en centímetros para ver el cambio." />
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="170" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Figura (decorativa) con aros en las zonas medidas -->
+                <Canvas Grid.Column="0" Width="170" Height="330" VerticalAlignment="Top" AutomationProperties.Name="Figura del cuerpo">
+                    <Canvas Canvas.Left="25">
+                        <Ellipse Canvas.Left="43" Canvas.Top="13" Width="34" Height="42" Fill="#E8E6FA" />
+                        <Rectangle Canvas.Left="52" Canvas.Top="50" Width="16" Height="14" Fill="#D6D2F3" />
+                        <Path Fill="#E8E6FA"
+                              Data="M45,62 C30,64 22,72 20,90 L14,152 L25,154 L33,102 L37,162 L38,202 L82,202 L83,162 L87,102 L95,154 L106,152 L100,90 C98,72 90,64 75,62 Z" />
+                        <Path Fill="#D6D2F3"
+                              Data="M38,200 L36,300 L35,320 L55,320 L57,300 L60,236 L63,300 L65,320 L85,320 L84,300 L82,200 Z" />
+                    </Canvas>
+
+                    <!-- Altura: línea vertical -->
+                    <Line X1="158" X2="158" Y1="14" Y2="320" Stroke="{StaticResource RingBrush}" StrokeThickness="2"
+                          StrokeDashArray="3 3"
+                          Visibility="{Binding IsHeightSelected, Converter={StaticResource BoolToVisibility}}" />
+
+                    <!-- Un aro por zona; el de la zona seleccionada se resalta -->
+                    <ItemsControl ItemsSource="{Binding Metrics}" IsTabStop="False" Focusable="False">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Top" Value="{Binding RingTop}" />
+                                <Setter Property="Canvas.Left" Value="{Binding RingLeft}" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="{Binding RingWidth}" Height="16" StrokeThickness="2" Fill="Transparent">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Stroke" Value="#66FFFFFF" />
+                                            <Setter Property="Opacity" Value="0.55" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="Stroke" Value="{StaticResource RingBrush}" />
+                                                    <Setter Property="StrokeThickness" Value="3" />
+                                                    <Setter Property="Opacity" Value="1" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding RingWidth}" Value="0">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Canvas>
+
+                <!-- Tarjetas de medidas -->
+                <ItemsControl Grid.Column="1" ItemsSource="{Binding Metrics}" Margin="8,0,0,0"
+                              AutomationProperties.Name="Medidas corporales">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border CornerRadius="12" Padding="10,8" Margin="0,0,0,8" BorderThickness="1.5">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="#14FFFFFF" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="Background" Value="#26FFFFFF" />
+                                                <Setter Property="BorderBrush" Value="{StaticResource RingBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <DockPanel>
+                                    <TextBox DockPanel.Dock="Right" Text="{Binding Input, UpdateSourceTrigger=PropertyChanged}"
+                                             Style="{StaticResource BodyInputStyle}" VerticalAlignment="Center"
+                                             ToolTip="Nueva medida en cm"
+                                             AutomationProperties.Name="{Binding Name, StringFormat=Nueva medida de {0} en centímetros}" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <DockPanel>
+                                            <TextBlock Text="{Binding Name}" FontSize="12" Foreground="{StaticResource OnPanelSoftBrush}" />
+                                            <TextBlock Text="{Binding DeltaText}" FontSize="11" FontWeight="SemiBold" Foreground="White"
+                                                       HorizontalAlignment="Right" Margin="0,0,10,0" />
+                                        </DockPanel>
+                                        <TextBlock Text="{Binding CurrentText}" FontSize="17" FontWeight="SemiBold" Foreground="White" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+
+            <Button Content="Guardar medidas" Command="{Binding SaveCommand}" Style="{StaticResource SecondaryButtonStyle}"
+                    HorizontalAlignment="Stretch" Margin="0,10,0,0" />
+
+            <Border Background="{DynamicResource BrandRedSoftBrush}" CornerRadius="10" Padding="12,8" Margin="0,12,0,0"
+                    Visibility="{Binding Error, Converter={StaticResource NonEmptyToVisibility}}">
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource BrandRedBrush}" FontSize="12.5"
+                           TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
+            </Border>
+            <TextBlock Text="{Binding SavedText}" Foreground="White" FontSize="12.5" FontWeight="SemiBold" Margin="0,12,0,0"
+                       Visibility="{Binding SavedText, Converter={StaticResource NonEmptyToVisibility}}"
+                       AutomationProperties.LiveSetting="Polite" />
+        </StackPanel>
+    </Border>
+</UserControl>

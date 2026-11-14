@@ -13,8 +13,7 @@ public sealed class MainWindowViewModelTests : IDisposable
 
     public MainWindowViewModelTests()
     {
-        ServiceCollection services = new();
-        services.AddHeartbeatDesktop();
+        ServiceCollection services = TestContainer.Services(out _);
         services.AddSingleton<Heartbeat.Desktop.Services.IConnectivityService>(new FakeConnectivityService());
         _provider = services.BuildServiceProvider();
         _navigation = _provider.GetRequiredService<INavigationService>();
@@ -105,8 +104,7 @@ public sealed class MainWindowViewModelTests : IDisposable
     public void Show_info_opens_the_indicator_panel()
     {
         FakeIndicatorInfoPresenter presenter = new();
-        ServiceCollection services = new();
-        services.AddHeartbeatDesktop();
+        ServiceCollection services = TestContainer.Services(out _);
         services.AddSingleton<Heartbeat.Desktop.Info.IIndicatorInfoPresenter>(presenter);
         using ServiceProvider provider = services.BuildServiceProvider();
 

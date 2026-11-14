@@ -37,11 +37,13 @@ public static class ServiceCollectionExtensions
         // Reglas de evaluación compartidas con el backend (Heartbeat.Shared).
         services.AddSingleton<IHealthEvaluator, HealthEvaluator>();
 
-        // Datos de demostración. Provisionales: se sustituyen por el login real (#27), la base local (#8) y el
-        // motor de sincronización (#32) registrando esas implementaciones en su lugar.
+        // Check-ups y mensajes se guardan en la base local (#8). Provisionales: el acceso de demostración (#27) y la
+        // sincronización simulada (#32), que se sustituyen registrando las implementaciones reales en su lugar.
         services.AddSingleton<IAuthenticator, DemoAuthenticator>();
-        services.AddSingleton<IHealthRecordStore, DemoHealthRecordStore>();
+        services.AddSingleton<IHealthRecordStore, LocalHealthRecordStore>();
         services.AddSingleton<ISyncStatusProvider, DemoSyncStatusProvider>();
+        services.AddSingleton<IBodyMeasurementStore, DemoBodyMeasurementStore>();
+        services.AddTransient<BodyMeasurementsViewModel>();
 
         // Panel de información y fuentes por indicador (DK-INFO).
         services.AddSingleton<IIndicatorInfoProvider, ReferenceRangesInfoProvider>();
