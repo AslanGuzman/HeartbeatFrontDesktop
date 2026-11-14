@@ -1,6 +1,7 @@
 using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Demo;
 using Heartbeat.Desktop.Info;
+using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
 
@@ -41,6 +42,12 @@ internal sealed class TestWorld : IDisposable
         Session = new SessionContext();
         Sync = new DemoSyncStatusProvider(Store, Connectivity, Clock);
 
+        Navigation = new RecordingNavigation(type =>
+            type == typeof(CheckUpResultViewModel) ? new CheckUpResultViewModel(Navigation!, Store, Session, Info, Presenter, Connectivity)
+            : type == typeof(CheckUpViewModel) ? NewCheckUp()
+            : type == typeof(HistoryViewModel) ? new HistoryViewModel(Store, Session, Info)
+            : new PlainPageViewModel());
+
         if (signedInUser is not null)
         {
             Session.SignIn(DemoAuthenticator.Accounts.First(a => a.UserName == signedInUser));
@@ -52,6 +59,15 @@ internal sealed class TestWorld : IDisposable
     public HealthEvaluator Evaluator { get; }
 
     public ReferenceRangesInfoProvider Info { get; }
+
+    public RecordingNavigation Navigation { get; }
+
+    /// <summary>El resultado del último check-up guardado (la pantalla a la que se navegó).</summary>
+    public CheckUpResultViewModel Result => (CheckUpResultViewModel)Navigation.CurrentPage!;
+
+    public CheckUpViewModel NewCheckUp() =>
+        new(Store, Session, Evaluator, Info, Presenter, Navigation,
+            new BodyMeasurementsViewModel(new Heartbeat.Desktop.Demo.DemoBodyMeasurementStore(Clock), Session));
 
     public ServiceProvider Services { get; }
 

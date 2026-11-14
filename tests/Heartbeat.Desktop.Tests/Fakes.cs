@@ -1,4 +1,5 @@
 using Heartbeat.Desktop.Info;
+using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
 
@@ -106,4 +107,24 @@ internal sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
     public override DateTimeOffset GetUtcNow() => Now;
 
     public override TimeZoneInfo LocalTimeZone => TimeZoneInfo.Utc;
+}
+
+/// <summary>Navegación de pruebas: crea la página con una fábrica y registra a dónde se navegó.</summary>
+internal sealed class RecordingNavigation(Func<Type, PageViewModel> factory) : INavigationService
+{
+    public PageViewModel? CurrentPage { get; private set; }
+
+    public List<Type> Visited { get; } = [];
+
+    public event EventHandler? CurrentPageChanged;
+
+    public PageViewModel NavigateTo(Type pageType, Action<PageViewModel>? initialize = null)
+    {
+        PageViewModel page = factory(pageType);
+        initialize?.Invoke(page);
+        CurrentPage = page;
+        Visited.Add(pageType);
+        CurrentPageChanged?.Invoke(this, EventArgs.Empty);
+        return page;
+    }
 }

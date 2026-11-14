@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<LoginViewModel>();
         services.AddTransient<DashboardViewModel>();
         services.AddTransient<CheckUpViewModel>();
+        services.AddTransient<CheckUpResultViewModel>();
         services.AddTransient<HistoryViewModel>();
         services.AddTransient<MessagesViewModel>();
         services.AddTransient<ProfileViewModel>();

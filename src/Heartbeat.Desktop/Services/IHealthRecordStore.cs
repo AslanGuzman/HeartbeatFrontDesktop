@@ -26,8 +26,15 @@ public sealed class CheckUpRecord(Guid id, DateTimeOffset recordedAt, HealthStat
 }
 
 /// <summary>Mensaje a control de misión (MR-11).</summary>
-public sealed class MessageRecord(Guid id, string body, DateTimeOffset createdAt)
+public sealed class MessageRecord(Guid id, string body, DateTimeOffset createdAt, Guid? checkUpId = null, string? subject = null)
 {
+    /// <summary>Check-up que adjunta un reporte; <c>null</c> en un mensaje normal.</summary>
+    public Guid? CheckUpId { get; } = checkUpId;
+
+    public string? Subject { get; } = subject;
+
+    public bool IsReport => CheckUpId is not null;
+
     public Guid Id { get; } = id;
 
     public string Body { get; } = body;
@@ -64,6 +71,12 @@ public interface IHealthRecordStore
     CheckUpRecord AddCheckUp(Guid astronautId, IReadOnlyList<ReadingInput> inputs, CheckUpEvaluation evaluation, string? note = null);
 
     MessageRecord QueueMessage(Guid astronautId, string body);
+
+    /// <summary>Encola un reporte a control de misión que adjunta el check-up indicado (<c>Kind = report</c>).</summary>
+    MessageRecord QueueReport(Guid astronautId, Guid checkUpId, string subject, string body);
+
+    /// <summary>Indica si ya se envió (o se encoló) un reporte de ese check-up.</summary>
+    bool HasReport(Guid checkUpId);
 
     /// <summary>Marca como enviado todo lo pendiente. Devuelve cuántos elementos se enviaron.</summary>
     int MarkAllSynced(DateTimeOffset at);

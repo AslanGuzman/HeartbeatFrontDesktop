@@ -16,6 +16,9 @@
     <DataTemplate DataType="{x:Type vm:CheckUpViewModel}">
         <views:CheckUpView />
     </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:CheckUpResultViewModel}">
+        <views:CheckUpResultView />
+    </DataTemplate>
     <DataTemplate DataType="{x:Type vm:HistoryViewModel}">
         <views:HistoryView />
     </DataTemplate>

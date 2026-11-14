@@ -64,7 +64,7 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
             foreach (MessageRecord message in _store.GetMessages(user.Id))
             {
                 Messages.Add(new MessageRowViewModel(
-                    message.Body,
+                    message.IsReport ? $"Reporte de check-up: {message.Subject}{Environment.NewLine}{message.Body}" : message.Body,
                     message.CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
                     message.SentAt is { } sent
                         ? string.Create(CultureInfo.CurrentCulture, $"Enviado {sent.ToLocalTime():g}")
