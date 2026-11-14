@@ -1,0 +1,41 @@
+<UserControl x:Class="Heartbeat.Desktop.Views.LoginView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:LoginViewModel}"
+             IsTabStop="False">
+
+    <!-- Marcador de posición: el formulario real de usuario y contraseña llega con el ticket #27 -->
+    <Border Width="420"
+            VerticalAlignment="Center"
+            HorizontalAlignment="Center"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="12"
+            Padding="32">
+        <StackPanel>
+            <TextBlock Text="Heartbeat"
+                       Style="{StaticResource TitleTextStyle}"
+                       Foreground="{DynamicResource AccentBrush}" />
+            <TextBlock Text="Autoevaluación de salud para astronautas"
+                       Style="{StaticResource SecondaryTextStyle}"
+                       Margin="0,4,0,24" />
+
+            <TextBlock Text="{Binding Title}"
+                       FontSize="18"
+                       FontWeight="SemiBold" />
+            <TextBlock Text="{Binding Description}"
+                       Style="{StaticResource SecondaryTextStyle}"
+                       Margin="0,8,0,24" />
+
+            <Button Content="Continuar"
+                    Command="{Binding ContinueCommand}"
+                    IsDefault="True"
+                    HorizontalAlignment="Stretch" />
+        </StackPanel>
+    </Border>
+</UserControl>
