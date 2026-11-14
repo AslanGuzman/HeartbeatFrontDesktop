@@ -99,7 +99,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private void SyncWithNavigation()
     {
-        Type? currentType = CurrentPage?.GetType();
+        Type? currentType = CurrentPage?.NavigationSection ?? CurrentPage?.GetType();
         foreach (NavigationItemViewModel item in NavigationItems)
         {
             item.IsSelected = item.PageType == currentType;

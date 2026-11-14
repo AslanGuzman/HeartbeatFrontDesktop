@@ -11,9 +11,7 @@ namespace Heartbeat.Desktop.Tests;
 
 public sealed class CheckUpViewModelTests
 {
-    private static CheckUpViewModel Create(TestWorld world) =>
-        new(world.Store, world.Session, world.Evaluator, world.Info, world.Presenter, world.Connectivity,
-            new BodyMeasurementsViewModel(new Heartbeat.Desktop.Demo.DemoBodyMeasurementStore(world.Clock), world.Session));
+    private static CheckUpViewModel Create(TestWorld world) => world.NewCheckUp();
 
     private static void FillAll(CheckUpViewModel vm, string sys = "120", string dia = "78", string hr = "70", string sugar = "90",
         string temp = "36.6", string sleep = "7", int? mood = 4)
@@ -51,8 +49,8 @@ public sealed class CheckUpViewModelTests
         vm.SaveCommand.Execute(null);
 
         Assert.Null(vm.Error);
-        Assert.Equal(6, vm.Results.Count);
-        Assert.All(vm.Results, r => Assert.Equal(HealthStatus.Normal, r.Status));
+        Assert.Equal(6, world.Result.Readings.Count);
+        Assert.All(world.Result.Readings, r => Assert.Equal(HealthStatus.Normal, r.Status));
         Assert.Equal(before + 1, Stored(world).Count);
         LocalCheckUp saved = Saved(world);
         Assert.Equal(6, saved.Readings.Count);
@@ -69,23 +67,24 @@ public sealed class CheckUpViewModelTests
         vm.SaveCommand.Execute(null);
 
         Assert.Null(vm.Error);
-        Assert.Equal("Frecuencia cardíaca", Assert.Single(vm.Results).Name);
+        Assert.Equal("Frecuencia cardíaca", Assert.Single(world.Result.Readings).Name);
         Assert.Equal(IndicatorType.HeartRate, Assert.Single(Saved(world).Readings).Indicator);
-        Assert.Contains("1 indicador", vm.SavedText);
+        Assert.Contains("1 indicador", world.Result.SummaryText);
     }
 
     [Fact]
     public void Several_but_not_all_indicators_are_saved_as_given()
     {
-        CheckUpViewModel vm = Create(new TestWorld("mara"));
+        TestWorld world = new("mara");
+        CheckUpViewModel vm = Create(world);
         vm.Temperature = "36,8";
         vm.SleepHours = "6.5";
         vm.SelectMoodCommand.Execute(2);
 
         vm.SaveCommand.Execute(null);
 
-        Assert.Equal(["Temperatura corporal", "Sueño", "Estado de ánimo"], vm.Results.Select(r => r.Name));
-        Assert.Contains("3 indicadores", vm.SavedText);
+        Assert.Equal(["Temperatura corporal", "Sueño", "Estado de ánimo"], world.Result.Readings.Select(r => r.Name));
+        Assert.Contains("3 indicadores", world.Result.SummaryText);
     }
 
     [Fact]
@@ -98,7 +97,7 @@ public sealed class CheckUpViewModelTests
         vm.SaveCommand.Execute(null);
 
         Assert.Contains("al menos un indicador", vm.Error);
-        Assert.Empty(vm.Results);
+        Assert.Empty(world.Navigation.Visited);
         Assert.Equal(before, Stored(world).Count);
     }
 
@@ -107,7 +106,8 @@ public sealed class CheckUpViewModelTests
     [InlineData("", "80")]
     public void Blood_pressure_needs_both_values_or_none(string sys, string dia)
     {
-        CheckUpViewModel vm = Create(new TestWorld("mara"));
+        TestWorld world = new("mara");
+        CheckUpViewModel vm = Create(world);
         vm.Systolic = sys;
         vm.Diastolic = dia;
         vm.HeartRate = "70";
@@ -116,7 +116,7 @@ public sealed class CheckUpViewModelTests
 
         Assert.Contains("Presión arterial", vm.Error);
         Assert.Contains("sistólica y la diastólica", vm.Error);
-        Assert.Empty(vm.Results);
+        Assert.Empty(world.Navigation.Visited);
     }
 
     [Fact]
@@ -140,7 +140,8 @@ public sealed class CheckUpViewModelTests
     [Fact]
     public void The_sleep_slider_writes_its_value_in_the_text_field()
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
 
         vm.SleepSlider = 6.5;
 
@@ -154,7 +155,8 @@ public sealed class CheckUpViewModelTests
     [InlineData("6.2", 6.0)]
     public void Typing_the_sleep_moves_the_slider_to_the_nearest_half_hour(string typed, double expected)
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
 
         vm.SleepHours = typed;
 
@@ -190,7 +192,8 @@ public sealed class CheckUpViewModelTests
     [Fact]
     public void Mood_has_five_buttons_from_very_bad_to_very_good()
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
 
         Assert.Equal([1, 2, 3, 4, 5], vm.MoodOptions.Select(o => o.Value));
         Assert.Equal("Muy mal", vm.MoodOptions[0].Label);
@@ -200,7 +203,8 @@ public sealed class CheckUpViewModelTests
     [Fact]
     public void Choosing_a_mood_selects_only_that_button_and_choosing_it_again_omits_mood()
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
 
         vm.SelectMoodCommand.Execute(4);
         Assert.Equal(4, vm.Mood);
@@ -241,7 +245,7 @@ public sealed class CheckUpViewModelTests
         vm.SaveCommand.Execute(null);
 
         Assert.Contains("Frecuencia cardíaca", vm.Error);
-        Assert.Empty(vm.Results);
+        Assert.Empty(world.Navigation.Visited);
         Assert.Equal(before, Stored(world).Count);
     }
 
@@ -264,7 +268,8 @@ public sealed class CheckUpViewModelTests
     [Fact]
     public void Every_problem_is_listed_at_once()
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
         vm.HeartRate = "abc";
         vm.Temperature = "99";
 
@@ -313,15 +318,16 @@ public sealed class CheckUpViewModelTests
     [Fact]
     public void The_result_is_evaluated_right_away_even_without_a_link()
     {
-        CheckUpViewModel vm = Create(new TestWorld("mara", online: false));
+        TestWorld world = new("mara", online: false);
+        CheckUpViewModel vm = Create(world);
         FillAll(vm, hr: "108");
 
         vm.SaveCommand.Execute(null);
 
-        ReadingRowViewModel row = vm.Results.Single(r => r.Name == "Frecuencia cardíaca");
+        ResultReadingViewModel row = world.Result.Readings.Single(r => r.Name == "Frecuencia cardíaca");
         Assert.Equal(HealthStatus.Watch, row.Status);
-        Assert.False(string.IsNullOrWhiteSpace(row.Guidance));
-        Assert.Contains("cuando haya enlace", vm.SavedText);
+        Assert.NotEmpty(row.GuidanceItems);
+        Assert.Contains("cuando haya enlace", world.Result.SummaryText);
     }
 
     [Fact]
@@ -335,30 +341,32 @@ public sealed class CheckUpViewModelTests
 
         Assert.Equal(0, world.Store.PendingCount);
         Assert.Equal(SyncState.Synced, Saved(world).SyncState);
-        Assert.Contains("enviado", vm.SavedText);
+        Assert.Contains("Enviado", world.Result.SummaryText);
     }
 
     [Fact]
     public void A_critical_reading_shows_the_escalation_notice()
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
         FillAll(vm, sugar: "45");
 
         vm.SaveCommand.Execute(null);
 
-        Assert.Contains("oficial médico", vm.Escalation);
-        Assert.Equal("Crítico", vm.Results.Single(r => r.Name == "Glucosa").StatusText);
+        Assert.Contains("oficial médico", world.Result.Escalation!.Contact);
+        Assert.Equal("Crítico", world.Result.Readings.Single(r => r.Name == "Glucosa").StatusText);
     }
 
     [Fact]
     public void A_watch_reading_gives_guidance_but_no_escalation_to_the_medical_officer()
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
         FillAll(vm, hr: "108");
 
         vm.SaveCommand.Execute(null);
 
-        Assert.Null(vm.Escalation);
+        Assert.Null(world.Result.Escalation);
     }
 
     [Fact]
@@ -388,30 +396,10 @@ public sealed class CheckUpViewModelTests
     }
 
     [Fact]
-    public void After_saving_the_form_is_cleared_but_the_result_stays_visible()
-    {
-        CheckUpViewModel vm = Create(new TestWorld());
-        FillAll(vm);
-        vm.Note = "algo";
-
-        vm.SaveCommand.Execute(null);
-
-        Assert.Equal(string.Empty, vm.Systolic);
-        Assert.Equal(string.Empty, vm.Diastolic);
-        Assert.Equal(string.Empty, vm.HeartRate);
-        Assert.Equal(string.Empty, vm.BloodSugar);
-        Assert.Equal(string.Empty, vm.Temperature);
-        Assert.Equal(string.Empty, vm.SleepHours);
-        Assert.Equal(0, vm.SleepSlider);
-        Assert.Equal(string.Empty, vm.Note);
-        Assert.Null(vm.Mood);
-        Assert.Equal(6, vm.Results.Count);
-    }
-
-    [Fact]
     public void A_failed_save_keeps_what_was_typed()
     {
-        CheckUpViewModel vm = Create(new TestWorld());
+        TestWorld world = new();
+        CheckUpViewModel vm = Create(world);
         vm.HeartRate = "999";
 
         vm.SaveCommand.Execute(null);
@@ -420,30 +408,16 @@ public sealed class CheckUpViewModelTests
     }
 
     [Fact]
-    public void Saving_again_replaces_the_previous_result_and_notices()
-    {
-        CheckUpViewModel vm = Create(new TestWorld());
-        FillAll(vm, sugar: "45");
-        vm.SaveCommand.Execute(null);
-        Assert.NotNull(vm.Escalation);
-
-        FillAll(vm);
-        vm.SaveCommand.Execute(null);
-
-        Assert.Null(vm.Escalation);
-        Assert.Equal(6, vm.Results.Count);
-    }
-
-    [Fact]
     public void Without_a_session_nothing_is_saved()
     {
-        CheckUpViewModel vm = Create(new TestWorld(signedInUser: null));
+        TestWorld world = new(signedInUser: null);
+        CheckUpViewModel vm = Create(world);
         FillAll(vm);
 
         vm.SaveCommand.Execute(null);
 
         Assert.NotNull(vm.Error);
-        Assert.Empty(vm.Results);
+        Assert.Empty(world.Navigation.Visited);
     }
 
     [Fact]

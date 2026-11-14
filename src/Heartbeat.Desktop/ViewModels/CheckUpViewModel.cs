@@ -1,12 +1,11 @@
-using System.Collections.ObjectModel;
 using System.Globalization;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using Heartbeat.Desktop.Converters;
 using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Info;
+using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
 
@@ -38,7 +37,7 @@ public sealed partial class CheckUpViewModel : PageViewModel
     private readonly IHealthEvaluator _evaluator;
     private readonly IIndicatorInfoProvider _info;
     private readonly IIndicatorInfoPresenter _infoPresenter;
-    private readonly IConnectivityService _connectivity;
+    private readonly INavigationService _navigation;
     private bool _syncingSleep;
 
     public CheckUpViewModel(
@@ -47,16 +46,16 @@ public sealed partial class CheckUpViewModel : PageViewModel
         IHealthEvaluator evaluator,
         IIndicatorInfoProvider info,
         IIndicatorInfoPresenter infoPresenter,
-        IConnectivityService connectivity,
+        INavigationService navigation,
         BodyMeasurementsViewModel body)
     {
+        _navigation = navigation;
         Body = body;
         _store = store;
         _session = session;
         _evaluator = evaluator;
         _info = info;
         _infoPresenter = infoPresenter;
-        _connectivity = connectivity;
 
         MoodOptions =
         [
@@ -121,16 +120,6 @@ public sealed partial class CheckUpViewModel : PageViewModel
     [ObservableProperty]
     public partial string? Error { get; private set; }
 
-    /// <summary>Aviso de escalamiento (MR-06); <c>null</c> si ninguna lectura requiere avisar.</summary>
-    [ObservableProperty]
-    public partial string? Escalation { get; private set; }
-
-    /// <summary>Confirmación tras guardar; <c>null</c> mientras no se haya guardado.</summary>
-    [ObservableProperty]
-    public partial string? SavedText { get; private set; }
-
-    public ObservableCollection<ReadingRowViewModel> Results { get; } = [];
-
     /// <summary>Elige un estado de ánimo; elegir el que ya está elegido lo quita (se omite).</summary>
     [RelayCommand]
     private void SelectMood(int? value)
@@ -150,9 +139,6 @@ public sealed partial class CheckUpViewModel : PageViewModel
     private void Save()
     {
         Error = null;
-        Escalation = null;
-        SavedText = null;
-        Results.Clear();
 
         if (_session.CurrentUser is not { } user)
         {
@@ -186,30 +172,8 @@ public sealed partial class CheckUpViewModel : PageViewModel
         CheckUpEvaluation evaluation = _evaluator.Evaluate(inputs);
         CheckUpRecord saved = _store.AddCheckUp(user.Id, inputs, evaluation, Note);
 
-        for (int i = 0; i < inputs.Count; i++)
-        {
-            ReadingEvaluation reading = evaluation.Readings[i];
-            Results.Add(new ReadingRowViewModel(
-                NameOf(inputs[i].Indicator),
-                IndicatorPresentation.FormatValue(inputs[i]),
-                reading.Status,
-                StatusPalette.Name(reading.Status),
-                IndicatorPresentation.GuidanceOf(reading)));
-        }
-
-        if (evaluation.Readings.Any(r => r.Escalation?.Contact == EscalationContact.CrewMedicalOfficer))
-        {
-            Escalation = "Resultado crítico: avisa ahora a tu oficial médico de la tripulación. "
-                       + "Queda marcado para los cirujanos de vuelo y se enviará en la próxima sincronización.";
-        }
-
-        string count = inputs.Count == 1 ? "1 indicador" : $"{inputs.Count} indicadores";
-        string when = saved.RecordedAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
-        SavedText = _connectivity.IsOnline
-            ? $"Check-up guardado a las {when} ({count}) y enviado a control de misión."
-            : $"Check-up guardado a las {when} ({count}). Se sincronizará cuando haya enlace.";
-
-        ClearForm();
+        // El resultado (estado, guía, escalamiento y reporte) se muestra en su propia pantalla (#29).
+        _navigation.NavigateTo<CheckUpResultViewModel>(result => result.Load(saved));
     }
 
     partial void OnSleepHoursChanged(string value)
@@ -290,21 +254,6 @@ public sealed partial class CheckUpViewModel : PageViewModel
         else
         {
             problems.Add($"{NameOf(type)} (escribe un número)");
-        }
-    }
-
-    private void ClearForm()
-    {
-        Systolic = string.Empty;
-        Diastolic = string.Empty;
-        HeartRate = string.Empty;
-        BloodSugar = string.Empty;
-        Temperature = string.Empty;
-        SleepHours = string.Empty;
-        Note = string.Empty;
-        if (Mood is not null)
-        {
-            SelectMood(Mood);
         }
     }
 

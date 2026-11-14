@@ -84,7 +84,7 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
             .Where(m => m.AstronautId == astronautId && m.Direction == MessageDirection.ToMissionControl)
             .ToList()
             .OrderByDescending(m => m.CreatedAt)
-            .Select(m => new MessageRecord(m.Id, m.Body, m.CreatedAt)
+            .Select(m => new MessageRecord(m.Id, m.Body, m.CreatedAt, m.Kind == MessageKind.Report ? m.CheckUpId : null, m.Subject)
             {
                 SentAt = m.SyncState == SyncState.Synced ? m.ReceivedAt : null,
             })
@@ -113,23 +113,61 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(body);
         string text = body.Trim();
-        if (text.Length > MaxMessageLength)
+        LocalMessage entity = NewOutgoing(astronautId, MessageKind.Message, null, SubjectOf(text), text);
+        Save(entity);
+        return new MessageRecord(entity.Id, entity.Body, entity.CreatedAt);
+    }
+
+    public MessageRecord QueueReport(Guid astronautId, Guid checkUpId, string subject, string body)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(subject);
+        ArgumentException.ThrowIfNullOrWhiteSpace(body);
+
+        using (IServiceScope scope = _scopes.CreateScope())
+        {
+            LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+            if (!db.CheckUps.Any(c => c.Id == checkUpId && c.AstronautId == astronautId))
+            {
+                throw new ArgumentException("El check-up no existe o no es de este astronauta.", nameof(checkUpId));
+            }
+        }
+
+        string cleanSubject = subject.Trim().Length <= MaxSubjectLength ? subject.Trim() : subject.Trim()[..(MaxSubjectLength - 1)] + "…";
+        LocalMessage entity = NewOutgoing(astronautId, MessageKind.Report, checkUpId, cleanSubject, body.Trim());
+        Save(entity);
+        return new MessageRecord(entity.Id, entity.Body, entity.CreatedAt, checkUpId, entity.Subject);
+    }
+
+    public bool HasReport(Guid checkUpId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+        return db.Messages.Any(m => m.Kind == MessageKind.Report && m.CheckUpId == checkUpId);
+    }
+
+    private LocalMessage NewOutgoing(Guid astronautId, MessageKind kind, Guid? checkUpId, string subject, string body)
+    {
+        if (body.Length > MaxMessageLength)
         {
             throw new ArgumentException($"El mensaje no puede superar {MaxMessageLength} caracteres.", nameof(body));
         }
 
-        LocalMessage entity = new()
+        return new LocalMessage
         {
             Id = Guid.CreateVersion7(),
             AstronautId = astronautId,
             Direction = MessageDirection.ToMissionControl,
-            Kind = MessageKind.Message,
-            Subject = SubjectOf(text),
-            Body = text,
+            Kind = kind,
+            CheckUpId = checkUpId,
+            Subject = subject,
+            Body = body,
             CreatedAt = _clock.GetUtcNow(),
             SyncState = SyncState.Pending,
         };
+    }
 
+    private void Save(LocalMessage entity)
+    {
         using (IServiceScope scope = _scopes.CreateScope())
         {
             LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
@@ -138,7 +176,6 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
         }
 
         RaiseChanged();
-        return new MessageRecord(entity.Id, entity.Body, entity.CreatedAt);
     }
 
     public int MarkAllSynced(DateTimeOffset at)

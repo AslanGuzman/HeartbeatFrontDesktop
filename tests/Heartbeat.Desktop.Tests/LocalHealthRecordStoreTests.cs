@@ -134,4 +134,44 @@ public sealed class LocalHealthRecordStoreTests
         Assert.Equal(before, _world.Store.GetCheckUps(TestWorld.IdOf("ana")).Count);
         Assert.Equal(3, before);
     }
+
+    [Fact]
+    public void A_report_is_a_pending_message_of_kind_report_attached_to_its_check_up()
+    {
+        CheckUpRecord checkUp = Add(Inputs((IndicatorType.BloodSugar, 45)));
+        Assert.False(_world.Store.HasReport(checkUp.Id));
+
+        MessageRecord report = _world.Store.QueueReport(_astronaut, checkUp.Id, "Check-up crítico", "Glucosa: 45");
+
+        Assert.True(report.IsReport);
+        Assert.Equal(checkUp.Id, report.CheckUpId);
+        Assert.True(_world.Store.HasReport(checkUp.Id));
+        Assert.False(_world.Store.GetMessages(_astronaut).Single().IsSent);
+        Assert.Equal(2, _world.Store.PendingCount);
+
+        _world.Store.MarkAllSynced(TestWorld.Now);
+
+        Assert.True(_world.Store.GetMessages(_astronaut).Single().IsSent);
+    }
+
+    [Fact]
+    public void A_report_needs_an_existing_check_up_of_the_same_astronaut()
+    {
+        CheckUpRecord checkUp = Add(Inputs((IndicatorType.HeartRate, 70)));
+
+        Assert.Throws<ArgumentException>(() => _world.Store.QueueReport(_astronaut, Guid.NewGuid(), "x", "y"));
+        Assert.Throws<ArgumentException>(() => _world.Store.QueueReport(Guid.NewGuid(), checkUp.Id, "x", "y"));
+        Assert.Throws<ArgumentException>(() => _world.Store.QueueReport(_astronaut, checkUp.Id, "", "y"));
+        Assert.False(_world.Store.HasReport(checkUp.Id));
+    }
+
+    [Fact]
+    public void A_report_subject_over_the_limit_is_shortened()
+    {
+        CheckUpRecord checkUp = Add(Inputs((IndicatorType.HeartRate, 70)));
+
+        MessageRecord report = _world.Store.QueueReport(_astronaut, checkUp.Id, new string('a', 300), "y");
+
+        Assert.Equal(120, report.Subject!.Length);
+    }
 }
