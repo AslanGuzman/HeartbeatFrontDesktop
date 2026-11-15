@@ -1,3 +1,5 @@
+using Heartbeat.Shared;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -36,7 +38,15 @@ public class LocalDbContext : DbContext
         // CONTRACTS.md guarda el estado de sync como pending / synced / rejected.
         b.Entity<LocalCheckUp>().Property(x => x.SyncState).HasConversion(SyncStateConverter).HasMaxLength(10);
         b.Entity<LocalMessage>().Property(x => x.SyncState).HasConversion(SyncStateConverter).HasMaxLength(10);
+
+        // Origen de la lectura (manual / wearable), igual que en CONTRACTS.md.
+        b.Entity<LocalReading>().Property(x => x.Source).HasConversion(ReadingSourceConverter).HasMaxLength(10);
+        b.Entity<LocalReading>().Property(x => x.DeviceId).HasMaxLength(LocalReading.DeviceIdMaxLength);
     }
+
+    private static readonly ValueConverter<ReadingSource, string> ReadingSourceConverter = new(
+        source => source.ToString().ToLowerInvariant(),
+        text => Enum.Parse<ReadingSource>(text, true));
 
     private static readonly ValueConverter<SyncState, string> SyncStateConverter = new(
         state => state.ToString().ToLowerInvariant(),

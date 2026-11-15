@@ -205,6 +205,87 @@ public sealed class LocalDatabaseTests : IDisposable
         Assert.StartsWith(localAppData, LocalDatabase.DefaultPath, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void A_reading_is_manual_without_a_device_by_default_and_stored_as_text()
+    {
+        using (LocalDbContext db = new(_options))
+        {
+            db.CheckUps.Add(NewCheckUp(Guid.CreateVersion7(), Guid.NewGuid()));
+            db.SaveChanges();
+        }
+
+        using LocalDbContext read = new(_options);
+        LocalReading reading = read.Readings.Single();
+
+        Assert.Equal(ReadingSource.Manual, reading.Source);
+        Assert.Null(reading.DeviceId);
+        Assert.Equal("manual", read.Database.SqlQueryRaw<string>("select Source as Value from Readings").Single());
+    }
+
+    [Fact]
+    public void A_wearable_reading_keeps_its_source_and_device()
+    {
+        using (LocalDbContext db = new(_options))
+        {
+            LocalCheckUp checkUp = NewCheckUp(Guid.CreateVersion7(), Guid.NewGuid());
+            LocalReading reading = checkUp.Readings.Single();
+            reading.Source = ReadingSource.Wearable;
+            reading.DeviceId = "pixel-watch-3";
+            db.CheckUps.Add(checkUp);
+            db.SaveChanges();
+        }
+
+        using LocalDbContext read = new(_options);
+        LocalReading stored = read.Readings.Single();
+
+        Assert.Equal((ReadingSource.Wearable, "pixel-watch-3"), (stored.Source, stored.DeviceId));
+        Assert.Equal("wearable", read.Database.SqlQueryRaw<string>("select Source as Value from Readings").Single());
+    }
+
+    [Fact]
+    public void A_database_created_before_reading_source_is_upgraded_and_keeps_its_readings()
+    {
+        string folder = Path.Combine(Path.GetTempPath(), "heartbeat-tests-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(folder, "heartbeat-desktop.db");
+
+        try
+        {
+            ServiceCollection services = new();
+            services.AddDbContext<LocalDbContext>(o => o.UseSqlite(LocalDatabase.ConnectionString(path)));
+            using ServiceProvider provider = services.BuildServiceProvider();
+
+            LocalDatabase.Initialize(provider);
+            Guid checkUpId = Guid.CreateVersion7();
+            using (IServiceScope scope = provider.CreateScope())
+            {
+                LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+                db.CheckUps.Add(NewCheckUp(checkUpId, Guid.NewGuid()));
+                db.SaveChanges();
+
+                // Deja la tabla como estaba antes de #9.
+                db.Database.ExecuteSqlRaw("ALTER TABLE Readings DROP COLUMN Source");
+                db.Database.ExecuteSqlRaw("ALTER TABLE Readings DROP COLUMN DeviceId");
+            }
+
+            LocalDatabase.Initialize(provider);
+            LocalDatabase.Initialize(provider);
+
+            using IServiceScope after = provider.CreateScope();
+            LocalReading reading = after.ServiceProvider.GetRequiredService<LocalDbContext>().Readings.Single();
+            Assert.Equal(checkUpId, reading.CheckUpId);
+            Assert.Equal(185m, reading.Value);
+            Assert.Equal((ReadingSource.Manual, (string?)null), (reading.Source, reading.DeviceId));
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, recursive: true);
+            }
+        }
+    }
+
     private static LocalCheckUp NewCheckUp(Guid id, Guid astronautId)
     {
         LocalCheckUp checkUp = new()
