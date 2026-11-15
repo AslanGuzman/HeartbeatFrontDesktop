@@ -45,12 +45,13 @@ internal sealed class TestWorld : IDisposable
         Navigation = new RecordingNavigation(type =>
             type == typeof(CheckUpResultViewModel) ? new CheckUpResultViewModel(Navigation!, Store, Session, Info, Presenter, Connectivity)
             : type == typeof(CheckUpViewModel) ? NewCheckUp()
+            : type == typeof(DashboardViewModel) ? new DashboardViewModel(Store, Session, Info, Presenter, Navigation!, Clock)
             : type == typeof(HistoryViewModel) ? new HistoryViewModel(Store, Session, Info)
             : new PlainPageViewModel());
 
         if (signedInUser is not null)
         {
-            Session.SignIn(DemoAuthenticator.Accounts.First(a => a.UserName == signedInUser));
+            Session.SignIn(DemoAccounts.All.First(a => a.UserName == signedInUser));
         }
     }
 
@@ -73,7 +74,7 @@ internal sealed class TestWorld : IDisposable
 
     public LocalHealthRecordStore Store { get; }
 
-    public static Guid IdOf(string userName) => DemoAuthenticator.Accounts.First(a => a.UserName == userName).Id;
+    public static Guid IdOf(string userName) => DemoAccounts.All.First(a => a.UserName == userName).Id;
 
     public LocalHealthRecordStore NewStore(SynchronizationContext? ui) =>
         new(Services.GetRequiredService<IServiceScopeFactory>(), Evaluator, Clock, ui);

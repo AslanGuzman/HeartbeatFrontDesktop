@@ -1,6 +1,8 @@
+using System.Net.Http;
 using Heartbeat.Desktop.Converters;
 using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Demo;
+using Heartbeat.Client;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
 
@@ -98,15 +100,20 @@ public sealed class DemoServicesTests
     }
 
     [Fact]
-    public void Authenticator_accepts_only_the_demo_accounts_with_the_demo_password()
+    public async Task The_demo_api_accepts_only_the_demo_accounts_with_the_demo_password_and_keeps_stable_ids()
     {
-        DemoAuthenticator auth = new();
+        using DemoCrewApiClient api = new(new FixedTimeProvider(TestWorld.Now));
 
-        Assert.True(auth.TryAuthenticate("ana", "demo123", out SessionUser? user));
-        Assert.Equal("Ana Rivera", user!.DisplayName);
-        Assert.Equal("Ana", user.FirstName);
-        Assert.False(auth.TryAuthenticate("ana", "otra", out SessionUser? none));
-        Assert.Null(none);
+        CrewLoginResponse ok = await api.LoginAsync(new LoginRequest("Ana", "demo123", "equipo"));
+        CrewLoginResponse again = await api.LoginAsync(new LoginRequest("ana", "demo123", "equipo"));
+
+        Assert.Equal("Ana Rivera", ok.Profile.DisplayName);
+        Assert.Equal(ok.Profile.Id, again.Profile.Id);
+        Assert.Equal(TestWorld.IdOf("ana"), ok.Profile.Id);
+        Assert.Equal("demo-access-token", api.AccessToken);
+
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(() => api.LoginAsync(new LoginRequest("ana", "otra", "equipo")));
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, ex.StatusCode);
     }
 
     [Fact]

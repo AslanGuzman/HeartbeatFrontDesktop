@@ -75,7 +75,8 @@
                 <PasswordBox x:Name="PassBox" Style="{StaticResource PasswordInputStyle}" Margin="0,6,0,24"
                              AutomationProperties.Name="Contraseña" />
 
-                <Button Content="Entrar" Click="SignIn_Click" IsDefault="True" HorizontalAlignment="Stretch" />
+                <Button Content="{Binding SignInText}" Click="SignIn_Click" IsDefault="True" HorizontalAlignment="Stretch"
+                        IsEnabled="{Binding IsNotBusy}" />
 
                 <Border Background="{DynamicResource BrandRedSoftBrush}" CornerRadius="10" Padding="12,8" Margin="0,14,0,0"
                         Visibility="{Binding Error, Converter={StaticResource NonEmptyToVisibility}}">
@@ -84,8 +85,16 @@
                                AutomationProperties.LiveSetting="Assertive" />
                 </Border>
 
+                <!-- Sin enlace: qué se puede hacer -->
+                <Border Background="{DynamicResource BrandBlueSoftBrush}" CornerRadius="10" Padding="12,8" Margin="0,14,0,0"
+                        Visibility="{Binding OfflineNotice, Converter={StaticResource NonEmptyToVisibility}}">
+                    <TextBlock Text="{Binding OfflineNotice}" Foreground="{DynamicResource BrandBlueBrush}" FontSize="12.5"
+                               TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                </Border>
+
                 <TextBlock Text="{Binding DemoHint}" Style="{StaticResource CaptionTextStyle}"
-                           Margin="0,20,0,0" HorizontalAlignment="Center" TextAlignment="Center" />
+                           Margin="0,20,0,0" HorizontalAlignment="Center" TextAlignment="Center"
+                           Visibility="{Binding DemoHint, Converter={StaticResource NonEmptyToVisibility}}" />
             </StackPanel>
         </Grid>
     </Border>

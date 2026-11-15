@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Services.Auth;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -14,6 +15,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 {
     private readonly INavigationService _navigation;
     private readonly ISessionContext _session;
+    private readonly IAuthService _auth;
     private readonly ISimulatedLink _link;
     private readonly IIndicatorInfoPresenter _infoPresenter;
 
@@ -21,11 +23,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         INavigationService navigation,
         StatusBarViewModel statusBar,
         ISessionContext session,
+        IAuthService auth,
         ISimulatedLink link,
         IIndicatorInfoPresenter infoPresenter)
     {
         _navigation = navigation;
         _session = session;
+        _auth = auth;
         _link = link;
         _infoPresenter = infoPresenter;
         StatusBar = statusBar;
@@ -56,6 +60,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     /// <summary>Nombre del astronauta con la sesión abierta, para la barra superior.</summary>
     public string CurrentUserName => _session.CurrentUser?.DisplayName ?? string.Empty;
+
+    /// <summary>«Sesión sin conexión» cuando se entró con la cuenta guardada en el equipo; vacío en una sesión en línea.</summary>
+    public string SessionModeText => _session.IsOfflineSession ? "Sesión sin conexión" : string.Empty;
 
     /// <summary>Interruptor "Enlace con la Tierra": apagado, la app se comporta como sin conexión.</summary>
     public bool IsLinkEnabled
@@ -89,13 +96,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void SignOut()
     {
-        _session.SignOut();
+        _auth.SignOut();
         _navigation.NavigateTo<LoginViewModel>();
     }
 
     private void OnCurrentPageChanged(object? sender, EventArgs e) => SyncWithNavigation();
 
-    private void OnSessionChanged(object? sender, EventArgs e) => OnPropertyChanged(nameof(CurrentUserName));
+    private void OnSessionChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(CurrentUserName));
+        OnPropertyChanged(nameof(SessionModeText));
+    }
 
     private void SyncWithNavigation()
     {

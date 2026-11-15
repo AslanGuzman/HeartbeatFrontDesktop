@@ -1,13 +1,17 @@
+using System.Net.Http;
+using Heartbeat.Client;
 using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Demo;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Services.Auth;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Views;
 using Heartbeat.Shared;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Heartbeat.Desktop;
@@ -34,12 +38,24 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IConnectivityService>(sp => sp.GetRequiredService<SimulatedLinkService>());
         services.AddSingleton<ISimulatedLink>(sp => sp.GetRequiredService<SimulatedLinkService>());
 
+        // Acceso (#27): Crew API real o de demostración según CrewApi:Mode, hash local PBKDF2 y tokens con DPAPI.
+        services.AddSingleton(sp => CrewApiOptions.From(sp.GetService<IConfiguration>()));
+        services.AddSingleton<ICrewApiClient>(sp =>
+        {
+            CrewApiOptions options = sp.GetRequiredService<CrewApiOptions>();
+            return options.IsDemo
+                ? new DemoCrewApiClient(sp.GetRequiredService<TimeProvider>())
+                : new CrewApiClient(new HttpClient { BaseAddress = new Uri(options.BaseUrl), Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds) });
+        });
+        services.AddSingleton<ITokenProtector, DpapiTokenProtector>();
+        services.AddSingleton<IDeviceIdProvider, FileDeviceIdProvider>();
+        services.AddSingleton<IAuthService, AuthService>();
+
         // Reglas de evaluación compartidas con el backend (Heartbeat.Shared).
         services.AddSingleton<IHealthEvaluator, HealthEvaluator>();
 
-        // Check-ups y mensajes se guardan en la base local (#8). Provisionales: el acceso de demostración (#27) y la
-        // sincronización simulada (#32), que se sustituyen registrando las implementaciones reales en su lugar.
-        services.AddSingleton<IAuthenticator, DemoAuthenticator>();
+        // Check-ups y mensajes se guardan en la base local (#8). Provisional: la sincronización simulada (#32), que se
+        // sustituye registrando el motor real en su lugar.
         services.AddSingleton<IHealthRecordStore, LocalHealthRecordStore>();
         services.AddSingleton<ISyncStatusProvider, DemoSyncStatusProvider>();
         services.AddSingleton<IBodyMeasurementStore, DemoBodyMeasurementStore>();
