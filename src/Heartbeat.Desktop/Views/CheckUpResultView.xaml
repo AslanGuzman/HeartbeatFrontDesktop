@@ -10,7 +10,7 @@
              Style="{StaticResource PageViewStyle}">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="860" HorizontalAlignment="Left" Margin="0,0,14,0">
+        <StackPanel MaxWidth="860" HorizontalAlignment="Center">
 
             <!-- Encabezado: estado general en color + texto (NR-01) -->
             <DockPanel Margin="0,0,0,6">

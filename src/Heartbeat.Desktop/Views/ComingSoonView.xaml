@@ -9,9 +9,9 @@
              Style="{StaticResource PageViewStyle}">
 
     <!-- Vista provisional compartida por las pantallas que todavía no están implementadas -->
-    <StackPanel>
+    <StackPanel HorizontalAlignment="Center">
         <TextBlock Text="{Binding Title}" Style="{StaticResource TitleTextStyle}" />
-        <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,16,0,0" HorizontalAlignment="Left" MaxWidth="560">
+        <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,16,0,0" HorizontalAlignment="Center" MaxWidth="560">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="&#xE946;" Style="{StaticResource IconTextStyle}" FontSize="20"
                            Foreground="{DynamicResource BrandBlueBrush}" Margin="0,0,14,0" VerticalAlignment="Top" />

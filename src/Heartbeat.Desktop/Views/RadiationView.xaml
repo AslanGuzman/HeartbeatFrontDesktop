@@ -10,7 +10,7 @@
              Style="{StaticResource PageViewStyle}">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="700" HorizontalAlignment="Left">
+        <StackPanel MaxWidth="700" HorizontalAlignment="Center">
             <TextBlock Text="{loc:Loc rad.heading}" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
             <TextBlock Text="{loc:Loc rad.intro}"
                        Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" Margin="0,0,0,16" />
@@ -20,9 +20,80 @@
                     <TextBlock Text="{loc:Loc rad.totalLabel}" Style="{StaticResource CaptionTextStyle}" />
                     <TextBlock Text="{Binding TotalText}" Style="{StaticResource TitleTextStyle}" Margin="0,4,0,8"
                                AutomationProperties.Name="{loc:Loc rad.totalAria}" />
+                    <DockPanel Margin="0,0,0,4">
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding LimitText}" Style="{StaticResource BodyTextStyle}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding PercentText}" Style="{StaticResource BodyTextStyle}" FontWeight="SemiBold" />
+                    </DockPanel>
+                    <ProgressBar Value="{Binding LimitProgress}" Maximum="100" Height="9" Margin="0,2,0,4"
+                                 Foreground="{DynamicResource BrandBlueBrush}" Background="{DynamicResource BrandBlueSoftBrush}"
+                                 AutomationProperties.Name="{loc:Loc rad.limitProgressAria}" />
+                    <TextBlock Text="{Binding LimitStatusText}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,4" />
                     <Button Content="{Binding SourceTitle}" Command="{Binding OpenSourceCommand}"
                             Style="{StaticResource LinkButtonStyle}" HorizontalAlignment="Left"
                             AutomationProperties.Name="{loc:Loc rad.csaAria}" />
+                </StackPanel>
+            </ContentControl>
+
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,18"
+                            Visibility="{Binding HasSpeAlert, Converter={StaticResource BoolToVisibility}}"
+                            AutomationProperties.LiveSetting="Assertive">
+                <Border Background="{DynamicResource BrandRedSoftBrush}" CornerRadius="10" Padding="8">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc rad.speHeading}" Style="{StaticResource SectionHeadingStyle}"
+                                       Foreground="{DynamicResource BrandRedBrush}" />
+                            <TextBlock Text="{loc:Loc rad.speMessage}" Style="{StaticResource BodyTextStyle}" Margin="0,4,12,4" />
+                            <TextBlock Text="{Binding ShelterActionText}" Style="{StaticResource CaptionTextStyle}"
+                                       Visibility="{Binding ShelterActionText, Converter={StaticResource NonEmptyToVisibility}}" />
+                            <TextBlock Text="{loc:Loc rad.simulated}" Style="{StaticResource CaptionTextStyle}" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="{loc:Loc rad.shelter}" Command="{Binding GoToShelterCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Center"
+                                AutomationProperties.Name="{loc:Loc rad.shelter}" />
+                    </Grid>
+                </Border>
+            </ContentControl>
+
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,18">
+                <StackPanel>
+                    <Grid Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{loc:Loc rad.timeline}" Style="{StaticResource SectionHeadingStyle}" />
+                        <TextBlock Grid.Column="1" Text="{loc:Loc rad.simulated}" Style="{StaticResource CaptionTextStyle}" Margin="12,0,0,0" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding TimelineRows}" AutomationProperties.Name="{loc:Loc rad.timelineAria}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="88" />
+                                        <ColumnDefinition Width="18" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{Binding DateText}" Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Top" />
+                                    <Grid Grid.Column="1">
+                                        <Border Width="2" Background="{DynamicResource BrandBlueSoftBrush}" HorizontalAlignment="Center" />
+                                        <Ellipse Width="9" Height="9" Fill="{DynamicResource BrandBlueBrush}"
+                                                 HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,4,0,0" />
+                                    </Grid>
+                                    <StackPanel Grid.Column="2">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding RateText}" Style="{StaticResource CaptionTextStyle}" />
+                                            <TextBlock Text="{Binding DoseText}" Style="{StaticResource BodyTextStyle}" FontWeight="SemiBold" />
+                                        </DockPanel>
+                                        <TextBlock Text="{Binding TypeText}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </StackPanel>
             </ContentControl>
 

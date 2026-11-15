@@ -22,7 +22,7 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid MaxWidth="1200" HorizontalAlignment="Left">
+        <Grid MaxWidth="1200" HorizontalAlignment="Center">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="500" />

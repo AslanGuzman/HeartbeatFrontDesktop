@@ -11,7 +11,7 @@
              Style="{StaticResource PageViewStyle}">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="760" HorizontalAlignment="Left">
+        <StackPanel MaxWidth="760" HorizontalAlignment="Center">
             <TextBlock Text="{loc:Loc msg.heading}" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
             <TextBlock Text="{loc:Loc msg.intro}"
                        Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,16" />

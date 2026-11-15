@@ -52,9 +52,9 @@
                         <Ellipse Canvas.Left="43" Canvas.Top="13" Width="34" Height="42" Fill="#E8E6FA" />
                         <Rectangle Canvas.Left="52" Canvas.Top="50" Width="16" Height="14" Fill="#D6D2F3" />
                         <Path Fill="#E8E6FA"
-                              Data="M45,62 C30,64 22,72 20,90 L14,152 L25,154 L33,102 L37,162 L38,202 L82,202 L83,162 L87,102 L95,154 L106,152 L100,90 C98,72 90,64 75,62 Z" />
+                              Data="M45,62 C30,64 22,72 20,90 L8,162 L20,166 L34,104 L37,132 L38,174 L82,174 L83,132 L86,104 L100,166 L112,162 L100,90 C98,72 90,64 75,62 Z" />
                         <Path Fill="#D6D2F3"
-                              Data="M38,200 L36,300 L35,320 L55,320 L57,300 L60,236 L63,300 L65,320 L85,320 L84,300 L82,200 Z" />
+                              Data="M38,172 L36,300 L35,320 L55,320 L57,300 L60,208 L63,300 L65,320 L85,320 L84,300 L82,172 Z" />
                     </Canvas>
 
                     <!-- Altura: línea vertical -->
