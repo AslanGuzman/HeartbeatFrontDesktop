@@ -8,6 +8,34 @@
              d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}"
              Style="{StaticResource PageViewStyle}">
 
+    <UserControl.Resources>
+        <!-- Región clicable de la figura: el relleno es el color del peor estado de la región (NR-01, NR-04) -->
+        <Style x:Key="BodyRegionButtonStyle" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Path x:Name="Shape" Data="{Binding Geometry}" StrokeThickness="2" StrokeLineJoin="Round" Opacity="0.82"
+                              Fill="{Binding Status, Converter={StaticResource StatusToBrush}}"
+                              Stroke="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Shape" Property="Opacity" Value="1" />
+                                <Setter TargetName="Shape" Property="StrokeThickness" Value="3" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Shape" Property="Opacity" Value="1" />
+                                <Setter TargetName="Shape" Property="Stroke" Value="{DynamicResource BrandBlueBrush}" />
+                                <Setter TargetName="Shape" Property="StrokeThickness" Value="3.5" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <!-- Encabezado: saludo, estado general y botón de nuevo check-up -->
@@ -111,6 +139,84 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
+            <!-- Figura humana: cada región con el peor estado de sus indicadores; clic abre su información (NR-04) -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,4,14,14">
+                <StackPanel>
+                    <TextBlock Text="Mapa del cuerpo" Style="{StaticResource SectionHeadingStyle}" />
+                    <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,14" TextWrapping="Wrap"
+                               Text="Cada región toma el color del peor estado de sus indicadores. Haz clic en una región para ver por qué importa y cómo medirla." />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="180" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Viewbox Grid.Column="0" Width="156" Height="429" VerticalAlignment="Top" HorizontalAlignment="Left" Stretch="Uniform">
+                        <Grid Width="120" Height="330" AutomationProperties.Name="Figura del cuerpo con el estado de cada región">
+                            <!-- Silueta -->
+                            <Rectangle Width="16" Height="14" Margin="0,54,0,0" VerticalAlignment="Top" Fill="{DynamicResource SurfaceRaisedBrush}" />
+                            <Path Fill="{DynamicResource SurfaceRaisedBrush}" Stroke="{DynamicResource InputBorderBrush}" StrokeThickness="1"
+                                  Data="M40,66 C26,68 20,76 18,92 L12,152 L23,154 L30,108 L34,170 L36,200 L84,200 L86,170 L90,108 L97,154 L108,152 L102,92 C100,76 94,68 80,66 Z" />
+                            <Path Fill="{DynamicResource SurfaceRaisedBrush}" Stroke="{DynamicResource InputBorderBrush}" StrokeThickness="1"
+                                  Data="M38,200 L36,300 L35,320 L55,320 L57,300 L60,236 L63,300 L65,320 L85,320 L84,300 L82,200 Z" />
+
+                            <!-- Regiones clicables -->
+                            <ItemsControl ItemsSource="{Binding Regions}" IsTabStop="False" Focusable="False">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <Grid />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource BodyRegionButtonStyle}"
+                                                Command="{Binding DataContext.ShowRegionCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding Id}"
+                                                ToolTip="{Binding SummaryText}"
+                                                AutomationProperties.Name="{Binding SummaryText}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Grid>
+                        </Viewbox>
+
+                        <!-- Detalle por región: el estado también en texto, no solo en color -->
+                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Regions}" AutomationProperties.Name="Estado por región">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,14">
+                                        <DockPanel>
+                                            <Border DockPanel.Dock="Right" CornerRadius="999" Padding="10,3" VerticalAlignment="Center"
+                                                    Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"
+                                                           Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                                            </Border>
+                                            <Ellipse Width="10" Height="10" VerticalAlignment="Center"
+                                                     Fill="{Binding Status, Converter={StaticResource StatusToBrush}}" />
+                                            <TextBlock Text="{Binding Name}" Style="{StaticResource SectionHeadingStyle}" Margin="8,0,0,0" />
+                                        </DockPanel>
+                                        <ItemsControl ItemsSource="{Binding Indicators}" Margin="18,4,0,0">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Button Style="{StaticResource LinkButtonStyle}" HorizontalAlignment="Left" Margin="0,1"
+                                                            Command="{Binding DataContext.ShowInfoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding Id}"
+                                                            AutomationProperties.Name="{Binding Name, StringFormat=Información de {0}}">
+                                                        <TextBlock FontSize="12.5">
+                                                            <Run Text="{Binding Name, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding ValueText, Mode=OneWay}" /><Run Text=" · " /><Run Text="{Binding StatusText, Mode=OneWay}" />
+                                                        </TextBlock>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </StackPanel>
+            </ContentControl>
+
             <!-- Fuentes y referencias de todos los indicadores -->
             <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,4,14,10">
                 <DockPanel>
@@ -120,19 +226,6 @@
                         <TextBlock Text="Información de los indicadores" Style="{StaticResource SectionHeadingStyle}" />
                         <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,12,0"
                                    Text="Por qué importa cada medición, cómo hacerla y sus riesgos, con las fuentes de NASA y de otras agencias." />
-                    </StackPanel>
-                </DockPanel>
-            </ContentControl>
-
-            <!-- Tendencias: espacio reservado -->
-            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,14,10">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Right" Text="&#xE9D2;" Style="{StaticResource IconTextStyle}" FontSize="34"
-                               Foreground="{DynamicResource BrandBlueSoftBrush}" Margin="12,0,6,0" />
-                    <StackPanel>
-                        <TextBlock Text="Tendencias" Style="{StaticResource SectionHeadingStyle}" />
-                        <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,0"
-                                   Text="Próximamente: la evolución de cada indicador en el tiempo. En misiones largas la tendencia importa más que una lectura suelta." />
                     </StackPanel>
                 </DockPanel>
             </ContentControl>

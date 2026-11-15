@@ -44,6 +44,7 @@ public sealed partial class DashboardViewModel : PageViewModel
         }
 
         Cards = cards;
+        Regions = BuildRegions(cards, info);
         Greeting = user is null ? "Hola" : $"Hola, {user.FirstName}";
         DateText = clock.GetLocalNow().ToString("dddd, d 'de' MMMM", CultureInfo.CurrentCulture);
 
@@ -84,6 +85,68 @@ public sealed partial class DashboardViewModel : PageViewModel
     public string CriticalNames { get; }
 
     public IReadOnlyList<IndicatorCardViewModel> Cards { get; }
+
+    /// <summary>Regiones de la figura humana con el peor estado de sus indicadores (NR-04).</summary>
+    public IReadOnlyList<BodyRegionViewModel> Regions { get; }
+
+    /// <summary>
+    /// Clic en una región: abre la información de su indicador más grave (o el primero si aún no hay mediciones).
+    /// </summary>
+    [RelayCommand]
+    private void ShowRegion(string? regionId)
+    {
+        BodyRegionViewModel? region = Regions.FirstOrDefault(r => r.Id == regionId);
+        if (region is not null)
+        {
+            _infoPresenter.Show(region.InfoIndicatorId);
+        }
+    }
+
+    // Trazos de las regiones sobre la figura de 120 × 330 (cabeza, pecho y abdomen).
+    private static readonly (string Id, string Name, string Geometry)[] RegionShapes =
+    [
+        ("head", "Cabeza", "M60,0 C72,0 80,12 80,28 C80,44 71,56 60,56 C49,56 40,44 40,28 C40,12 48,0 60,0 Z"),
+        ("heart", "Corazón", "M40,66 L80,66 C90,68 96,76 98,92 L98,124 L22,124 L22,92 C24,76 30,68 40,66 Z"),
+        ("abdomen", "Abdomen", "M22,128 L98,128 L96,176 C90,186 30,186 24,176 Z"),
+    ];
+
+    private static List<BodyRegionViewModel> BuildRegions(List<IndicatorCardViewModel> cards, IIndicatorInfoProvider info)
+    {
+        List<BodyRegionViewModel> regions = [];
+        foreach ((string id, string name, string geometry) in RegionShapes)
+        {
+            List<IndicatorCardViewModel> members = info.Indicators
+                .Where(i => i.BodyRegion == id)
+                .Select(i => cards.First(c => c.Id == i.Id))
+                .ToList();
+            if (members.Count == 0)
+            {
+                continue;
+            }
+
+            List<IndicatorCardViewModel> measured = members.Where(c => c.HasData).ToList();
+            HealthStatus? worst = measured.Count == 0 ? null : measured.Max(c => c.Status);
+
+            // El más grave; a igualdad, el primero del contrato.
+            IndicatorCardViewModel focus = worst is null ? members[0] : measured.First(c => c.Status == worst);
+            string summary = worst is null
+                ? $"{name}: sin mediciones"
+                : $"{name}: {StatusPalette.Name(worst)} · {focus.Name}";
+
+            regions.Add(new BodyRegionViewModel(
+                id,
+                name,
+                geometry,
+                worst,
+                StatusPalette.Name(worst),
+                summary,
+                focus.Id,
+                members.Select(c => new RegionIndicatorViewModel(
+                    c.Id, c.Name, c.HasData ? c.Status : null, c.StatusText, c.HasData ? $"{c.ValueText} {c.UnitText}" : "—")).ToList()));
+        }
+
+        return regions;
+    }
 
     /// <summary>Abre el formulario para registrar un nuevo check-up.</summary>
     [RelayCommand]
