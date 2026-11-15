@@ -31,6 +31,8 @@ internal sealed class FakeSyncStatusProvider : ISyncStatusProvider
 
     public string? StatusText { get; private set; }
 
+    public double CommunicationDelaySeconds { get; private set; }
+
     public int SyncRequests { get; private set; }
 
     public event EventHandler? Changed;
@@ -87,6 +89,8 @@ internal sealed class InstantSyncStatusProvider : ISyncStatusProvider
     public bool IsSyncing => false;
 
     public string? StatusText => null;
+
+    public double CommunicationDelaySeconds => 0;
 
     public event EventHandler? Changed;
 

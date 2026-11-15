@@ -119,6 +119,26 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
         }
     }
 
+    public double CommunicationDelaySeconds
+    {
+        get
+        {
+            if (_session.CurrentUser is not { } user)
+            {
+                return 0;
+            }
+
+            ProfileView? view = _profiles.Get(user.Id);
+            decimal distance = view?.Profile.Mission.EnvironmentProfile?.DistanceKm ?? 0m;
+            if (distance <= 0)
+            {
+                return 0;
+            }
+
+            return (double)(distance / 299792.458m);
+        }
+    }
+
     public string? StatusText
     {
         get
@@ -249,6 +269,15 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
         SetState(true, null);
         try
         {
+            // Retardo unidireccional de comunicación con la Tierra (HB-BE-09): la app espera sola
+            // antes de sincronizar. Escalable para la demo: se acota para no bloquear la UI.
+            double delaySeconds = CommunicationDelaySeconds;
+            if (delaySeconds > 0)
+            {
+                double scaled = Math.Min(delaySeconds, _options.MaxCommunicationDelaySeconds);
+                await Task.Delay(TimeSpan.FromSeconds(scaled), ct);
+            }
+
             SyncReport report = await SyncUserAsync(user, ct);
             SetState(false, null);
             return new SyncResult(SyncOutcome.Completed, report);
@@ -531,15 +560,16 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
         // solo actualiza. Se ignoran las de check-ups que no son de este astronauta.
         int alertsStored = 0;
         List<AcknowledgedAlert> alerts = (response.Inbound?.AcknowledgedAlerts ?? [])
+            .Where(a => a.CheckUpId.HasValue)
             .GroupBy(a => a.CheckUpId).Select(g => g.Last()).ToList();
-        List<Guid> alertCheckUpIds = alerts.Select(a => a.CheckUpId).ToList();
+        List<Guid> alertCheckUpIds = alerts.Select(a => a.CheckUpId!.Value).ToList();
         HashSet<Guid> mine = db.CheckUps.Where(c => alertCheckUpIds.Contains(c.Id) && c.AstronautId == astronautId)
             .Select(c => c.Id).ToHashSet();
         Dictionary<Guid, LocalAlertAcknowledgement> existing = db.AlertAcknowledgements
             .Where(a => alertCheckUpIds.Contains(a.CheckUpId)).ToDictionary(a => a.CheckUpId);
-        foreach (AcknowledgedAlert alert in alerts.Where(a => mine.Contains(a.CheckUpId)))
+        foreach (AcknowledgedAlert alert in alerts.Where(a => a.CheckUpId.HasValue && mine.Contains(a.CheckUpId.Value)))
         {
-            if (existing.TryGetValue(alert.CheckUpId, out LocalAlertAcknowledgement? row))
+            if (alert.CheckUpId.HasValue && existing.TryGetValue(alert.CheckUpId.Value, out LocalAlertAcknowledgement? row))
             {
                 row.AcknowledgedAt = alert.AcknowledgedAt;
                 row.AcknowledgedBy = alert.By;
@@ -549,7 +579,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             {
                 db.AlertAcknowledgements.Add(new LocalAlertAcknowledgement
                 {
-                    CheckUpId = alert.CheckUpId,
+                    CheckUpId = alert.CheckUpId!.Value,
                     AstronautId = astronautId,
                     AcknowledgedAt = alert.AcknowledgedAt,
                     AcknowledgedBy = alert.By,

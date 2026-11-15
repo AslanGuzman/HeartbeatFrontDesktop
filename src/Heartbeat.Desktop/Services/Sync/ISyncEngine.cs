@@ -58,8 +58,8 @@ public interface ISyncEngine
     event EventHandler<SyncResult>? Completed;
 }
 
-public sealed record SyncOptions(TimeSpan Interval, int BatchSize)
+public sealed record SyncOptions(TimeSpan Interval, int BatchSize, double MaxCommunicationDelaySeconds = 5)
 {
-    /// <summary>60 s entre intentos y lotes de hasta 500 check-ups (CONTRACTS.md §5).</summary>
-    public static SyncOptions Default { get; } = new(TimeSpan.FromSeconds(60), 500);
+    /// <summary>60 s entre intentos y lotes de hasta 500 check-ups (CONTRACTS.md §5). El retardo de comunicación se acota a 5 s para la demo.</summary>
+    public static SyncOptions Default { get; } = new(TimeSpan.FromSeconds(60), 500, 5);
 }
