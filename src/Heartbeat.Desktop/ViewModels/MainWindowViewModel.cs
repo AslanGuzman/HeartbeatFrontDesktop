@@ -42,6 +42,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             new NavigationItemViewModel("nav.history", "", typeof(HistoryViewModel)),
             new NavigationItemViewModel("nav.messages", "", typeof(MessagesViewModel)),
             new NavigationItemViewModel("nav.radiation", "\uE7BA", typeof(RadiationViewModel)),
+            new NavigationItemViewModel("nav.vision", "", typeof(VisionViewModel)),
             new NavigationItemViewModel("nav.profile", "", typeof(ProfileViewModel)),
         ];
 

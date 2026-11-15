@@ -32,7 +32,7 @@ public sealed class MainWindowViewModelTests : IDisposable
     public void Menu_has_the_five_sections_after_login_in_order()
     {
         Assert.Equal(
-            ["Dashboard", "Check-up", "Historial", "Mensajes", "Radiaci\u00f3n", "Perfil"],
+            ["Dashboard", "Check-up", "Historial", "Mensajes", "Radiaci\u00f3n", "Visi\u00f3n", "Perfil"],
             _window.NavigationItems.Select(item => item.Title));
     }
 

@@ -1,0 +1,104 @@
+<UserControl x:Class="Heartbeat.Desktop.Views.VisionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Heartbeat.Desktop.Localization"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             xmlns:views="clr-namespace:Heartbeat.Desktop.Views"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:VisionViewModel}"
+             Style="{StaticResource PageViewStyle}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Center">
+            <DockPanel Margin="0,0,0,4">
+                <Border DockPanel.Dock="Right" CornerRadius="999" Padding="10,4" VerticalAlignment="Center"
+                        Background="{DynamicResource BrandBlueSoftBrush}" ToolTip="{loc:Loc simple.simulatedTip}"
+                        AutomationProperties.AutomationId="SimulatedLabel">
+                    <TextBlock Text="{loc:Loc simple.simulated}" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource BrandBlueBrush}" />
+                </Border>
+                <Border DockPanel.Dock="Right" CornerRadius="999" Padding="10,4" Margin="0,0,10,0" VerticalAlignment="Center"
+                        Background="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                    <TextBlock Text="{Binding OverallText}" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                </Border>
+                <TextBlock Text="{loc:Loc vision.heading}" Style="{StaticResource TitleTextStyle}" />
+            </DockPanel>
+            <TextBlock Text="{loc:Loc vision.intro}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" Margin="0,0,0,16" />
+
+            <!-- Registro de IOP y agudeza -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,18">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc vision.logHeading}" Style="{StaticResource SectionHeadingStyle}" Margin="0,0,0,10" />
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel Margin="0,0,16,0">
+                            <TextBlock Text="{loc:Loc vision.iopLabel}" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding IopText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource InputStyle}" MaxLength="8" Width="160" HorizontalAlignment="Left"
+                                     AutomationProperties.Name="{loc:Loc vision.iopAria}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="{loc:Loc vision.acuityLabel}" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding AcuityText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource InputStyle}" MaxLength="8" Width="160" HorizontalAlignment="Left"
+                                     AutomationProperties.Name="{loc:Loc vision.acuityAria}" />
+                        </StackPanel>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Error}" Foreground="{DynamicResource BrandRedBrush}" FontSize="12.5"
+                               TextWrapping="Wrap" Margin="0,10,0,0" AutomationProperties.LiveSetting="Assertive"
+                               Visibility="{Binding Error, Converter={StaticResource NonEmptyToVisibility}}" />
+                    <TextBlock Text="{Binding Confirmation}" Foreground="{DynamicResource BrandBlueBrush}" FontSize="12.5"
+                               TextWrapping="Wrap" Margin="0,10,0,0" AutomationProperties.LiveSetting="Polite"
+                               Visibility="{Binding Confirmation, Converter={StaticResource NonEmptyToVisibility}}" />
+                    <Button Content="{loc:Loc vision.add}" Command="{Binding AddCommand}" HorizontalAlignment="Right"
+                            Margin="0,12,0,0" Padding="20,9" />
+                </StackPanel>
+            </ContentControl>
+
+            <!-- Una tarjeta por indicador: valor, estado, tendencia, gráfica y relación con el CO₂ -->
+            <ItemsControl ItemsSource="{Binding Indicators}" AutomationProperties.Name="{loc:Loc vision.cardsAria}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,18">
+                            <StackPanel>
+                                <DockPanel>
+                                    <Border DockPanel.Dock="Right" CornerRadius="999" Padding="10,4" VerticalAlignment="Center"
+                                            Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                                        <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"
+                                                   Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SectionHeadingStyle}" />
+                                </DockPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <TextBlock Text="{Binding ValueText}" FontSize="26" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding UnitText}" FontSize="13" Margin="6,0,0,4" VerticalAlignment="Bottom"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding TrendText}" Style="{StaticResource BodyTextStyle}" Margin="0,6,0,10" TextWrapping="Wrap" />
+                                <views:TrendChart Model="{Binding Chart}" Height="240"
+                                                  AutomationProperties.Name="{Binding ChartTitle}" />
+                                <TextBlock Text="{Binding CorrelationText}" Style="{StaticResource BodyTextStyle}" FontSize="12.5"
+                                           Margin="0,10,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </ContentControl>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Nota corta sobre SANS y el CO₂, con fuente -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,18" AutomationProperties.AutomationId="SansNote">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc vision.sans.heading}" Style="{StaticResource SectionHeadingStyle}" />
+                    <TextBlock Text="{Binding SansNote}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" Margin="0,6,0,6" />
+                    <TextBlock Text="{Binding EvidenceText}" Style="{StaticResource CaptionTextStyle}" TextWrapping="Wrap" />
+                    <Button Content="{Binding SourceTitle}" Command="{Binding OpenSourceCommand}"
+                            Style="{StaticResource LinkButtonStyle}" HorizontalAlignment="Left" Margin="0,4,0,0"
+                            AutomationProperties.Name="{Binding SourceTitle}" />
+                </StackPanel>
+            </ContentControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

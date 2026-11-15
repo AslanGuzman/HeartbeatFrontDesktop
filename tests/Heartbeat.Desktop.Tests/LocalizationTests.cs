@@ -183,13 +183,13 @@ public sealed class LanguageSwitchTests : IDisposable
     {
         LocalizationManager.Instance.SetLanguage(AppLanguage.English);
 
-        Assert.Equal(["Dashboard", "Check-up", "History", "Messages", "Radiation", "Profile"], _window.NavigationItems.Select(i => i.Title));
+        Assert.Equal(["Dashboard", "Check-up", "History", "Messages", "Radiation", "Vision", "Profile"], _window.NavigationItems.Select(i => i.Title));
         Assert.Equal("Self-assessment tool, not a medical diagnosis", _window.DisclaimerText);
         Assert.Equal("ES", _window.LanguageButtonText);
 
         _window.ToggleLanguageCommand.Execute(null);
 
-        Assert.Equal(["Dashboard", "Check-up", "Historial", "Mensajes", "Radiación", "Perfil"], _window.NavigationItems.Select(i => i.Title));
+        Assert.Equal(["Dashboard", "Check-up", "Historial", "Mensajes", "Radiación", "Visión", "Perfil"], _window.NavigationItems.Select(i => i.Title));
         Assert.Equal("Herramienta de autoevaluación, no diagnóstico médico", _window.DisclaimerText);
         Assert.Equal("EN", _window.LanguageButtonText);
     }

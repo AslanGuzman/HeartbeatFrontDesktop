@@ -80,6 +80,10 @@ dotnet run --project src/Heartbeat.Desktop/Heartbeat.Desktop.csproj
 
 El inicio abre con «Tu estado de un vistazo»: un semáforo global y uno por cada uno de los 5 peligros, cada uno con su «por qué», la etiqueta **Datos simulados**, una introducción de 3 pasos la primera vez (se recuerda por astronauta en `onboarding.json`, junto a la base local) y un glosario corto (mSv, CO₂, SANS, PVT…). El cálculo usa `RiskEngine` de `Heartbeat.Shared` (HB-BE-07) con los datos locales, así que funciona sin conexión y coincide con el servidor; los umbrales viven en el catálogo, no en la UI.
 
+### Presión ocular y visión (HB-FE-04)
+
+La pantalla **Visión** registra IOP (mmHg) y agudeza visual (logMAR), dibuja la tendencia de los últimos 30 días con las bandas del catálogo y muestra una nota corta sobre SANS y su relación con el CO₂, con su fuente y el estado de la evidencia (heurístico). Tendencia y correlación salen de `VisionAnalysis` (`Heartbeat.Shared`, HB-BE-05), así que coinciden con el servidor sin conexión. Las lecturas se guardan en la tabla local de ambiente (`IVisionStore`); todo es simulado y no es un diagnóstico.
+
 ### Añadir una pantalla
 
 1. Crear `XxxViewModel : PageViewModel` y registrarlo con `AddTransient` en `ServiceCollectionExtensions`.

@@ -60,6 +60,28 @@ public static class DemoDataSeeder
             }
         }
 
+        // Seis lecturas entre hace 10 y 2 días. Ana y Mara se mantienen estables; Luis sube junto con el CO₂.
+        void AddVisionHistory(string user)
+        {
+            int[] daysAgo = [10, 8, 6, 4, 3, 2];
+            (decimal[] Iop, decimal[] Acuity, decimal[] Co2) series = user switch
+            {
+                "luis" => ([18m, 19.5m, 20.5m, 22m, 23.5m, 24.5m], [0.15m, 0.2m, 0.25m, 0.3m, 0.4m, 0.45m], [3.0m, 3.6m, 4.1m, 4.6m, 5.0m, 5.4m]),
+                "mara" => ([14m, 14.5m, 14m, 14.2m, 14.4m, 14.1m], [0.0m, 0.05m, 0.0m, 0.05m, 0.0m, 0.05m], [3.2m, 3.4m, 3.3m, 3.5m, 3.3m, 3.4m]),
+                _ => ([15.5m, 16m, 15.8m, 16.2m, 15.9m, 16.1m], [0.05m, 0.05m, 0.1m, 0.05m, 0.1m, 0.05m], [2.0m, 2.4m, 2.1m, 2.5m, 2.2m, 2.3m]),
+            };
+
+            for (int i = 0; i < daysAgo.Length; i++)
+            {
+                AddEnvironment(
+                    user,
+                    TimeSpan.FromDays(daysAgo[i]),
+                    (VisionAnalysis.IopId, series.Iop[i]),
+                    (VisionAnalysis.VisualAcuityId, series.Acuity[i]),
+                    (VisionAnalysis.Co2Id, series.Co2[i]));
+            }
+        }
+
         bool seeded = false;
         foreach (SessionUser account in DemoAccounts.All)
         {
@@ -105,6 +127,14 @@ public static class DemoDataSeeder
                             ("humidity", 62m), ("light", 220m), ("noise", 58m));
                         break;
                 }
+            }
+
+            // Historial simulado de IOP, agudeza y CO₂ para ver la tendencia (HB-FE-04). Se añade por separado para que
+            // también lo reciban las bases creadas antes de esta pantalla.
+            if (!db.EnvironmentReadings.Any(r => r.AstronautId == account.Id && r.IndicatorId == VisionAnalysis.IopId))
+            {
+                seededAccount = true;
+                AddVisionHistory(account.UserName);
             }
 
             seeded |= seededAccount;

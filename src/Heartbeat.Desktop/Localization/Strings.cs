@@ -23,6 +23,7 @@ public static partial class Strings
         AddCode(table);
         AddViews(table);
         AddSimple(table);
+        AddVision(table);
         return table;
     }
 
