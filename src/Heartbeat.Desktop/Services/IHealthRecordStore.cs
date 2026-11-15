@@ -47,6 +47,12 @@ public sealed class MessageRecord(Guid id, string body, DateTimeOffset createdAt
     public bool IsSent => SentAt is not null;
 }
 
+/// <summary>Una dosis de radiacion registrada, en milisieverts (NR-07).</summary>
+public sealed record RadiationDoseRecord(Guid Id, decimal DoseMsv, DateTimeOffset RecordedAt, string? Note, DateTimeOffset? SyncedAt)
+{
+    public bool IsSynced => SyncedAt is not null;
+}
+
 /// <summary>
 /// Check-ups y mensajes del astronauta. Las pantallas solo conocen esta interfaz; la implementación guarda en la
 /// base SQLite local y el motor de sincronización (#32) se encarga de enviar lo pendiente.
@@ -80,6 +86,16 @@ public interface IHealthRecordStore
 
     /// <summary>Marca como enviado todo lo pendiente. Devuelve cuántos elementos se enviaron.</summary>
     int MarkAllSynced(DateTimeOffset at);
+
+    /// <summary>Dosis de radiacion del usuario, de la mas reciente a la mas antigua.</summary>
+    IReadOnlyList<RadiationDoseRecord> GetRadiationDoses(Guid astronautId);
+
+    /// <summary>Dosis acumulada del usuario en milisieverts (suma de todas sus dosis).</summary>
+    decimal GetRadiationTotal(Guid astronautId);
+
+    /// <summary>Registra una dosis (mayor que 0 y hasta 500 mSv) como pendiente de sincronizar.</summary>
+    /// <exception cref="ArgumentException">La dosis o la nota no cumplen las reglas del contrato.</exception>
+    RadiationDoseRecord AddRadiationDose(Guid astronautId, decimal doseMsv, string? note = null);
 
     /// <summary>Se produce al cambiar los datos. Se entrega en el hilo de la interfaz.</summary>
     event EventHandler? Changed;

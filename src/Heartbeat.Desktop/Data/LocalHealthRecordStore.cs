@@ -43,7 +43,8 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
             using IServiceScope scope = _scopes.CreateScope();
             LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
             return db.CheckUps.Count(c => c.SyncState == SyncState.Pending)
-                 + db.Messages.Count(m => m.Direction == MessageDirection.ToMissionControl && m.SyncState == SyncState.Pending);
+                 + db.Messages.Count(m => m.Direction == MessageDirection.ToMissionControl && m.SyncState == SyncState.Pending)
+                 + db.RadiationDoses.Count(d => d.SyncState == SyncState.Pending);
         }
     }
 
@@ -57,6 +58,7 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
             // SQLite no sabe ordenar ni agregar DateTimeOffset: se compara en memoria.
             List<DateTimeOffset?> received = db.CheckUps.Where(c => c.ReceivedAt != null).Select(c => c.ReceivedAt)
                 .Concat(db.Messages.Where(m => m.Direction == MessageDirection.ToMissionControl && m.ReceivedAt != null).Select(m => m.ReceivedAt))
+                .Concat(db.RadiationDoses.Where(d => d.ReceivedAt != null).Select(d => d.ReceivedAt))
                 .ToList();
             return received.Count == 0 ? null : received.Max();
         }
@@ -138,6 +140,69 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
         return new MessageRecord(entity.Id, entity.Body, entity.CreatedAt, checkUpId, entity.Subject);
     }
 
+    public IReadOnlyList<RadiationDoseRecord> GetRadiationDoses(Guid astronautId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+
+        // SQLite no sabe ordenar un DateTimeOffset: se ordena en memoria.
+        return db.RadiationDoses.AsNoTracking()
+            .Where(d => d.AstronautId == astronautId)
+            .ToList()
+            .OrderByDescending(d => d.RecordedAt)
+            .Select(ToRecord)
+            .ToList();
+    }
+
+    public decimal GetRadiationTotal(Guid astronautId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+
+        // SQLite no sabe sumar un decimal: se suma en memoria.
+        return RadiationDoses.Total(db.RadiationDoses.AsNoTracking()
+            .Where(d => d.AstronautId == astronautId)
+            .Select(d => d.DoseMsv)
+            .ToList());
+    }
+
+    public RadiationDoseRecord AddRadiationDose(Guid astronautId, decimal doseMsv, string? note = null)
+    {
+        string? cleanNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        IReadOnlyList<string> errors = RadiationDoses.Validate(doseMsv, cleanNote);
+        if (errors.Count > 0)
+        {
+            throw new ArgumentException(errors[0], nameof(doseMsv));
+        }
+
+        LocalRadiationDose entity = new()
+        {
+            Id = Guid.CreateVersion7(),
+            AstronautId = astronautId,
+            RecordedAt = _clock.GetUtcNow(),
+            DoseMsv = doseMsv,
+            Note = cleanNote,
+            SyncState = SyncState.Pending,
+        };
+
+        using (IServiceScope scope = _scopes.CreateScope())
+        {
+            LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+            db.RadiationDoses.Add(entity);
+            db.SaveChanges();
+        }
+
+        RaiseChanged();
+        return ToRecord(entity);
+    }
+
+    private static RadiationDoseRecord ToRecord(LocalRadiationDose entity) => new(
+        entity.Id,
+        entity.DoseMsv,
+        entity.RecordedAt,
+        entity.Note,
+        entity.SyncState == SyncState.Synced ? entity.ReceivedAt : null);
+
     public bool HasReport(Guid checkUpId)
     {
         using IServiceScope scope = _scopes.CreateScope();
@@ -202,7 +267,14 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
                 message.ReceivedAt = at;
             }
 
-            sent = checkUps.Count + messages.Count;
+            List<LocalRadiationDose> doses = db.RadiationDoses.Where(d => d.SyncState == SyncState.Pending).ToList();
+            foreach (LocalRadiationDose dose in doses)
+            {
+                dose.SyncState = SyncState.Synced;
+                dose.ReceivedAt = at;
+            }
+
+            sent = checkUps.Count + messages.Count + doses.Count;
             if (sent > 0)
             {
                 db.SaveChanges();
