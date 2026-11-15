@@ -6,6 +6,7 @@ public sealed class SimulatedLinkService : IConnectivityService, ISimulatedLink,
     private readonly NetworkConnectivityService _network;
     private readonly object _gate = new();
     private bool _isLinkEnabled = true;
+    private double _communicationDelaySeconds;
 
     public SimulatedLinkService(NetworkConnectivityService network)
     {
@@ -55,6 +56,28 @@ public sealed class SimulatedLinkService : IConnectivityService, ISimulatedLink,
             }
         }
     }
+
+    /// <summary>Retardo unidireccional de comunicación con la Tierra, en segundos, derivado del perfil de la misión (HB-BE-09).</summary>
+    public double CommunicationDelaySeconds
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return _communicationDelaySeconds;
+            }
+        }
+        set
+        {
+            lock (_gate)
+            {
+                _communicationDelaySeconds = value < 0 ? 0 : value;
+            }
+        }
+    }
+
+    /// <summary>Retardo unidireccional de comunicación con la Tierra (HB-BE-09).</summary>
+    public TimeSpan CommunicationDelay => TimeSpan.FromSeconds(CommunicationDelaySeconds);
 
     public event EventHandler? IsOnlineChanged;
 

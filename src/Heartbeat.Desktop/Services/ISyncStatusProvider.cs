@@ -18,6 +18,9 @@ public interface ISyncStatusProvider
     /// <summary>Se está sincronizando ahora mismo.</summary>
     bool IsSyncing { get; }
 
+    /// <summary>Retardo unidireccional de comunicación con la Tierra, en segundos, derivado del perfil de la misión (HB-BE-09).</summary>
+    double CommunicationDelaySeconds { get; }
+
     /// <summary>
     /// Aviso sobre el último intento («Vuelve a iniciar sesión…», «No se pudo sincronizar…»); <c>null</c> si todo va bien.
     /// </summary>
