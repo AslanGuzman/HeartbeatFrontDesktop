@@ -6,6 +6,7 @@ using Heartbeat.Desktop.Converters;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Services.Profile;
 using Heartbeat.Shared;
 using Heartbeat.Desktop.Localization;
 
@@ -21,6 +22,10 @@ public sealed partial class DashboardViewModel : PageViewModel
     private readonly IIndicatorInfoPresenter _infoPresenter;
     private readonly INavigationService _navigation;
     private readonly CheckUpReminder _reminder;
+    private readonly IProfileStore _profiles;
+
+    private static readonly string[] EnvironmentIndicatorIds =
+        ["gravity", "co2", "o2", "pressure", "temperature", "humidity", "light", "noise"];
 
     public DashboardViewModel(
         IHealthRecordStore store,
@@ -29,14 +34,18 @@ public sealed partial class DashboardViewModel : PageViewModel
         IIndicatorInfoPresenter infoPresenter,
         INavigationService navigation,
         TimeProvider clock,
-        CheckUpReminder reminder)
+        CheckUpReminder reminder,
+        IProfileStore profiles,
+        IEnvironmentReadingStore environment)
     {
         _infoPresenter = infoPresenter;
         _navigation = navigation;
         _reminder = reminder;
+        _profiles = profiles;
 
         SessionUser? user = session.CurrentUser;
         IReadOnlyList<CheckUpRecord> checkUps = user is null ? [] : store.GetCheckUps(user.Id);
+        ProfileView? profile = user is null ? null : _profiles.Get(user.Id);
 
         // Un check-up puede omitir indicadores (1 a 6 lecturas): cada tarjeta muestra la lectura más reciente de su indicador.
         List<IndicatorCardViewModel> cards = [];
@@ -49,6 +58,19 @@ public sealed partial class DashboardViewModel : PageViewModel
 
         Cards = cards;
         Regions = BuildRegions(cards, info);
+        EnvironmentCards = BuildEnvironmentCards(
+            profile?.Profile.Mission.EnvironmentProfile,
+            user is null ? [] : environment.GetLatest(user.Id),
+            clock);
+        List<HealthStatus> environmentStatuses = EnvironmentCards
+            .Where(c => c.HasData && c.Status is not null)
+            .Select(c => c.Status!.Value)
+            .ToList();
+        EnvironmentStatus = environmentStatuses.Count == 0 ? null : environmentStatuses.Max();
+        EnvironmentStatusText = EnvironmentStatus is { } environmentStatus
+            ? Loc.T("status.overall", StatusPalette.Name(environmentStatus))
+            : Loc.T("env.noData");
+        EnvironmentProfileText = BuildEnvironmentProfileText(profile?.Profile.Mission.EnvironmentProfile);
         Greeting = user is null ? Loc.T("dash.greeting") : Loc.T("dash.greetingName", user.FirstName);
         DateText = clock.GetLocalNow().ToString(Loc.T("dash.dateFormat"), Loc.Culture);
 
@@ -104,6 +126,14 @@ public sealed partial class DashboardViewModel : PageViewModel
 
     /// <summary>Regiones de la figura humana con el peor estado de sus indicadores (NR-04).</summary>
     public IReadOnlyList<BodyRegionViewModel> Regions { get; }
+
+    public IReadOnlyList<EnvironmentCardViewModel> EnvironmentCards { get; }
+
+    public HealthStatus? EnvironmentStatus { get; }
+
+    public string EnvironmentStatusText { get; }
+
+    public string EnvironmentProfileText { get; }
 
     /// <summary>
     /// Clic en una región: abre la información de su indicador más grave (o el primero si aún no hay mediciones).
@@ -163,6 +193,93 @@ public sealed partial class DashboardViewModel : PageViewModel
         }
 
         return regions;
+    }
+
+    private static List<EnvironmentCardViewModel> BuildEnvironmentCards(
+        EnvironmentProfile? profile,
+        IReadOnlyList<EnvironmentReadingRecord> readings,
+        TimeProvider clock)
+    {
+        Dictionary<string, EnvironmentReadingRecord> latest = readings.ToDictionary(
+            r => r.IndicatorId,
+            StringComparer.OrdinalIgnoreCase);
+        List<EnvironmentCardViewModel> cards = [];
+
+        foreach (string id in EnvironmentIndicatorIds)
+        {
+            IndicatorCatalogEntry? entry = IndicatorsCatalog.Find(id);
+            if (entry is null)
+            {
+                continue;
+            }
+
+            if (id == "gravity" && profile is { } environmentProfile)
+            {
+                cards.Add(BuildEnvironmentCard(entry, environmentProfile.GravityG, Loc.T("env.profile")));
+            }
+            else if (latest.TryGetValue(id, out EnvironmentReadingRecord? reading))
+            {
+                cards.Add(BuildEnvironmentCard(
+                    entry,
+                    reading.Value,
+                    IndicatorPresentation.FormatWhen(reading.RecordedAt, clock)));
+            }
+            else
+            {
+                cards.Add(new EnvironmentCardViewModel(
+                    entry.Id,
+                    EnvironmentPresentation.GlyphOf(entry.Id),
+                    EnvironmentPresentation.NameOf(entry.Id),
+                    null,
+                    StatusPalette.Name(null),
+                    "—",
+                    entry.Unit,
+                    Loc.T("env.card.none"),
+                    false));
+            }
+        }
+
+        return cards;
+    }
+
+    private static EnvironmentCardViewModel BuildEnvironmentCard(
+        IndicatorCatalogEntry entry,
+        decimal value,
+        string takenAtText)
+    {
+        IndicatorBand band = IndicatorsCatalog.Evaluate(entry, value);
+        return new EnvironmentCardViewModel(
+            entry.Id,
+            EnvironmentPresentation.GlyphOf(entry.Id),
+            EnvironmentPresentation.NameOf(entry.Id),
+            band.Status,
+            StatusPalette.Name(band.Status),
+            value.ToString("0.##", Loc.Culture),
+            entry.Unit,
+            takenAtText,
+            true);
+    }
+
+    private static string BuildEnvironmentProfileText(EnvironmentProfile? profile)
+    {
+        if (profile is null)
+        {
+            return Loc.T("env.noProfile");
+        }
+
+        string type = profile.Type switch
+        {
+            "station" => Loc.T("profile.env.station"),
+            "moon" or "lunarBase" => Loc.T("profile.env.moon"),
+            "mars" or "marsBase" => Loc.T("profile.env.mars"),
+            _ => profile.Type,
+        };
+        return Loc.T(
+            "env.profileDetails",
+            type,
+            profile.CrewSize,
+            profile.DistanceKm.ToString("0.##", Loc.Culture),
+            profile.HabitableVolumeM3.ToString("0.##", Loc.Culture));
     }
 
     /// <summary>Abre el formulario para registrar un nuevo check-up.</summary>

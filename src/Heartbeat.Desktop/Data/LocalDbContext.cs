@@ -14,6 +14,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalReading> Readings => Set<LocalReading>();
     public DbSet<LocalMessage> Messages => Set<LocalMessage>();
     public DbSet<LocalRadiationDose> RadiationDoses => Set<LocalRadiationDose>();
+    public DbSet<LocalEnvironmentReading> EnvironmentReadings => Set<LocalEnvironmentReading>();
     public DbSet<LocalAlertAcknowledgement> AlertAcknowledgements => Set<LocalAlertAcknowledgement>();
     public DbSet<SyncCursor> SyncCursors => Set<SyncCursor>();
     public DbSet<RangesCache> RangesCache => Set<RangesCache>();
@@ -48,6 +49,9 @@ public class LocalDbContext : DbContext
         b.Entity<LocalRadiationDose>().Property(x => x.Note).HasMaxLength(Heartbeat.Shared.RadiationDoses.NoteMaxLength);
         b.Entity<LocalRadiationDose>().HasIndex(x => new { x.AstronautId, x.RecordedAt });
         b.Entity<LocalRadiationDose>().HasIndex(x => new { x.AstronautId, x.SyncState });
+        b.Entity<LocalEnvironmentReading>().HasIndex(x => new { x.AstronautId, x.IndicatorId, x.RecordedAt });
+        b.Entity<LocalEnvironmentReading>().Property(x => x.IndicatorId).HasMaxLength(50);
+        b.Entity<LocalEnvironmentReading>().Property(x => x.Unit).HasMaxLength(30);
 
         // Origen de la lectura (manual / wearable), igual que en CONTRACTS.md.
         b.Entity<LocalReading>().Property(x => x.Source).HasConversion(ReadingSourceConverter).HasMaxLength(10);

@@ -56,6 +56,19 @@ public static class LocalDatabase
             "CREATE INDEX IF NOT EXISTS IX_RadiationDoses_AstronautId_RecordedAt ON RadiationDoses (AstronautId, RecordedAt)");
         db.Database.ExecuteSqlRaw(
             "CREATE INDEX IF NOT EXISTS IX_RadiationDoses_AstronautId_SyncState ON RadiationDoses (AstronautId, SyncState)");
+        db.Database.ExecuteSqlRaw(
+            "CREATE TABLE IF NOT EXISTS EnvironmentReadings (" +
+            "Id TEXT NOT NULL CONSTRAINT PK_EnvironmentReadings PRIMARY KEY, " +
+            "AstronautId TEXT NOT NULL, " +
+            "RecordedAt TEXT NOT NULL, " +
+            "ReceivedAt TEXT NULL, " +
+            "IndicatorId TEXT NOT NULL, " +
+            "Value TEXT NOT NULL, " +
+            "SecondaryValue TEXT NULL, " +
+            "Unit TEXT NOT NULL, " +
+            "Simulated INTEGER NOT NULL DEFAULT 1)");
+        db.Database.ExecuteSqlRaw(
+            "CREATE INDEX IF NOT EXISTS IX_EnvironmentReadings_AstronautId_IndicatorId_RecordedAt ON EnvironmentReadings (AstronautId, IndicatorId, RecordedAt)");
 
         // Alertas reconocidas por control de misión (#33).
         db.Database.ExecuteSqlRaw(

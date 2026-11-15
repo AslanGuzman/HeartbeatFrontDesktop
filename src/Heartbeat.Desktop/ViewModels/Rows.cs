@@ -21,6 +21,21 @@ public sealed record IndicatorCardViewModel(
     public bool NeedsAttention => Status is HealthStatus.Watch or HealthStatus.Critical;
 }
 
+/// <summary>Tarjeta de una lectura de ambiente o del perfil de misión.</summary>
+public sealed record EnvironmentCardViewModel(
+    string Id,
+    string Glyph,
+    string Name,
+    HealthStatus? Status,
+    string StatusText,
+    string ValueText,
+    string UnitText,
+    string TakenAtText,
+    bool HasData)
+{
+    public bool NeedsAttention => Status is HealthStatus.Watch or HealthStatus.Critical;
+}
+
 /// <summary>Un indicador dentro de una región del cuerpo.</summary>
 public sealed record RegionIndicatorViewModel(string Id, string Name, HealthStatus? Status, string StatusText, string ValueText);
 
