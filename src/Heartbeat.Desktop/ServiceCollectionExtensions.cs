@@ -67,6 +67,7 @@ public static class ServiceCollectionExtensions
 
         // Check-ups y mensajes se guardan en la base local (#8) y el motor de sincronización (#32) los sube.
         services.AddSingleton<IHealthRecordStore, LocalHealthRecordStore>();
+        services.AddSingleton<IEnvironmentReadingStore, LocalEnvironmentReadingStore>();
         services.AddSingleton<IProfileStore, LocalProfileStore>();
 
         // Sincronización en segundo plano: servicio hospedado, estado para la barra de estado y petición manual.

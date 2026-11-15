@@ -53,7 +53,12 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
                 account.UserName,
                 account.DisplayName,
                 "Demo",
-                new MissionInfo(Guid.Parse("0197c2a0-0000-7000-8000-0000000000ff"), "Artemis Demo 1", "station", now.AddDays(-100)),
+                new MissionInfo(
+                    Guid.Parse("0197c2a0-0000-7000-8000-0000000000ff"),
+                    "Artemis Demo 1",
+                    "station",
+                    now.AddDays(-100),
+                    new EnvironmentProfile("station", 0m, 408m, 4, 388m)),
                 null,
                 null,
                 now.AddDays(-30));

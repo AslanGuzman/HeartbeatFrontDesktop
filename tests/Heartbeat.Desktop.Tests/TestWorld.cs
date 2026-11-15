@@ -28,10 +28,12 @@ internal sealed class TestWorld : IDisposable
         services.AddSingleton<TimeProvider>(Clock);
         services.AddSingleton<IHealthEvaluator>(Evaluator);
         services.AddDbContext<LocalDbContext>(o => o.UseSqlite(_database.ConnectionString));
+        services.AddSingleton<IEnvironmentReadingStore, LocalEnvironmentReadingStore>();
         Services = services.BuildServiceProvider();
         SeedAccounts();
         DemoDataSeeder.Seed(Services);
         ProfileStore = NewProfileStore(new ImmediateSynchronizationContext());
+        EnvironmentStore = Services.GetRequiredService<IEnvironmentReadingStore>();
         Store = NewStore(new ImmediateSynchronizationContext());
         Connectivity = new FakeConnectivityService(online);
         Presenter = new FakeIndicatorInfoPresenter();
@@ -44,7 +46,7 @@ internal sealed class TestWorld : IDisposable
         Navigation = new RecordingNavigation(type =>
             type == typeof(CheckUpResultViewModel) ? new CheckUpResultViewModel(Navigation!, Store, Session, Info, Presenter, Connectivity)
             : type == typeof(CheckUpViewModel) ? NewCheckUp()
-            : type == typeof(DashboardViewModel) ? new DashboardViewModel(Store, Session, Info, Presenter, Navigation!, Clock, Reminder)
+            : type == typeof(DashboardViewModel) ? new DashboardViewModel(Store, Session, Info, Presenter, Navigation!, Clock, Reminder, ProfileStore, EnvironmentStore)
             : type == typeof(HistoryViewModel) ? new HistoryViewModel(Store, Session, Info)
             : new PlainPageViewModel());
 
@@ -75,6 +77,8 @@ internal sealed class TestWorld : IDisposable
 
     public LocalProfileStore ProfileStore { get; }
 
+    public IEnvironmentReadingStore EnvironmentStore { get; }
+
     public LocalProfileStore NewProfileStore(SynchronizationContext? ui) =>
         new(Services.GetRequiredService<IServiceScopeFactory>(), Clock, ui);
 
@@ -84,7 +88,12 @@ internal sealed class TestWorld : IDisposable
         SessionUser account = DemoAccounts.All.First(a => a.UserName == userName);
         return new AstronautProfile(
             account.Id, account.UserName, account.DisplayName, "Comet",
-            new MissionInfo(Guid.Parse("0197c2a0-0000-7000-8000-0000000000ff"), "Artemis Demo 1", "station", Now.AddDays(-100)),
+            new MissionInfo(
+                Guid.Parse("0197c2a0-0000-7000-8000-0000000000ff"),
+                "Artemis Demo 1",
+                "station",
+                Now.AddDays(-100),
+                new EnvironmentProfile("station", 0m, 408m, 4, 388m)),
             new DateOnly(1988, 3, 12), "Alergia a la penicilina", updatedAt ?? Now.AddDays(-10));
     }
 

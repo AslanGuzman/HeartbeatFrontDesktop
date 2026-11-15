@@ -1,5 +1,6 @@
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.ViewModels;
+using Heartbeat.Desktop.Localization;
 using Heartbeat.Shared;
 
 namespace Heartbeat.Desktop.Tests;
@@ -7,7 +8,7 @@ namespace Heartbeat.Desktop.Tests;
 public sealed class DashboardViewModelTests
 {
     private static DashboardViewModel Create(TestWorld world) =>
-        new(world.Store, world.Session, world.Info, world.Presenter, world.Navigation, world.Clock, world.Reminder);
+        new(world.Store, world.Session, world.Info, world.Presenter, world.Navigation, world.Clock, world.Reminder, world.ProfileStore, world.EnvironmentStore);
 
     private static void Add(TestWorld world, string user, params ReadingInput[] inputs) =>
         world.Store.AddCheckUp(TestWorld.IdOf(user), inputs, world.Evaluator.Evaluate(inputs));
@@ -148,6 +149,32 @@ public sealed class DashboardViewModelTests
         Assert.Equal(
             ["Presión arterial", "Frecuencia cardíaca", "Glucosa", "Temperatura corporal", "Sueño", "Estado de ánimo"],
             dashboard.Cards.Select(c => c.Name));
+    }
+
+    [Fact]
+    public void Environment_cards_show_the_eight_catalog_indicators_from_local_storage()
+    {
+        DashboardViewModel dashboard = Create(new TestWorld("ana", online: false));
+
+        Assert.Equal(
+            ["gravity", "co2", "o2", "pressure", "temperature", "humidity", "light", "noise"],
+            dashboard.EnvironmentCards.Select(c => c.Id));
+        Assert.All(dashboard.EnvironmentCards, card => Assert.True(card.HasData));
+        Assert.All(dashboard.EnvironmentCards, card => Assert.Contains(card.StatusText, new[] { "Normal", "Vigilancia", "Crítico" }));
+        Assert.Equal("0", dashboard.EnvironmentCards.Single(c => c.Id == "gravity").ValueText);
+        Assert.Equal("g", dashboard.EnvironmentCards.Single(c => c.Id == "gravity").UnitText);
+        Assert.Equal(HealthStatus.Critical, dashboard.EnvironmentCards.Single(c => c.Id == "gravity").Status);
+        Assert.Contains("408 km", dashboard.EnvironmentProfileText);
+    }
+
+    [Fact]
+    public void Environment_cards_keep_last_saved_values_without_a_connection()
+    {
+        DashboardViewModel dashboard = Create(new TestWorld("ana", online: false));
+
+        Assert.Equal(2.2m.ToString("0.##", Loc.Culture), dashboard.EnvironmentCards.Single(c => c.Id == "co2").ValueText);
+        Assert.Equal(HealthStatus.Normal, dashboard.EnvironmentCards.Single(c => c.Id == "co2").Status);
+        Assert.Equal(21.5m.ToString("0.##", Loc.Culture), dashboard.EnvironmentCards.Single(c => c.Id == "temperature").ValueText);
     }
 
     // ---- Estado general arriba ----

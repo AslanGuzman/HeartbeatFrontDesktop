@@ -7,7 +7,7 @@ namespace Heartbeat.Desktop.Tests;
 public sealed class BodyMapTests
 {
     private static DashboardViewModel Create(TestWorld world) =>
-        new(world.Store, world.Session, world.Info, world.Presenter, world.Navigation, world.Clock, world.Reminder);
+        new(world.Store, world.Session, world.Info, world.Presenter, world.Navigation, world.Clock, world.Reminder, world.ProfileStore, world.EnvironmentStore);
 
     private static void Add(TestWorld world, string user, params ReadingInput[] inputs) =>
         world.Store.AddCheckUp(TestWorld.IdOf(user), inputs, world.Evaluator.Evaluate(inputs));
