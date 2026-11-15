@@ -13,7 +13,8 @@ namespace Heartbeat.Desktop.Demo;
 /// datos de cada astronauta sobreviven entre sesiones. Responde como el servidor real: 401 si las credenciales
 /// fallan, y en <c>/sync</c> acepta lo recibido (idempotente), aplica la edición de perfil si es más nueva y devuelve
 /// el perfil solo cuando la aplicó. Para poder ver cómo se muestra un rechazo, rechaza los check-ups y mensajes cuyo
-/// texto contiene «[rechazar]».
+/// texto contiene «[rechazar]». También hace de control de misión: contesta a cada reporte y
+/// reconoce las alertas de los check-ups críticos, para poder ver la bandeja.
 /// </summary>
 public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
 {
@@ -121,7 +122,28 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
             _profile = applied;
         }
 
-        return Task.FromResult(new SyncResponse(clock.GetUtcNow(), accepted, rejected, applied, new SyncInbound([], []), false));
+        // Control de misión de mentira: contesta a cada reporte y reconoce las alertas de los check-ups críticos. Los Id
+        // salen del elemento al que responde, así que si el mismo lote se repite la respuesta es la misma (idempotente).
+        DateTimeOffset now = clock.GetUtcNow();
+        List<MessageDto> replies = request.Messages
+            .Where(m => accepted.Contains(m.Id) && m.Kind == MessageKind.Report)
+            .Select(m => new MessageDto(
+                DerivedId(m.Id), MessageDirection.ToAstronaut, MessageKind.Message, m.CheckUpId,
+                "Re: " + m.Subject, "Recibimos tu reporte. Seguimos tus indicadores; avísanos si algo empeora.",
+                now, now, null, "Control de misión (demo)"))
+            .ToList();
+        List<AcknowledgedAlert> alerts = request.CheckUps
+            .Where(c => accepted.Contains(c.Id) && c.OverallStatus == HealthStatus.Critical)
+            .Select(c => new AcknowledgedAlert(c.Id, now, "Control de misión (demo)", "Alerta recibida por los cirujanos de vuelo."))
+            .ToList();
+
+        return Task.FromResult(new SyncResponse(now, accepted, rejected, applied, new SyncInbound(replies, alerts), false));
+    }
+
+    private static Guid DerivedId(Guid source)
+    {
+        byte[] bytes = System.Security.Cryptography.MD5.HashData(source.ToByteArray());
+        return new Guid(bytes);
     }
 
     public Task<Paged<CheckUpDto>> GetCheckUpsAsync(DateTimeOffset? from = null, DateTimeOffset? to = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default) =>

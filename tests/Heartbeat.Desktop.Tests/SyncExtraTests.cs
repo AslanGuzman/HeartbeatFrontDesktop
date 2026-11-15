@@ -189,10 +189,10 @@ public sealed class RejectedDisplayTests
         w.Api.OnSyncAsync = req => Task.FromResult(new SyncResponse(TestWorld.Now, [], [new SyncRejected(message.Id, "Message body is too long")], null, new SyncInbound([], []), false));
         await w.Engine.SyncNowAsync();
 
-        MessagesViewModel messages = new(w.World.Store, w.World.Session);
+        MessagesViewModel messages = new(w.World.Store, w.World.Session, w.World.Info);
 
-        Assert.Equal("Rechazado: Message body is too long", messages.Messages.Single().StatusText);
-        Assert.False(messages.Messages.Single().IsSent);
+        Assert.Equal("Rechazado: Message body is too long", messages.Sent.Single().StatusText);
+        Assert.Equal(MessageStatus.Rejected, messages.Sent.Single().Status);
     }
 
     [Fact]
@@ -214,14 +214,14 @@ public sealed class RejectedDisplayTests
         w.AddCheckUp("ana", TestWorld.Now.AddMinutes(-2));
         w.World.Store.QueueMessage(w.Id("ana"), "hola");
         HistoryViewModel history = new(w.World.Store, w.World.Session, w.World.Info);
-        MessagesViewModel messages = new(w.World.Store, w.World.Session);
+        MessagesViewModel messages = new(w.World.Store, w.World.Session, w.World.Info);
         Assert.Equal("Pendiente de sincronizar", history.CheckUps.First().SyncText);
-        Assert.False(messages.Messages.Single().IsSent);
+        Assert.Equal(MessageStatus.Queued, messages.Sent.Single().Status);
 
         await w.Engine.SyncNowAsync();
 
         Assert.Equal("Sincronizado", history.CheckUps.First().SyncText);
-        Assert.True(messages.Messages.Single().IsSent);
+        Assert.Equal(MessageStatus.Sent, messages.Sent.Single().Status);
     }
 
     [Fact]
@@ -229,11 +229,11 @@ public sealed class RejectedDisplayTests
     {
         using SyncTestWorld w = new();
         MessageRecord message = w.World.Store.QueueMessage(w.Id("ana"), "hola");
-        MessagesViewModel messages = new(w.World.Store, w.World.Session);
+        MessagesViewModel messages = new(w.World.Store, w.World.Session, w.World.Info);
         w.Api.OnSyncAsync = req => Task.FromResult(new SyncResponse(TestWorld.Now, [], [new SyncRejected(message.Id, "no")], null, new SyncInbound([], []), false));
 
         await w.Engine.SyncNowAsync();
 
-        Assert.Equal("Rechazado: no", messages.Messages.Single().StatusText);
+        Assert.Equal("Rechazado: no", messages.Sent.Single().StatusText);
     }
 }

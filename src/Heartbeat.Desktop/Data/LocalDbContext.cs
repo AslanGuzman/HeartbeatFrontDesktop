@@ -14,6 +14,7 @@ public class LocalDbContext : DbContext
     public DbSet<LocalReading> Readings => Set<LocalReading>();
     public DbSet<LocalMessage> Messages => Set<LocalMessage>();
     public DbSet<LocalRadiationDose> RadiationDoses => Set<LocalRadiationDose>();
+    public DbSet<LocalAlertAcknowledgement> AlertAcknowledgements => Set<LocalAlertAcknowledgement>();
     public DbSet<SyncCursor> SyncCursors => Set<SyncCursor>();
     public DbSet<RangesCache> RangesCache => Set<RangesCache>();
     public DbSet<TokenCache> TokenCache => Set<TokenCache>();
@@ -24,6 +25,8 @@ public class LocalDbContext : DbContext
         b.Entity<SyncCursor>().HasKey(x => x.AstronautId);
         b.Entity<TokenCache>().HasKey(x => x.AstronautId);
         b.Entity<RangesCache>().HasKey(x => x.Id);
+        b.Entity<LocalAlertAcknowledgement>().HasKey(x => x.CheckUpId);
+        b.Entity<LocalAlertAcknowledgement>().HasIndex(x => new { x.AstronautId, x.AcknowledgedAt });
         b.Entity<LocalCheckUp>().HasMany(c => c.Readings).WithOne().HasForeignKey(r => r.CheckUpId);
 
         // Cada consulta del escritorio filtra por el astronauta con sesion (MR-12) y el motor de sync busca lo pendiente.

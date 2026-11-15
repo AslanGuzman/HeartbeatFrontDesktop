@@ -15,6 +15,9 @@ public class LocalMessage
     public DateTimeOffset? ReceivedAt { get; set; }
     public DateTimeOffset? ReadAt { get; set; }
     public Guid? SenderUserId { get; set; }
+
+    /// <summary>Nombre de quien escribió (control de misión) en los mensajes que llegan por sync.</summary>
+    public string? SenderName { get; set; }
     public SyncState SyncState { get; set; } = SyncState.Pending;
     public string? SyncError { get; set; }
 }

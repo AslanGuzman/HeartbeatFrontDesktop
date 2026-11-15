@@ -104,13 +104,105 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
             .Where(m => m.AstronautId == astronautId && m.Direction == MessageDirection.ToMissionControl)
             .ToList()
             .OrderByDescending(m => m.CreatedAt)
-            .Select(m => new MessageRecord(m.Id, m.Body, m.CreatedAt, m.Kind == MessageKind.Report ? m.CheckUpId : null, m.Subject)
-            {
-                SentAt = m.SyncState == SyncState.Synced ? m.ReceivedAt : null,
-                IsRejected = m.SyncState == SyncState.Rejected,
-                SyncError = m.SyncError,
-            })
+            .Select(ToRecord)
             .ToList();
+    }
+
+    public IReadOnlyList<MessageRecord> GetInbox(Guid astronautId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+
+        return db.Messages.AsNoTracking()
+            .Where(m => m.AstronautId == astronautId && m.Direction == MessageDirection.ToAstronaut)
+            .ToList()
+            .OrderByDescending(m => m.CreatedAt)
+            .Select(ToRecord)
+            .ToList();
+    }
+
+    public int GetUnreadCount(Guid astronautId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+        return db.Messages.Count(m => m.AstronautId == astronautId && m.Direction == MessageDirection.ToAstronaut && m.ReadAt == null);
+    }
+
+    public bool MarkRead(Guid astronautId, Guid messageId)
+    {
+        using (IServiceScope scope = _scopes.CreateScope())
+        {
+            LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+            LocalMessage? message = db.Messages.FirstOrDefault(m =>
+                m.Id == messageId && m.AstronautId == astronautId && m.Direction == MessageDirection.ToAstronaut);
+            if (message is null || message.ReadAt is not null)
+            {
+                return false;
+            }
+
+            message.ReadAt = _clock.GetUtcNow();
+            db.SaveChanges();
+        }
+
+        RaiseChanged();
+        return true;
+    }
+
+    public int MarkAllRead(Guid astronautId)
+    {
+        int changed;
+        using (IServiceScope scope = _scopes.CreateScope())
+        {
+            LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+            List<LocalMessage> unread = db.Messages
+                .Where(m => m.AstronautId == astronautId && m.Direction == MessageDirection.ToAstronaut && m.ReadAt == null)
+                .ToList();
+            DateTimeOffset now = _clock.GetUtcNow();
+            foreach (LocalMessage message in unread)
+            {
+                message.ReadAt = now;
+            }
+
+            changed = unread.Count;
+            if (changed > 0)
+            {
+                db.SaveChanges();
+            }
+        }
+
+        if (changed > 0)
+        {
+            RaiseChanged();
+        }
+
+        return changed;
+    }
+
+    public IReadOnlyList<AlertAcknowledgementRecord> GetAcknowledgedAlerts(Guid astronautId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+
+        return db.AlertAcknowledgements.AsNoTracking()
+            .Where(a => a.AstronautId == astronautId)
+            .ToList()
+            .OrderByDescending(a => a.AcknowledgedAt)
+            .Select(a => new AlertAcknowledgementRecord(a.CheckUpId, a.AcknowledgedAt, a.AcknowledgedBy, a.Note))
+            .ToList();
+    }
+
+    private static MessageRecord ToRecord(LocalMessage m)
+    {
+        bool inbound = m.Direction == MessageDirection.ToAstronaut;
+        return new MessageRecord(
+            m.Id, m.Body, m.CreatedAt, m.Kind == MessageKind.Report ? m.CheckUpId : null, m.Subject,
+            m.Direction, m.SenderName)
+        {
+            SentAt = !inbound && m.SyncState == SyncState.Synced ? m.ReceivedAt : null,
+            ReadAt = m.ReadAt,
+            IsRejected = !inbound && m.SyncState == SyncState.Rejected,
+            SyncError = m.SyncError,
+        };
     }
 
     public CheckUpRecord AddCheckUp(Guid astronautId, IReadOnlyList<ReadingInput> inputs, CheckUpEvaluation evaluation, string? note = null)
@@ -131,13 +223,14 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
         return ToRecord(entity);
     }
 
-    public MessageRecord QueueMessage(Guid astronautId, string body)
+    public MessageRecord QueueMessage(Guid astronautId, string body, string? subject = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(body);
         string text = body.Trim();
-        LocalMessage entity = NewOutgoing(astronautId, MessageKind.Message, null, SubjectOf(text), text);
+        string cleanSubject = string.IsNullOrWhiteSpace(subject) ? SubjectOf(text) : Cap(subject.Trim());
+        LocalMessage entity = NewOutgoing(astronautId, MessageKind.Message, null, cleanSubject, text);
         Save(entity);
-        return new MessageRecord(entity.Id, entity.Body, entity.CreatedAt);
+        return ToRecord(entity);
     }
 
     public MessageRecord QueueReport(Guid astronautId, Guid checkUpId, string subject, string body)
@@ -154,10 +247,9 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
             }
         }
 
-        string cleanSubject = subject.Trim().Length <= MaxSubjectLength ? subject.Trim() : subject.Trim()[..(MaxSubjectLength - 1)] + "…";
-        LocalMessage entity = NewOutgoing(astronautId, MessageKind.Report, checkUpId, cleanSubject, body.Trim());
+        LocalMessage entity = NewOutgoing(astronautId, MessageKind.Report, checkUpId, Cap(subject.Trim()), body.Trim());
         Save(entity);
-        return new MessageRecord(entity.Id, entity.Body, entity.CreatedAt, checkUpId, entity.Subject);
+        return ToRecord(entity);
     }
 
     public IReadOnlyList<RadiationDoseRecord> GetRadiationDoses(Guid astronautId)
@@ -375,11 +467,10 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
         };
     }
 
-    private static string SubjectOf(string body)
-    {
-        string firstLine = body.Split('\n', 2)[0].Trim();
-        return firstLine.Length <= MaxSubjectLength ? firstLine : firstLine[..(MaxSubjectLength - 1)] + "…";
-    }
+    private static string SubjectOf(string body) => Cap(body.Split('\n', 2)[0].Trim());
+
+    private static string Cap(string text) =>
+        text.Length <= MaxSubjectLength ? text : text[..(MaxSubjectLength - 1)] + "…";
 
     public void NotifyChanged() => RaiseChanged();
 
