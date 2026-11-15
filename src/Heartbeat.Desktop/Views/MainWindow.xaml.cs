@@ -3,6 +3,7 @@ using System.Windows.Automation;
 using System.Windows.Data;
 
 using Heartbeat.Desktop.Localization;
+using Heartbeat.Desktop.Assistant;
 
 using Heartbeat.Desktop.ViewModels;
 
@@ -45,14 +46,22 @@ public partial class MainWindow : Window
 
     private readonly Services.Auth.CrewApiOptions? _liveApiOptions;
     private readonly Heartbeat.Client.ICrewApiClient? _liveApiClient;
+    private readonly IAssistantWindowPresenter? _assistantPresenter;
 
     /// <summary>Constructor que usa la inyección de dependencias: añade la URL base y el token para las ventanas nuevas.</summary>
-    public MainWindow(MainWindowViewModel viewModel, Services.Auth.CrewApiOptions apiOptions, Heartbeat.Client.ICrewApiClient apiClient)
+    public MainWindow(
+        MainWindowViewModel viewModel,
+        Services.Auth.CrewApiOptions apiOptions,
+        Heartbeat.Client.ICrewApiClient apiClient,
+        IAssistantWindowPresenter assistantPresenter)
         : this(viewModel)
     {
         _liveApiOptions = apiOptions;
         _liveApiClient = apiClient;
+        _assistantPresenter = assistantPresenter;
     }
+
+    private void Assistant_Click(object sender, RoutedEventArgs e) => _assistantPresenter?.Show(this);
 
     private void FrecuenciaEnVivo_Click(object sender, RoutedEventArgs e)
     {
