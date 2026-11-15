@@ -76,6 +76,10 @@ dotnet run --project src/Heartbeat.Desktop/Heartbeat.Desktop.csproj
 
 - **Panel de información y fuentes** (`Info/`): por indicador explica por qué importa, cómo medir y riesgos, y lista las fuentes NASA / agencias con enlaces que abren en el navegador. El contenido sale de `reference-ranges.json` (copia embebida en `Heartbeat.Shared`) a través de `IIndicatorInfoProvider`, con lectura estricta: una fuente no definida o con URL que no sea http(s) hace fallar las pruebas en vez de mostrar una ficha incompleta. Se abre en una ventana aparte, no modal y única, con `IIndicatorInfoPresenter.Show(indicatorId)`; el dashboard ya lo usa, y **el formulario de check-up (#30) solo tiene que inyectar `IIndicatorInfoPresenter` y llamar a `Show("heartRate")` desde su botón de ayuda** (al ser otra ventana, no se pierde lo escrito en el formulario).
 
+### Modo simple (HB-FE-01)
+
+El inicio abre con «Tu estado de un vistazo»: un semáforo global y uno por cada uno de los 5 peligros, cada uno con su «por qué», la etiqueta **Datos simulados**, una introducción de 3 pasos la primera vez (se recuerda por astronauta en `onboarding.json`, junto a la base local) y un glosario corto (mSv, CO₂, SANS, PVT…). El cálculo usa `RiskEngine` de `Heartbeat.Shared` (HB-BE-07) con los datos locales, así que funciona sin conexión y coincide con el servidor; los umbrales viven en el catálogo, no en la UI.
+
 ### Añadir una pantalla
 
 1. Crear `XxxViewModel : PageViewModel` y registrarlo con `AddTransient` en `ServiceCollectionExtensions`.

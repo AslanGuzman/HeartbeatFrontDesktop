@@ -67,6 +67,119 @@
             <TextBlock Text="{Binding SummaryText}" Style="{StaticResource SecondaryTextStyle}" FontSize="13" Margin="0,0,14,16"
                        AutomationProperties.AutomationId="Summary" />
 
+            <!-- Introducción de 3 pasos la primera vez (HB-FE-01) -->
+            <Border Background="{DynamicResource BrandBlueSoftBrush}" CornerRadius="14" Padding="18,14" Margin="0,0,14,16"
+                    Visibility="{Binding Onboarding.IsOpen, Converter={StaticResource BoolToVisibility}}"
+                    AutomationProperties.AutomationId="Onboarding">
+                <StackPanel>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="{loc:Loc onb.skip}" Command="{Binding Onboarding.FinishCommand}"
+                                Style="{StaticResource LinkButtonStyle}" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding Onboarding.ProgressText}" Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding Onboarding.StepTitle}" Style="{StaticResource SectionHeadingStyle}" Margin="0,6,0,0"
+                               AutomationProperties.LiveSetting="Polite" />
+                    <TextBlock Text="{Binding Onboarding.StepBody}" Style="{StaticResource BodyTextStyle}" Margin="0,6,0,12" TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="{loc:Loc onb.back}" Command="{Binding Onboarding.BackCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0"
+                                Visibility="{Binding Onboarding.CanGoBack, Converter={StaticResource BoolToVisibility}}" />
+                        <Button Content="{Binding Onboarding.NextText}" Command="{Binding Onboarding.NextCommand}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Modo simple: un semáforo global y uno por peligro, con su «por qué» (HB-FE-01) -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,14,16" AutomationProperties.AutomationId="SimpleStatus">
+                <StackPanel>
+                    <DockPanel>
+                        <Border DockPanel.Dock="Right" CornerRadius="999" Padding="10,4" VerticalAlignment="Center"
+                                Background="{DynamicResource BrandBlueSoftBrush}" ToolTip="{loc:Loc simple.simulatedTip}"
+                                AutomationProperties.AutomationId="SimulatedLabel">
+                            <TextBlock Text="{loc:Loc simple.simulated}" FontSize="11" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource BrandBlueBrush}" />
+                        </Border>
+                        <Button DockPanel.Dock="Right" Content="{loc:Loc simple.glossary}" Command="{Binding ToggleGlossaryCommand}"
+                                Style="{StaticResource LinkButtonStyle}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <Button DockPanel.Dock="Right" Content="{loc:Loc simple.showIntro}" Command="{Binding Onboarding.ShowCommand}"
+                                Style="{StaticResource LinkButtonStyle}" VerticalAlignment="Center" Margin="0,0,14,0" />
+                        <TextBlock Text="{loc:Loc simple.heading}" Style="{StaticResource SectionHeadingStyle}" VerticalAlignment="Center" />
+                    </DockPanel>
+                    <TextBlock Text="{loc:Loc simple.subtitle}" Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,14" TextWrapping="Wrap" />
+
+                    <!-- Semáforo global -->
+                    <Border CornerRadius="14" Padding="16,12" Margin="0,0,0,14"
+                            Background="{Binding Simple.GlobalStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="34" Height="34" VerticalAlignment="Center"
+                                     Fill="{Binding Simple.GlobalStatus, Converter={StaticResource StatusToBrush}}" />
+                            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                <TextBlock FontSize="12" FontWeight="SemiBold"
+                                           Foreground="{Binding Simple.GlobalStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}">
+                                    <Run Text="{loc:Loc simple.overall}" /><Run Text=" · " /><Run Text="{Binding Simple.GlobalStatusText, Mode=OneWay}" />
+                                </TextBlock>
+                                <TextBlock Text="{Binding Simple.Headline}" FontSize="20" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           AutomationProperties.AutomationId="GlobalHeadline" />
+                                <TextBlock Text="{Binding Simple.GlobalWhy}" Style="{StaticResource BodyTextStyle}" FontSize="13" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Un semáforo por peligro -->
+                    <ItemsControl ItemsSource="{Binding Simple.Hazards}" AutomationProperties.Name="{loc:Loc simple.hazardsAria}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="215" Margin="0,0,12,12" Padding="14,12" CornerRadius="12" BorderThickness="1" ToolTip="{Binding Detail}"
+                                        BorderBrush="{DynamicResource InputBorderBrush}" Background="{DynamicResource SurfaceRaisedBrush}">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Ellipse Width="20" Height="20" VerticalAlignment="Center"
+                                                     Fill="{Binding Status, Converter={StaticResource StatusToBrush}}" />
+                                            <Border CornerRadius="999" Padding="8,3" Margin="10,0,0,0" VerticalAlignment="Center"
+                                                    Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                                                <TextBlock Text="{Binding StatusText}" FontSize="10.5" FontWeight="SemiBold"
+                                                           Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource SectionHeadingStyle}" Margin="0,8,0,0" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Why}" Style="{StaticResource BodyTextStyle}" FontSize="12.5" Margin="0,4,0,0" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Evidence}" Style="{StaticResource CaptionTextStyle}" Margin="0,6,0,0" TextWrapping="Wrap"
+                                                   Visibility="{Binding HasEvidence, Converter={StaticResource BoolToVisibility}}" />
+                                        <TextBlock Text="{Binding SourceText}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,0" TextWrapping="Wrap"
+                                                   Visibility="{Binding HasSource, Converter={StaticResource BoolToVisibility}}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ContentControl>
+
+            <!-- Glosario corto -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,14,16" AutomationProperties.AutomationId="Glossary"
+                            Visibility="{Binding IsGlossaryOpen, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <TextBlock Text="{loc:Loc gloss.heading}" Style="{StaticResource SectionHeadingStyle}" />
+                    <TextBlock Text="{loc:Loc gloss.hint}" Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,12" />
+                    <ItemsControl ItemsSource="{Binding GlossaryTerms}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,0,0,10">
+                                    <TextBlock Text="{Binding Term}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding Meaning}" Style="{StaticResource BodyTextStyle}" FontSize="12.5" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ContentControl>
+
             <!-- Aviso destacado cuando hay indicadores críticos (MR-06) -->
             <Border Background="{DynamicResource BrandRedBrush}" CornerRadius="14" Padding="18,12" Margin="0,0,14,16"
                     Visibility="{Binding HasCritical, Converter={StaticResource BoolToVisibility}}">

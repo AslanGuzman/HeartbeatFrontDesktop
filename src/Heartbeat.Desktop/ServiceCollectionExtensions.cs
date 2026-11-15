@@ -37,6 +37,9 @@ public static class ServiceCollectionExtensions
         // Recordatorio diario de check-up (P2-REMIND): horario guardado en el equipo y aviso de Windows.
         services.AddSingleton<ICheckUpReminderSettingsStore, FileCheckUpReminderSettingsStore>();
         services.AddSingleton<ICheckUpNotification, WindowsCheckUpNotification>();
+
+        // Introducción de 3 pasos de la primera vez (HB-FE-01).
+        services.AddSingleton<IOnboardingStore, FileOnboardingStore>();
         services.AddSingleton<CheckUpReminder>();
         services.AddHostedService<CheckUpReminderService>();
 

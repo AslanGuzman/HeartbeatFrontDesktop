@@ -131,6 +131,15 @@ internal sealed class FakeReminderSettings(CheckUpReminderSettings settings) : I
     public void Save(CheckUpReminderSettings value) => Settings = value;
 }
 
+internal sealed class FakeOnboardingStore : IOnboardingStore
+{
+    private readonly HashSet<Guid> _completed = [];
+
+    public bool IsCompleted(Guid astronautId) => _completed.Contains(astronautId);
+
+    public void MarkCompleted(Guid astronautId) => _completed.Add(astronautId);
+}
+
 internal sealed class FakeCheckUpNotification : ICheckUpNotification
 {
     public int Shown { get; private set; }
