@@ -10,7 +10,7 @@
              Style="{StaticResource PageViewStyle}">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel MaxWidth="980" HorizontalAlignment="Left" Margin="0,0,14,0">
+        <StackPanel MaxWidth="980" HorizontalAlignment="Center">
             <TextBlock Text="{loc:Loc profile.heading}" Style="{StaticResource TitleTextStyle}" />
             <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,18"
                        Text="{loc:Loc profile.intro}" />

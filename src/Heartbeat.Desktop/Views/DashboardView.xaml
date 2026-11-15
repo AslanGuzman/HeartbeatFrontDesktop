@@ -38,7 +38,7 @@
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel>
+        <StackPanel MaxWidth="1200" HorizontalAlignment="Center">
             <!-- Encabezado: saludo, estado general y botón de nuevo check-up -->
             <DockPanel Margin="0,0,14,6">
                 <Button DockPanel.Dock="Right" Command="{Binding NewCheckUpCommand}" VerticalAlignment="Center"

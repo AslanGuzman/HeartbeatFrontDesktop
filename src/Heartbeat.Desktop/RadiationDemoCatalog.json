@@ -1,0 +1,19 @@
+{
+  "limitMsv": 600,
+  "limitStatus": "heuristic",
+  "limitSource": "https://www.asc-csa.gc.ca/eng/astronauts/space-medicine/radiation.asp",
+  "percentFormula": "totalMsv / limitMsv * 100",
+  "timelineStatus": "heuristic",
+  "timelineSource": "https://www.asc-csa.gc.ca/eng/astronauts/space-medicine/radiation.asp",
+  "timeline": [
+    { "daysAgo": 28, "doseMsv": 8.4, "rateMsvPerDay": 0.3, "type": "gcr" },
+    { "daysAgo": 20, "doseMsv": 11.2, "rateMsvPerDay": 0.4, "type": "belt" },
+    { "daysAgo": 12, "doseMsv": 7.8, "rateMsvPerDay": 0.3, "type": "gcr" },
+    { "daysAgo": 4, "doseMsv": 18.6, "rateMsvPerDay": 0.8, "type": "spe" }
+  ],
+  "speAlert": {
+    "active": true,
+    "status": "heuristic",
+    "source": "https://www.asc-csa.gc.ca/eng/astronauts/space-medicine/radiation.asp"
+  }
+}

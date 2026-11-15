@@ -28,6 +28,10 @@
     <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="RadiationDemoCatalog.json" />
+  </ItemGroup>
+
   <!-- UseWindowsForms agrega estos using globales y chocan con los tipos de WPF; solo se usan con nombre completo. -->
   <ItemGroup>
     <Using Remove="System.Drawing" />
