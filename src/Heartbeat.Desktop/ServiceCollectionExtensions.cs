@@ -7,6 +7,7 @@ using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
 using Heartbeat.Desktop.Services.Profile;
+using Heartbeat.Desktop.Services.Sync;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Views;
 using Heartbeat.Shared;
@@ -52,23 +53,26 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDeviceIdProvider, FileDeviceIdProvider>();
         services.AddSingleton<IAuthService, AuthService>();
 
-        // Reglas de evaluación compartidas con el backend (Heartbeat.Shared).
-        services.AddSingleton<IHealthEvaluator, HealthEvaluator>();
+        // Rangos de referencia: los descargados en una sincronización anterior si son más nuevos, o los embebidos.
+        services.AddSingleton(sp => RangesSource.Load(sp));
 
-        // Check-ups y mensajes se guardan en la base local (#8). Provisional: la sincronización simulada (#32), que se
-        // sustituye registrando el motor real en su lugar.
+        // Reglas de evaluación compartidas con el backend (Heartbeat.Shared).
+        services.AddSingleton<IHealthEvaluator>(sp => new HealthEvaluator(sp.GetRequiredService<RangesSource>().Json));
+
+        // Check-ups y mensajes se guardan en la base local (#8) y el motor de sincronización (#32) los sube.
         services.AddSingleton<IHealthRecordStore, LocalHealthRecordStore>();
         services.AddSingleton<IProfileStore, LocalProfileStore>();
 
-        // Con el servidor real todavía no hay quien envíe lo pendiente (#32): solo se informa, sin fingir un envío.
-        services.AddSingleton<ISyncStatusProvider>(sp => sp.GetRequiredService<CrewApiOptions>().IsDemo
-            ? ActivatorUtilities.CreateInstance<DemoSyncStatusProvider>(sp)
-            : ActivatorUtilities.CreateInstance<PendingOnlySyncStatusProvider>(sp));
+        // Sincronización en segundo plano: servicio hospedado, estado para la barra de estado y petición manual.
+        services.AddSingleton<SyncEngine>();
+        services.AddSingleton<ISyncEngine>(sp => sp.GetRequiredService<SyncEngine>());
+        services.AddSingleton<ISyncStatusProvider>(sp => sp.GetRequiredService<SyncEngine>());
+        services.AddHostedService(sp => sp.GetRequiredService<SyncEngine>());
         services.AddSingleton<IBodyMeasurementStore, DemoBodyMeasurementStore>();
         services.AddTransient<BodyMeasurementsViewModel>();
 
         // Panel de información y fuentes por indicador (DK-INFO).
-        services.AddSingleton<IIndicatorInfoProvider, ReferenceRangesInfoProvider>();
+        services.AddSingleton<IIndicatorInfoProvider>(sp => new ReferenceRangesInfoProvider(sp.GetRequiredService<RangesSource>().Json));
         services.AddSingleton<IUrlLauncher, ShellUrlLauncher>();
         services.AddSingleton<IIndicatorInfoPresenter, IndicatorInfoWindowPresenter>();
         services.AddTransient<IndicatorInfoViewModel>();

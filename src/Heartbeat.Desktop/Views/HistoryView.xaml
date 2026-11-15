@@ -32,8 +32,8 @@
                                         <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
                                     </Border>
-                                    <TextBlock DockPanel.Dock="Right" Text="{Binding SyncText}" Style="{StaticResource CaptionTextStyle}"
-                                               VerticalAlignment="Center" TextWrapping="NoWrap" />
+                                    <TextBlock DockPanel.Dock="Right" Text="{Binding SyncText}" ToolTip="{Binding SyncText}" Style="{StaticResource CaptionTextStyle}"
+                                               VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" MaxWidth="300" />
                                     <TextBlock Text="{Binding DateText}" FontWeight="SemiBold" FontSize="13.5"
                                                Foreground="{DynamicResource TextPrimaryBrush}" Margin="10,0,0,0" VerticalAlignment="Center" />
                                 </DockPanel>

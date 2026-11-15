@@ -10,10 +10,17 @@ namespace Heartbeat.Desktop.Demo;
 /// <summary>
 /// Crew API de mentira para el modo demostración: acepta a ana, luis y mara con la contraseña de demostración y
 /// devuelve perfiles estables (con el mismo Id siempre, a diferencia de <c>FakeCrewApiClient</c>), de modo que los
-/// datos de cada astronauta sobreviven entre sesiones. Responde como el servidor real: 401 si las credenciales fallan.
+/// datos de cada astronauta sobreviven entre sesiones. Responde como el servidor real: 401 si las credenciales
+/// fallan, y en <c>/sync</c> acepta lo recibido (idempotente), aplica la edición de perfil si es más nueva y devuelve
+/// el perfil solo cuando la aplicó. Para poder ver cómo se muestra un rechazo, rechaza los check-ups y mensajes cuyo
+/// texto contiene «[rechazar]».
 /// </summary>
 public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
 {
+    public const string RejectMarker = "[rechazar]";
+
+    private readonly Dictionary<Guid, AstronautProfile> _serverProfiles = [];
+    private readonly HashSet<Guid> _stored = [];
     private AstronautProfile? _profile;
 
     public string? AccessToken { get; private set; }
@@ -37,15 +44,17 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
         }
 
         DateTimeOffset now = clock.GetUtcNow();
-        _profile = new AstronautProfile(
-            account.Id,
-            account.UserName,
-            account.DisplayName,
-            "Demo",
-            new MissionInfo(Guid.Parse("0197c2a0-0000-7000-8000-0000000000ff"), "Artemis Demo 1", "station", now.AddDays(-100)),
-            null,
-            null,
-            now);
+        _profile = _serverProfiles.TryGetValue(account.Id, out AstronautProfile? known)
+            ? known
+            : _serverProfiles[account.Id] = new AstronautProfile(
+                account.Id,
+                account.UserName,
+                account.DisplayName,
+                "Demo",
+                new MissionInfo(Guid.Parse("0197c2a0-0000-7000-8000-0000000000ff"), "Artemis Demo 1", "station", now.AddDays(-100)),
+                null,
+                null,
+                now.AddDays(-30));
 
         SetTokens("demo-access-token", "demo-refresh-token", request.DeviceId);
         return Task.FromResult(new CrewLoginResponse(AccessToken!, now.AddHours(1), RefreshToken!, now.AddDays(14), _profile));
@@ -64,21 +73,52 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
     }
 
     public Task<AstronautProfile> GetMeAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult(_profile ?? throw new InvalidOperationException("Not logged in."));
+        Task.FromResult(_profile is { } mine && _serverProfiles.TryGetValue(mine.Id, out AstronautProfile? current)
+            ? current
+            : throw new InvalidOperationException("Not logged in."));
 
     public Task<string> GetReferenceRangesAsync(CancellationToken cancellationToken = default) =>
         Task.FromResult(ReferenceRanges.Json);
 
     public Task<SyncResponse> SyncAsync(SyncRequest request, CancellationToken cancellationToken = default)
     {
-        List<Guid> accepted = request.CheckUps.Select(c => c.Id).Concat(request.Messages.Select(m => m.Id)).ToList();
-        return Task.FromResult(new SyncResponse(
-            clock.GetUtcNow(),
-            accepted,
-            [],
-            _profile,
-            new SyncInbound([], []),
-            false));
+        List<Guid> accepted = [];
+        List<SyncRejected> rejected = [];
+
+        foreach (CheckUpDto checkUp in request.CheckUps)
+        {
+            if (checkUp.Note?.Contains(RejectMarker, StringComparison.OrdinalIgnoreCase) == true)
+            {
+                rejected.Add(new SyncRejected(checkUp.Id, "Rechazado por el servidor de demostración (la nota contiene " + RejectMarker + ")."));
+            }
+            else
+            {
+                _stored.Add(checkUp.Id);
+                accepted.Add(checkUp.Id);
+            }
+        }
+
+        foreach (MessageDto message in request.Messages)
+        {
+            if (message.Body.Contains(RejectMarker, StringComparison.OrdinalIgnoreCase))
+            {
+                rejected.Add(new SyncRejected(message.Id, "Rechazado por el servidor de demostración (el mensaje contiene " + RejectMarker + ")."));
+            }
+            else
+            {
+                accepted.Add(message.Id);
+            }
+        }
+
+        // Como el servidor real: el perfil solo vuelve cuando se aplicó la edición (updatedAt estrictamente posterior).
+        AstronautProfile? applied = null;
+        if (request.Profile is { } edit && _profile is { } mine && _serverProfiles.TryGetValue(mine.Id, out AstronautProfile? current) && edit.UpdatedAt > current.UpdatedAt)
+        {
+            applied = _serverProfiles[mine.Id] = current with { DisplayName = edit.DisplayName, CallSign = edit.CallSign, Notes = edit.Notes, UpdatedAt = edit.UpdatedAt };
+            _profile = applied;
+        }
+
+        return Task.FromResult(new SyncResponse(clock.GetUtcNow(), accepted, rejected, applied, new SyncInbound([], []), false));
     }
 
     public Task<Paged<CheckUpDto>> GetCheckUpsAsync(DateTimeOffset? from = null, DateTimeOffset? to = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default) =>

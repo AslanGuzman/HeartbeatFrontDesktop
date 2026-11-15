@@ -66,9 +66,10 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
                 Messages.Add(new MessageRowViewModel(
                     message.IsReport ? $"Reporte de check-up: {message.Subject}{Environment.NewLine}{message.Body}" : message.Body,
                     message.CreatedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
-                    message.SentAt is { } sent
-                        ? string.Create(CultureInfo.CurrentCulture, $"Enviado {sent.ToLocalTime():g}")
-                        : "En cola (sin enlace)",
+                    message.IsRejected ? $"Rechazado: {message.SyncError}"
+                        : message.SentAt is { } sent
+                            ? string.Create(CultureInfo.CurrentCulture, $"Enviado {sent.ToLocalTime():g}")
+                            : "En cola (sin enlace)",
                     message.IsSent));
             }
         }
