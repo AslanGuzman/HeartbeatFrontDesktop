@@ -4,19 +4,60 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             xmlns:views="clr-namespace:Heartbeat.Desktop.Views"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:HistoryViewModel}"
              Style="{StaticResource PageViewStyle}">
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="780" HorizontalAlignment="Left">
-            <TextBlock Text="Historial de check-ups" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
-            <TextBlock Text="Cada check-up guarda sus lecturas (de 1 a 6) con un solo instante." Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,18" />
+            <TextBlock Text="Historial y tendencias" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
+            <TextBlock Text="Una tendencia dice más que una sola lectura. Cada check-up guarda sus lecturas (de 1 a 6) con un solo instante."
+                       Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,16" />
+
+            <!-- Período -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <Button Content="7 días" Style="{StaticResource SegmentButtonStyle}" Margin="0,0,8,0"
+                        Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:HistoryRange.Week}" Tag="{Binding IsWeek}" />
+                <Button Content="30 días" Style="{StaticResource SegmentButtonStyle}" Margin="0,0,8,0"
+                        Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:HistoryRange.Month}" Tag="{Binding IsMonth}" />
+                <Button Content="Toda la misión" Style="{StaticResource SegmentButtonStyle}"
+                        Command="{Binding SelectRangeCommand}" CommandParameter="{x:Static vm:HistoryRange.Mission}" Tag="{Binding IsMission}" />
+            </StackPanel>
+
+            <!-- Gráfica por indicador -->
+            <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,22">
+                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding Metrics}" AutomationProperties.Name="Indicador de la gráfica" Margin="0,0,0,10">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Name}" Style="{StaticResource ChoiceButtonStyle}" Padding="12,6" Margin="0,0,8,8"
+                                        FontSize="12.5" FontWeight="SemiBold"
+                                        Command="{Binding DataContext.SelectMetricCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="{Binding ChartSummary}" Style="{StaticResource SectionHeadingStyle}" Margin="0,0,0,8" />
+                    <views:TrendChart Model="{Binding Chart}" Height="280"
+                                      AutomationProperties.Name="{Binding ChartSummary}" />
+                    <TextBlock Text="Cada punto es una lectura. Los tramos de color son los rangos del indicador: normal, vigilancia y crítico."
+                               Style="{StaticResource CaptionTextStyle}" Margin="0,10,0,0" TextWrapping="Wrap" />
+                </StackPanel>
+            </ContentControl>
+
+            <TextBlock Text="Check-ups del período" Style="{StaticResource SectionHeadingStyle}" Margin="0,0,0,10" />
 
             <!-- Sin check-ups todavía -->
             <ContentControl Style="{StaticResource HoverCardStyle}"
                             Visibility="{Binding HasItems, Converter={StaticResource InverseBoolToVisibility}}">
-                <TextBlock Text="Aún no hay check-ups. Registra el primero desde la sección Check-up." Style="{StaticResource BodyTextStyle}" />
+                <TextBlock Text="{Binding EmptyText}" Style="{StaticResource BodyTextStyle}" />
             </ContentControl>
 
             <ItemsControl ItemsSource="{Binding CheckUps}" AutomationProperties.Name="Check-ups registrados">

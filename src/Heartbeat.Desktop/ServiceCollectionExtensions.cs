@@ -73,6 +73,7 @@ public static class ServiceCollectionExtensions
 
         // Panel de información y fuentes por indicador (DK-INFO).
         services.AddSingleton<IIndicatorInfoProvider>(sp => new ReferenceRangesInfoProvider(sp.GetRequiredService<RangesSource>().Json));
+        services.AddSingleton(sp => IndicatorBands.Parse(sp.GetRequiredService<RangesSource>().Json));
         services.AddSingleton<IUrlLauncher, ShellUrlLauncher>();
         services.AddSingleton<IIndicatorInfoPresenter, IndicatorInfoWindowPresenter>();
         services.AddTransient<IndicatorInfoViewModel>();
