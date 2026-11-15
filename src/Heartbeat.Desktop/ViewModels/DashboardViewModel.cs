@@ -1,5 +1,6 @@
 using System.Globalization;
 
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Heartbeat.Desktop.Converters;
@@ -36,7 +37,8 @@ public sealed partial class DashboardViewModel : PageViewModel
         TimeProvider clock,
         CheckUpReminder reminder,
         IProfileStore profiles,
-        IEnvironmentReadingStore environment)
+        IEnvironmentReadingStore environment,
+        IOnboardingStore? onboarding = null)
     {
         _infoPresenter = infoPresenter;
         _navigation = navigation;
@@ -56,11 +58,20 @@ public sealed partial class DashboardViewModel : PageViewModel
             cards.Add(BuildCard(type, source, reading, info, clock));
         }
 
+        IReadOnlyList<EnvironmentReadingRecord> environmentReadings = user is null ? [] : environment.GetLatest(user.Id);
+        Simple = new SimpleStatusViewModel(
+            checkUps,
+            user is null ? [] : store.GetRadiationDoses(user.Id),
+            environmentReadings,
+            profile?.Profile.Mission.EnvironmentProfile);
+        Onboarding = new OnboardingViewModel(onboarding, user?.Id);
+        GlossaryTerms = Glossary.Terms();
+
         Cards = cards;
         Regions = BuildRegions(cards, info);
         EnvironmentCards = BuildEnvironmentCards(
             profile?.Profile.Mission.EnvironmentProfile,
-            user is null ? [] : environment.GetLatest(user.Id),
+            environmentReadings,
             clock);
         List<HealthStatus> environmentStatuses = EnvironmentCards
             .Where(c => c.HasData && c.Status is not null)
@@ -98,6 +109,20 @@ public sealed partial class DashboardViewModel : PageViewModel
     public override string Title => Loc.T("nav.dashboard");
 
     public string Greeting { get; }
+
+    /// <summary>Modo simple: el semáforo global y uno por peligro, con su «por qué» (HB-FE-01).</summary>
+    public SimpleStatusViewModel Simple { get; }
+
+    /// <summary>Introducción de 3 pasos de la primera vez.</summary>
+    public OnboardingViewModel Onboarding { get; }
+
+    public IReadOnlyList<GlossaryTermViewModel> GlossaryTerms { get; }
+
+    [ObservableProperty]
+    public partial bool IsGlossaryOpen { get; set; }
+
+    [RelayCommand]
+    private void ToggleGlossary() => IsGlossaryOpen = !IsGlossaryOpen;
 
     public string DateText { get; }
 

@@ -25,6 +25,9 @@ internal static class TestContainer
         services.AddSingleton<ICheckUpReminderSettingsStore>(new FakeReminderSettings(CheckUpReminderSettings.Disabled));
         services.AddSingleton<ICheckUpNotification>(new FakeCheckUpNotification());
 
+        // La introducción de la primera vez no lee ni escribe el archivo real.
+        services.AddSingleton<IOnboardingStore>(new FakeOnboardingStore());
+
         // El último registro gana: se sustituye la base de %LOCALAPPDATA% por la temporal.
         services.AddDbContext<LocalDbContext>(o => o.UseSqlite(connectionString));
 
