@@ -68,12 +68,15 @@ public static class ProfileCache
         JsonSerializer.Serialize(new { profile = cached.Profile, pendingEdit = cached.PendingEdit }, Options);
 
     /// <summary>
-    /// Incorpora el perfil que acaba de mandar el servidor. Gana la edición más reciente (CONTRACTS.md §5): si la
-    /// edición pendiente es posterior a la del servidor se conserva; si no, el servidor tiene algo más nuevo y se descarta.
+    /// Incorpora el perfil que acaba de mandar el servidor. Gana siempre la versión más reciente (CONTRACTS.md §5,
+    /// «the newer <c>updatedAt</c> wins»): el perfil de referencia es el más nuevo entre el guardado y el del servidor,
+    /// y la edición pendiente se conserva solo si es posterior a ese perfil de referencia.
     /// </summary>
     public static CachedProfile MergeServerProfile(string? existingJson, AstronautProfile server)
     {
-        UpdateProfileRequest? pending = Read(existingJson)?.PendingEdit;
-        return new CachedProfile(server, pending is not null && pending.UpdatedAt > server.UpdatedAt ? pending : null);
+        CachedProfile? existing = Read(existingJson);
+        AstronautProfile reference = existing is not null && existing.Profile.UpdatedAt > server.UpdatedAt ? existing.Profile : server;
+        UpdateProfileRequest? pending = existing?.PendingEdit;
+        return new CachedProfile(reference, pending is not null && pending.UpdatedAt > reference.UpdatedAt ? pending : null);
     }
 }

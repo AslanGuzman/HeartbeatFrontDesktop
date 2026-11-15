@@ -52,7 +52,7 @@ public sealed class HistoryViewModel : PageViewModel, IDisposable
         checkUp.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
         checkUp.OverallStatus,
         StatusPalette.Name(checkUp.OverallStatus),
-        checkUp.IsSynced ? "Sincronizado" : "Pendiente de sincronizar",
+        checkUp.IsRejected ? $"Rechazado: {checkUp.SyncError}" : checkUp.IsSynced ? "Sincronizado" : "Pendiente de sincronizar",
         checkUp.IsSynced,
         checkUp.Readings
             .Select(r => new ReadingRowViewModel(

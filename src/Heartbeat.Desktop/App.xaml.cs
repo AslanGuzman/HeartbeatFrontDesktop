@@ -39,8 +39,7 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        await _host.StartAsync();
-
+        // La base debe existir antes de arrancar el host: el motor de sincronización (servicio hospedado) la lee al empezar.
         LocalDatabase.Initialize(_host.Services);
 
         // El historial de ejemplo solo se siembra en modo demostración.
@@ -48,6 +47,8 @@ public partial class App : Application
         {
             DemoDataSeeder.Seed(_host.Services);
         }
+
+        await _host.StartAsync();
 
         MainWindow window = _host.Services.GetRequiredService<MainWindow>();
         this.MainWindow = window;

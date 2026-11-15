@@ -23,6 +23,12 @@ public sealed class CheckUpRecord(Guid id, DateTimeOffset recordedAt, HealthStat
     public DateTimeOffset? SyncedAt { get; internal set; }
 
     public bool IsSynced => SyncedAt is not null;
+
+    /// <summary>El servidor lo rechazó (ver <see cref="SyncError"/>); no se reintenta.</summary>
+    public bool IsRejected { get; internal set; }
+
+    /// <summary>Motivo del rechazo que dio el servidor.</summary>
+    public string? SyncError { get; internal set; }
 }
 
 /// <summary>Mensaje a control de misión (MR-11).</summary>
@@ -45,6 +51,11 @@ public sealed class MessageRecord(Guid id, string body, DateTimeOffset createdAt
     public DateTimeOffset? SentAt { get; internal set; }
 
     public bool IsSent => SentAt is not null;
+
+    /// <summary>El servidor lo rechazó (ver <see cref="SyncError"/>); no se reintenta.</summary>
+    public bool IsRejected { get; internal set; }
+
+    public string? SyncError { get; internal set; }
 }
 
 /// <summary>Una dosis de radiacion registrada, en milisieverts (NR-07).</summary>
@@ -61,6 +72,12 @@ public interface IHealthRecordStore
 {
     /// <summary>Elementos (check-ups y mensajes) que aún no han salido hacia el servidor.</summary>
     int PendingCount { get; }
+
+    /// <summary>Check-ups y mensajes pendientes de un astronauta.</summary>
+    int GetPendingCount(Guid astronautId);
+
+    /// <summary>Check-ups y mensajes de un astronauta que el servidor rechazó.</summary>
+    int GetRejectedCount(Guid astronautId);
 
     /// <summary>Último momento en que algo se sincronizó, o <c>null</c> si nunca.</summary>
     DateTimeOffset? LastSyncedAt { get; }
@@ -86,6 +103,12 @@ public interface IHealthRecordStore
 
     /// <summary>Marca como enviado todo lo pendiente. Devuelve cuántos elementos se enviaron.</summary>
     int MarkAllSynced(DateTimeOffset at);
+
+    /// <summary>
+    /// Avisa de que los datos cambiaron por fuera del almacén (el motor de sincronización marcó elementos como enviados o
+    /// rechazados, o guardó mensajes entrantes), para que las pantallas abiertas se actualicen.
+    /// </summary>
+    void NotifyChanged();
 
     /// <summary>Dosis de radiacion del usuario, de la mas reciente a la mas antigua.</summary>
     IReadOnlyList<RadiationDoseRecord> GetRadiationDoses(Guid astronautId);

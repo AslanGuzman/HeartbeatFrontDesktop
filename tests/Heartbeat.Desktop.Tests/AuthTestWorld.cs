@@ -8,7 +8,6 @@ using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
 using Heartbeat.Shared;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -55,11 +54,47 @@ internal sealed class ScriptedCrewApiClient : ICrewApiClient
 
     public Task<TokenResponse> RefreshAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
-    public Task<AstronautProfile> GetMeAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    // ---- /sync, /me y /reference-ranges: lo que cada prueba ordene (por defecto, el servidor acepta todo) ----
 
-    public Task<string> GetReferenceRangesAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public List<SyncRequest> Syncs { get; } = [];
 
-    public Task<SyncResponse> SyncAsync(SyncRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+    public int GetMeCalls { get; private set; }
+
+    public int GetRangesCalls { get; private set; }
+
+    /// <summary>Decide la respuesta de <c>/sync</c> (puede lanzar para simular un fallo). Por defecto acepta todo.</summary>
+    public Func<SyncRequest, Task<SyncResponse>>? OnSyncAsync { get; set; }
+
+    public Func<AstronautProfile>? OnGetMe { get; set; }
+
+    public Func<string>? OnGetRanges { get; set; }
+
+    public Task<SyncResponse> SyncAsync(SyncRequest request, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Syncs.Add(request);
+        return OnSyncAsync is { } custom ? custom(request) : Task.FromResult(AcceptAll(request));
+    }
+
+    public static SyncResponse AcceptAll(SyncRequest request, DateTimeOffset? serverTime = null, AstronautProfile? profile = null, bool rangesUpdate = false, SyncInbound? inbound = null) =>
+        new(serverTime ?? TestWorld.Now,
+            request.CheckUps.Select(c => c.Id).Concat(request.Messages.Select(m => m.Id)).Concat((request.RadiationDoses ?? []).Select(d => d.Id)).ToList(),
+            [],
+            profile,
+            inbound ?? new SyncInbound([], []),
+            rangesUpdate);
+
+    public Task<AstronautProfile> GetMeAsync(CancellationToken cancellationToken = default)
+    {
+        GetMeCalls++;
+        return Task.FromResult(OnGetMe?.Invoke() ?? throw new HttpRequestException("sin guion"));
+    }
+
+    public Task<string> GetReferenceRangesAsync(CancellationToken cancellationToken = default)
+    {
+        GetRangesCalls++;
+        return Task.FromResult(OnGetRanges?.Invoke() ?? throw new HttpRequestException("sin guion"));
+    }
 
     public Task<Paged<CheckUpDto>> GetCheckUpsAsync(DateTimeOffset? from = null, DateTimeOffset? to = null, int page = 1, int pageSize = 50, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
@@ -85,11 +120,10 @@ internal sealed class ReversingProtector : ITokenProtector
 /// <summary>El servicio de acceso montado sobre una base SQLite en memoria, sin servidor ni DPAPI.</summary>
 internal sealed class AuthTestWorld : IDisposable
 {
-    private readonly SqliteConnection _connection = new("Data Source=:memory:");
+    private readonly TestDatabase _database = new();
 
     public AuthTestWorld(bool online = true)
     {
-        _connection.Open();
         Clock = new FixedTimeProvider(TestWorld.Now);
         Api = new ScriptedCrewApiClient();
         Connectivity = new FakeConnectivityService(online);
@@ -99,13 +133,8 @@ internal sealed class AuthTestWorld : IDisposable
         ServiceCollection services = new();
         services.AddSingleton<TimeProvider>(Clock);
         services.AddSingleton<IHealthEvaluator>(new HealthEvaluator());
-        services.AddDbContext<LocalDbContext>(o => o.UseSqlite(_connection));
+        services.AddDbContext<LocalDbContext>(o => o.UseSqlite(_database.ConnectionString));
         Services = services.BuildServiceProvider();
-        using (IServiceScope scope = Services.CreateScope())
-        {
-            scope.ServiceProvider.GetRequiredService<LocalDbContext>().Database.EnsureCreated();
-        }
-
         Auth = new AuthService(Api, Connectivity, Session, Services.GetRequiredService<IServiceScopeFactory>(), Protector, new FixedDeviceId("equipo-1"), Clock);
     }
 
@@ -156,7 +185,7 @@ internal sealed class AuthTestWorld : IDisposable
     public void Dispose()
     {
         Services.Dispose();
-        _connection.Dispose();
+        _database.Dispose();
     }
 
     public static string Utf8(byte[] bytes) => Encoding.UTF8.GetString(bytes);

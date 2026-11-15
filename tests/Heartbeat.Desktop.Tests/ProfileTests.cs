@@ -97,6 +97,18 @@ public sealed class ProfileCacheTests
     }
 
     [Fact]
+    public void A_server_profile_older_than_the_saved_reference_does_not_overwrite_it()
+    {
+        string json = ProfileCache.Write(new CachedProfile(Server with { DisplayName = "Ya sincronizada", UpdatedAt = Edit.UpdatedAt }, null));
+        AstronautProfile staleServer = Server with { DisplayName = "Vieja del servidor", UpdatedAt = Edit.UpdatedAt.AddDays(-3) };
+
+        CachedProfile merged = ProfileCache.MergeServerProfile(json, staleServer);
+
+        Assert.Equal("Ya sincronizada", merged.Profile.DisplayName);
+        Assert.Null(merged.PendingEdit);
+    }
+
+    [Fact]
     public void Without_a_saved_profile_the_server_one_is_used_as_is()
     {
         CachedProfile merged = ProfileCache.MergeServerProfile(null, Server);
@@ -656,7 +668,7 @@ public sealed class SessionUpdateTests
     }
 }
 
-public sealed class SyncStatusProviderTests
+public sealed class InstantSyncTests
 {
     [Fact]
     public void The_demo_sync_counts_profile_edits_as_pending_and_sends_them_when_the_link_returns()
@@ -681,24 +693,5 @@ public sealed class SyncStatusProviderTests
         world.ProfileStore.Save(TestWorld.IdOf("ana"), "Ana R.", null, null);
 
         Assert.Equal(2, world.Sync.PendingCount);
-    }
-
-    [Fact]
-    public void The_real_server_provider_reports_pending_without_flushing_even_when_online()
-    {
-        // Sin la sincronización simulada: así se comporta la app con la Crew API real hasta que exista el motor de sync (#32).
-        TestWorld world = new("ana", online: false, demoSync: false);
-        PendingOnlySyncStatusProvider live = new(world.Store, world.ProfileStore);
-        int changes = 0;
-        live.Changed += (_, _) => changes++;
-
-        world.ProfileStore.Save(TestWorld.IdOf("ana"), "Ana R.", null, null);
-        world.Store.QueueMessage(TestWorld.IdOf("ana"), "hola");
-
-        Assert.Equal(2, live.PendingCount);
-        Assert.Equal(2, changes);
-        world.Connectivity.Set(true);
-        Assert.Equal(2, live.PendingCount);
-        Assert.Equal(world.Store.LastSyncedAt, live.LastSyncAt);
     }
 }

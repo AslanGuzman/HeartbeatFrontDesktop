@@ -48,6 +48,24 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
         }
     }
 
+    public int GetPendingCount(Guid astronautId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+        return db.CheckUps.Count(c => c.AstronautId == astronautId && c.SyncState == SyncState.Pending)
+             + db.Messages.Count(m => m.AstronautId == astronautId && m.Direction == MessageDirection.ToMissionControl && m.SyncState == SyncState.Pending)
+             + db.RadiationDoses.Count(d => d.AstronautId == astronautId && d.SyncState == SyncState.Pending);
+    }
+
+    public int GetRejectedCount(Guid astronautId)
+    {
+        using IServiceScope scope = _scopes.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+        return db.CheckUps.Count(c => c.AstronautId == astronautId && c.SyncState == SyncState.Rejected)
+             + db.Messages.Count(m => m.AstronautId == astronautId && m.Direction == MessageDirection.ToMissionControl && m.SyncState == SyncState.Rejected)
+             + db.RadiationDoses.Count(d => d.AstronautId == astronautId && d.SyncState == SyncState.Rejected);
+    }
+
     public DateTimeOffset? LastSyncedAt
     {
         get
@@ -89,6 +107,8 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
             .Select(m => new MessageRecord(m.Id, m.Body, m.CreatedAt, m.Kind == MessageKind.Report ? m.CheckUpId : null, m.Subject)
             {
                 SentAt = m.SyncState == SyncState.Synced ? m.ReceivedAt : null,
+                IsRejected = m.SyncState == SyncState.Rejected,
+                SyncError = m.SyncError,
             })
             .ToList();
     }
@@ -350,6 +370,8 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
         return new CheckUpRecord(entity.Id, entity.RecordedAt, entity.OverallStatus, readings, entity.Note)
         {
             SyncedAt = entity.SyncState == SyncState.Synced ? entity.ReceivedAt : null,
+            IsRejected = entity.SyncState == SyncState.Rejected,
+            SyncError = entity.SyncError,
         };
     }
 
@@ -358,6 +380,8 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
         string firstLine = body.Split('\n', 2)[0].Trim();
         return firstLine.Length <= MaxSubjectLength ? firstLine : firstLine[..(MaxSubjectLength - 1)] + "…";
     }
+
+    public void NotifyChanged() => RaiseChanged();
 
     private void RaiseChanged()
     {

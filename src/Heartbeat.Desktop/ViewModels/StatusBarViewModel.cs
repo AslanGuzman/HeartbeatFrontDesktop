@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 using Heartbeat.Desktop.Services;
 
@@ -45,6 +46,31 @@ public sealed partial class StatusBarViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasPending))]
     public partial int PendingCount { get; private set; }
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RejectedText), nameof(HasRejected))]
+    public partial int RejectedCount { get; private set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SyncStateText), nameof(HasSyncState))]
+    public partial bool IsSyncing { get; private set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SyncStateText), nameof(HasSyncState))]
+    public partial string? SyncStatusText { get; private set; }
+
+    /// <summary>«Sincronizando…» mientras corre, o el aviso del último intento («Sin respuesta del servidor…»); vacío si todo va bien.</summary>
+    public string SyncStateText => IsSyncing ? "Sincronizando…" : SyncStatusText ?? string.Empty;
+
+    public bool HasSyncState => SyncStateText.Length > 0;
+
+    public string RejectedText => RejectedCount == 1 ? "1 rechazado" : $"{RejectedCount} rechazados";
+
+    public bool HasRejected => RejectedCount > 0;
+
+    /// <summary>Pide una sincronización ahora sin esperar a los 60 s.</summary>
+    [RelayCommand]
+    private void SyncNow() => _syncStatus.SyncNow();
+
     public string ConnectionText => IsOnline ? "En línea" : "Sin conexión";
 
     public string LastSyncText => LastSyncAt is { } at
@@ -72,5 +98,8 @@ public sealed partial class StatusBarViewModel : ObservableObject
         IsOnline = _connectivity.IsOnline;
         LastSyncAt = _syncStatus.LastSyncAt;
         PendingCount = _syncStatus.PendingCount;
+        RejectedCount = _syncStatus.RejectedCount;
+        IsSyncing = _syncStatus.IsSyncing;
+        SyncStatusText = _syncStatus.StatusText;
     }
 }
