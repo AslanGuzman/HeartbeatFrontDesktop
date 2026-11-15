@@ -35,6 +35,27 @@ public static class LocalDatabase
         db.Database.EnsureCreated();
 
         AddMissingColumns(db);
+        AddMissingTables(db);
+    }
+
+    // EnsureCreated tampoco crea tablas nuevas en una base que ya existe: las bases anteriores a #51 no tienen RadiationDoses.
+    // El SQL replica lo que EF crea para una base nueva.
+    private static void AddMissingTables(LocalDbContext db)
+    {
+        db.Database.ExecuteSqlRaw(
+            "CREATE TABLE IF NOT EXISTS RadiationDoses (" +
+            "Id TEXT NOT NULL CONSTRAINT PK_RadiationDoses PRIMARY KEY, " +
+            "AstronautId TEXT NOT NULL, " +
+            "RecordedAt TEXT NOT NULL, " +
+            "ReceivedAt TEXT NULL, " +
+            "DoseMsv TEXT NOT NULL, " +
+            "Note TEXT NULL, " +
+            "SyncState TEXT NOT NULL, " +
+            "SyncError TEXT NULL)");
+        db.Database.ExecuteSqlRaw(
+            "CREATE INDEX IF NOT EXISTS IX_RadiationDoses_AstronautId_RecordedAt ON RadiationDoses (AstronautId, RecordedAt)");
+        db.Database.ExecuteSqlRaw(
+            "CREATE INDEX IF NOT EXISTS IX_RadiationDoses_AstronautId_SyncState ON RadiationDoses (AstronautId, SyncState)");
     }
 
     // EnsureCreated no altera tablas que ya existen: las bases creadas antes de #9 no tienen Source ni DeviceId.
