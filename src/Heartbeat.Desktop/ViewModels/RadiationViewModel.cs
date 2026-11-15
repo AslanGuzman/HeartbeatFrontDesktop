@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -40,7 +41,7 @@ public sealed partial class RadiationViewModel : PageViewModel, IDisposable
         _store.Changed += OnStoreChanged;
     }
 
-    public override string Title => "Radiación";
+    public override string Title => Loc.T("nav.radiation");
 
     [ObservableProperty]
     public partial string DoseText { get; set; }
@@ -76,19 +77,19 @@ public sealed partial class RadiationViewModel : PageViewModel, IDisposable
 
         if (!TryParseDose(DoseText, out decimal dose))
         {
-            Error = "Escribe la dosis en mSv, por ejemplo 0.42.";
+            Error = Loc.T("rad.err.dose");
             return;
         }
 
         if (dose <= 0)
         {
-            Error = "La dosis debe ser mayor que 0 mSv.";
+            Error = Loc.T("rad.err.positive");
             return;
         }
 
         if (dose > RadiationDoses.MaxEntryMsv)
         {
-            Error = string.Create(CultureInfo.CurrentCulture, $"La dosis no puede superar {RadiationDoses.MaxEntryMsv:0} mSv por registro.");
+            Error = Loc.T("rad.err.max", RadiationDoses.MaxEntryMsv);
             return;
         }
 
@@ -113,7 +114,7 @@ public sealed partial class RadiationViewModel : PageViewModel, IDisposable
     {
         if (!_launcher.TryOpen(_source.Url))
         {
-            Error = "No se pudo abrir el enlace en el navegador.";
+            Error = Loc.T("rad.err.link");
         }
     }
 
@@ -143,8 +144,8 @@ public sealed partial class RadiationViewModel : PageViewModel, IDisposable
                     dose.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
                     dose.Note,
                     dose.SyncedAt is { } synced
-                        ? string.Create(CultureInfo.CurrentCulture, $"Enviada {synced.ToLocalTime():g}")
-                        : "En cola (sin enlace)",
+                        ? Loc.T("rad.sentAt", synced.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+                        : Loc.T("sync.queued"),
                     dose.IsSynced));
             }
         }

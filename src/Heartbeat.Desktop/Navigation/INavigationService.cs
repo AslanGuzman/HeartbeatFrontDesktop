@@ -21,6 +21,14 @@ public interface INavigationService
     /// la actual para no perder lo que el usuario estaba escribiendo.
     /// </summary>
     PageViewModel NavigateTo(Type pageType, Action<PageViewModel>? initialize = null);
+
+    /// <summary>
+    /// Vuelve a crear la página actual con los mismos parámetros (por ejemplo, para que recalcule sus textos al
+    /// cambiar el idioma). La implementación por defecto no hace nada.
+    /// </summary>
+    void Reload()
+    {
+    }
 }
 
 public static class NavigationServiceExtensions

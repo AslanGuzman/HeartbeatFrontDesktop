@@ -4,6 +4,7 @@ using System.Windows.Media;
 
 using Heartbeat.Desktop.Converters;
 using Heartbeat.Desktop.ViewModels;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.Views;
 
@@ -105,7 +106,7 @@ public sealed class TrendChart : FrameworkElement
 
         if (!model.HasData)
         {
-            FormattedText empty = Text("Sin lecturas en este período", Axis, 13, FontWeights.SemiBold);
+            FormattedText empty = Text(Loc.T("chart.empty"), Axis, 13, FontWeights.SemiBold);
             dc.DrawText(empty, new Point(plot.Left + (plot.Width - empty.Width) / 2, plot.Top + (plot.Height - empty.Height) / 2));
             return;
         }

@@ -7,6 +7,7 @@ using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -36,16 +37,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
         NavigationItems =
         [
-            new NavigationItemViewModel("Dashboard", "", typeof(DashboardViewModel)),
-            new NavigationItemViewModel("Check-up", "", typeof(CheckUpViewModel)),
-            new NavigationItemViewModel("Historial", "", typeof(HistoryViewModel)),
-            new NavigationItemViewModel("Mensajes", "", typeof(MessagesViewModel)),
-            new NavigationItemViewModel("Radiaci\u00f3n", "\uE7BA", typeof(RadiationViewModel)),
-            new NavigationItemViewModel("Perfil", "", typeof(ProfileViewModel)),
+            new NavigationItemViewModel("nav.dashboard", "", typeof(DashboardViewModel)),
+            new NavigationItemViewModel("nav.checkUp", "", typeof(CheckUpViewModel)),
+            new NavigationItemViewModel("nav.history", "", typeof(HistoryViewModel)),
+            new NavigationItemViewModel("nav.messages", "", typeof(MessagesViewModel)),
+            new NavigationItemViewModel("nav.radiation", "\uE7BA", typeof(RadiationViewModel)),
+            new NavigationItemViewModel("nav.profile", "", typeof(ProfileViewModel)),
         ];
 
         _navigation.CurrentPageChanged += OnCurrentPageChanged;
         _session.Changed += OnSessionChanged;
+        Loc.Manager.LanguageChanged += OnLanguageChanged;
         SyncWithNavigation();
     }
 
@@ -63,7 +65,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     public string CurrentUserName => _session.CurrentUser?.DisplayName ?? string.Empty;
 
     /// <summary>«Sesión sin conexión» cuando se entró con la cuenta guardada en el equipo; vacío en una sesión en línea.</summary>
-    public string SessionModeText => _session.IsOfflineSession ? "Sesión sin conexión" : string.Empty;
+    public string SessionModeText => _session.IsOfflineSession ? Loc.T("main.sessionOffline") : string.Empty;
 
     /// <summary>Interruptor "Enlace con la Tierra": apagado, la app se comporta como sin conexión.</summary>
     public bool IsLinkEnabled
@@ -81,11 +83,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Texto del botón de idioma: el idioma al que se cambiaría («ES» mientras la app está en inglés).</summary>
+    public string LanguageButtonText => Loc.T("lang.toggleLabel");
+
+    public string LanguageButtonTip => Loc.T("lang.toggleTip");
+
     public void Dispose()
     {
+        Loc.Manager.LanguageChanged -= OnLanguageChanged;
         _navigation.CurrentPageChanged -= OnCurrentPageChanged;
         _session.Changed -= OnSessionChanged;
     }
+
+    /// <summary>Alterna entre inglés y español; todas las pantallas recalculan sus textos.</summary>
+    [RelayCommand]
+    private void ToggleLanguage() => Loc.Manager.Toggle();
 
     [RelayCommand]
     private void Navigate(NavigationItemViewModel item) => _navigation.NavigateTo(item.PageType);
@@ -102,6 +114,30 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     private void OnCurrentPageChanged(object? sender, EventArgs e) => SyncWithNavigation();
+
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        foreach (NavigationItemViewModel item in NavigationItems)
+        {
+            item.RefreshLanguage();
+        }
+
+        StatusBar.RefreshLanguage();
+        OnPropertyChanged(nameof(DisclaimerText));
+        OnPropertyChanged(nameof(SessionModeText));
+        OnPropertyChanged(nameof(LanguageButtonText));
+        OnPropertyChanged(nameof(LanguageButtonTip));
+
+        // Los textos de cada pantalla se calculan al crearla: se recrea, salvo las que guardan lo que el usuario escribe.
+        if (CurrentPage is { RebuildsOnLanguageChange: false } page)
+        {
+            page.RefreshLanguage();
+        }
+        else
+        {
+            _navigation.Reload();
+        }
+    }
 
     private void OnSessionChanged(object? sender, EventArgs e)
     {

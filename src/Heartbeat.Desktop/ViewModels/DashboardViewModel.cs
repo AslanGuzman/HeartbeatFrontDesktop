@@ -7,6 +7,7 @@ using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -45,15 +46,15 @@ public sealed partial class DashboardViewModel : PageViewModel
 
         Cards = cards;
         Regions = BuildRegions(cards, info);
-        Greeting = user is null ? "Hola" : $"Hola, {user.FirstName}";
-        DateText = clock.GetLocalNow().ToString("dddd, d 'de' MMMM", CultureInfo.CurrentCulture);
+        Greeting = user is null ? Loc.T("dash.greeting") : Loc.T("dash.greetingName", user.FirstName);
+        DateText = clock.GetLocalNow().ToString(Loc.T("dash.dateFormat"), Loc.Culture);
 
         List<IndicatorCardViewModel> withData = cards.Where(c => c.HasData).ToList();
         HasData = withData.Count > 0;
         OverallStatus = HasData ? withData.Max(c => c.Status) : null;
         OverallText = OverallStatus is { } overall
-            ? $"Estado general: {StatusPalette.Name(overall)}"
-            : "Sin mediciones todavía";
+            ? Loc.T("status.overall", StatusPalette.Name(overall))
+            : Loc.T("dash.noMeasurements");
 
         int watch = withData.Count(c => c.Status == HealthStatus.Watch);
         int critical = withData.Count(c => c.Status == HealthStatus.Critical);
@@ -63,7 +64,7 @@ public sealed partial class DashboardViewModel : PageViewModel
         HasCritical = critical > 0;
     }
 
-    public override string Title => "Dashboard";
+    public override string Title => Loc.T("nav.dashboard");
 
     public string Greeting { get; }
 
@@ -105,16 +106,17 @@ public sealed partial class DashboardViewModel : PageViewModel
     // Trazos de las regiones sobre la figura de 120 × 330 (cabeza, pecho y abdomen).
     private static readonly (string Id, string Name, string Geometry)[] RegionShapes =
     [
-        ("head", "Cabeza", "M60,0 C72,0 80,12 80,28 C80,44 71,56 60,56 C49,56 40,44 40,28 C40,12 48,0 60,0 Z"),
-        ("heart", "Corazón", "M40,66 L80,66 C90,68 96,76 98,92 L98,124 L22,124 L22,92 C24,76 30,68 40,66 Z"),
-        ("abdomen", "Abdomen", "M22,128 L98,128 L96,176 C90,186 30,186 24,176 Z"),
+        ("head", "region.head", "M60,0 C72,0 80,12 80,28 C80,44 71,56 60,56 C49,56 40,44 40,28 C40,12 48,0 60,0 Z"),
+        ("heart", "region.heart", "M40,66 L80,66 C90,68 96,76 98,92 L98,124 L22,124 L22,92 C24,76 30,68 40,66 Z"),
+        ("abdomen", "region.abdomen", "M22,128 L98,128 L96,176 C90,186 30,186 24,176 Z"),
     ];
 
     private static List<BodyRegionViewModel> BuildRegions(List<IndicatorCardViewModel> cards, IIndicatorInfoProvider info)
     {
         List<BodyRegionViewModel> regions = [];
-        foreach ((string id, string name, string geometry) in RegionShapes)
+        foreach ((string id, string nameKey, string geometry) in RegionShapes)
         {
+            string name = Loc.T(nameKey);
             List<IndicatorCardViewModel> members = info.Indicators
                 .Where(i => i.BodyRegion == id)
                 .Select(i => cards.First(c => c.Id == i.Id))
@@ -130,7 +132,7 @@ public sealed partial class DashboardViewModel : PageViewModel
             // El más grave; a igualdad, el primero del contrato.
             IndicatorCardViewModel focus = worst is null ? members[0] : measured.First(c => c.Status == worst);
             string summary = worst is null
-                ? $"{name}: sin mediciones"
+                ? Loc.T("region.noData", name)
                 : $"{name}: {StatusPalette.Name(worst)} · {focus.Name}";
 
             regions.Add(new BodyRegionViewModel(
@@ -160,25 +162,25 @@ public sealed partial class DashboardViewModel : PageViewModel
     {
         if (latest is null)
         {
-            return "Registra tu primer check-up para ver aquí el estado de tus indicadores.";
+            return Loc.T("dash.firstCheckUp");
         }
 
         List<string> parts = [];
         if (critical > 0)
         {
-            parts.Add(critical == 1 ? "1 crítico" : $"{critical} críticos");
+            parts.Add(critical == 1 ? Loc.T("dash.critical.one") : Loc.T("dash.critical.many", critical));
         }
 
         if (watch > 0)
         {
-            parts.Add(watch == 1 ? "1 en vigilancia" : $"{watch} en vigilancia");
+            parts.Add(watch == 1 ? Loc.T("dash.watch.one") : Loc.T("dash.watch.many", watch));
         }
 
         string attention = parts.Count > 0
             ? string.Join(", ", parts)
-            : measured == 6 ? "Todos los indicadores en rango" : $"{measured} de 6 indicadores medidos, todos en rango";
+            : measured == 6 ? Loc.T("dash.allInRange") : Loc.T("dash.someInRange", measured);
 
-        return $"{attention} · Último check-up: {IndicatorPresentation.FormatWhen(latest.RecordedAt, clock)}";
+        return Loc.T("dash.lastCheckUp", attention, IndicatorPresentation.FormatWhen(latest.RecordedAt, clock));
     }
 
     private static IndicatorCardViewModel BuildCard(IndicatorType type, CheckUpRecord? source, ReadingRecord? reading, IIndicatorInfoProvider info, TimeProvider clock)
@@ -191,8 +193,8 @@ public sealed partial class DashboardViewModel : PageViewModel
         if (source is null || reading is null)
         {
             return new IndicatorCardViewModel(
-                id, glyph, name, null, StatusPalette.Name(null), "—", unit, "Sin mediciones",
-                "Registra un check-up para ver el estado de este indicador.", false);
+                id, glyph, name, null, StatusPalette.Name(null), "—", unit, Loc.T("dash.card.none"),
+                Loc.T("dash.card.hint"), false);
         }
 
         return new IndicatorCardViewModel(

@@ -1,6 +1,7 @@
 <UserControl x:Class="Heartbeat.Desktop.Views.CheckUpResultView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Heartbeat.Desktop.Localization"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
@@ -22,7 +23,7 @@
                                    Foreground="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
                     </StackPanel>
                 </Border>
-                <TextBlock Text="Resultado del check-up" Style="{StaticResource TitleTextStyle}" />
+                <TextBlock Text="{loc:Loc result.title}" Style="{StaticResource TitleTextStyle}" />
             </DockPanel>
             <TextBlock Text="{Binding SummaryText}" Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,18" />
 
@@ -36,12 +37,12 @@
                         <TextBlock Text="{Binding Escalation.Title}" FontSize="17" FontWeight="Bold" Foreground="White"
                                    AutomationProperties.LiveSetting="Assertive" />
                         <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="White" FontSize="14">
-                            <Run Text="Contacta a:" FontWeight="SemiBold" />
+                            <Run Text="{loc:Loc result.contact}" FontWeight="SemiBold" />
                             <Run Text="{Binding Escalation.Contact, Mode=OneWay}" FontWeight="Bold" />
                         </TextBlock>
                         <TextBlock Text="{Binding Escalation.Message}" Margin="0,6,0,0" TextWrapping="Wrap" Foreground="White" FontSize="13" />
                         <TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Foreground="#FFE3E3" FontSize="12.5">
-                            <Run Text="Indicadores críticos:" FontWeight="SemiBold" />
+                            <Run Text="{loc:Loc result.criticalIndicators}" FontWeight="SemiBold" />
                             <Run Text="{Binding Escalation.Indicators, Mode=OneWay}" />
                         </TextBlock>
                     </StackPanel>
@@ -60,7 +61,7 @@
             </Border>
 
             <!-- Una tarjeta por lectura: estado y etiqueta con color, y guía si no está en rango (MR-03, MR-04) -->
-            <ItemsControl ItemsSource="{Binding Readings}" AutomationProperties.Name="Lecturas del check-up">
+            <ItemsControl ItemsSource="{Binding Readings}" AutomationProperties.Name="{loc:Loc result.readings}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,12">
@@ -68,7 +69,7 @@
                                 <DockPanel>
                                     <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource IconButtonStyle}"
                                             Command="{Binding DataContext.ShowInfoCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                                            CommandParameter="{Binding Id}" ToolTip="Por qué importa, cómo medirlo y fuentes"
+                                            CommandParameter="{Binding Id}" ToolTip="{loc:Loc info.tooltip}"
                                             AutomationProperties.Name="{Binding Name, StringFormat=Información de {0}}" />
                                     <Border DockPanel.Dock="Right" CornerRadius="999" Padding="12,4" Margin="0,0,8,0" VerticalAlignment="Center"
                                             Background="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
@@ -84,7 +85,7 @@
                                                Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                                 </DockPanel>
 
-                                <TextBlock Text="Dentro del rango de referencia." Margin="0,8,0,0">
+                                <TextBlock Text="{loc:Loc result.inRange}" Margin="0,8,0,0">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock" BasedOn="{StaticResource CaptionTextStyle}">
                                             <Setter Property="Visibility" Value="Collapsed" />
@@ -99,7 +100,7 @@
 
                                 <!-- Guía: qué hacer ahora -->
                                 <StackPanel Margin="0,10,0,0" Visibility="{Binding HasGuidance, Converter={StaticResource BoolToVisibility}}">
-                                    <TextBlock Text="QUÉ HACER" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4" />
+                                    <TextBlock Text="{loc:Loc result.whatToDo}" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,4" />
                                     <ItemsControl ItemsSource="{Binding GuidanceItems}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
@@ -124,10 +125,10 @@
             <!-- Reporte a control de misión -->
             <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,4,0,12">
                 <StackPanel>
-                    <TextBlock Text="Control de misión" Style="{StaticResource SectionHeadingStyle}" />
+                    <TextBlock Text="{loc:Loc mc.name}" Style="{StaticResource SectionHeadingStyle}" />
                     <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,12"
-                               Text="Envía este check-up con su estado y guía a control de misión. Sin enlace queda en cola y sale al reconectar." />
-                    <Button Content="Enviar reporte a control de misión" Command="{Binding SendReportCommand}" HorizontalAlignment="Left" />
+                               Text="{loc:Loc result.sendHint}" />
+                    <Button Content="{loc:Loc result.sendReport}" Command="{Binding SendReportCommand}" HorizontalAlignment="Left" />
                     <TextBlock Text="{Binding ReportText}" Margin="0,10,0,0" FontSize="12.5" FontWeight="SemiBold"
                                Foreground="{DynamicResource BrandBlueBrush}" TextWrapping="Wrap"
                                Visibility="{Binding ReportText, Converter={StaticResource NonEmptyToVisibility}}"
@@ -136,8 +137,8 @@
             </ContentControl>
 
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <Button Content="Nuevo check-up" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding NewCheckUpCommand}" Margin="0,0,10,0" />
-                <Button Content="Ver historial" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ShowHistoryCommand}" />
+                <Button Content="{loc:Loc checkup.new}" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding NewCheckUpCommand}" Margin="0,0,10,0" />
+                <Button Content="{loc:Loc result.viewHistory}" Style="{StaticResource SecondaryButtonStyle}" Command="{Binding ShowHistoryCommand}" />
             </StackPanel>
         </StackPanel>
     </ScrollViewer>

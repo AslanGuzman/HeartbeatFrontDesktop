@@ -1,4 +1,8 @@
 using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Data;
+
+using Heartbeat.Desktop.Localization;
 
 using Heartbeat.Desktop.ViewModels;
 
@@ -22,6 +26,14 @@ public partial class MainWindow : Window
         StateChanged += (_, _) => OnStateChanged();
     }
 
+    /// <summary>Enlaza el texto (tooltip y nombre accesible) del botón Maximizar/Restaurar a una clave de idioma.</summary>
+    private void BindMaximizeText(string key)
+    {
+        var binding = new Binding($"[{key}]") { Source = LocalizationManager.Instance, Mode = BindingMode.OneWay };
+        MaximizeButton.SetBinding(ToolTipProperty, binding);
+        MaximizeButton.SetBinding(AutomationProperties.NameProperty, binding);
+    }
+
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void MaximizeRestore_Click(object sender, RoutedEventArgs e) =>
@@ -35,6 +47,6 @@ public partial class MainWindow : Window
         bool maximized = WindowState == WindowState.Maximized;
         Root.Margin = maximized ? SystemParameters.WindowResizeBorderThickness : new Thickness(0);
         MaximizeButton.Content = maximized ? "" : "";
-        MaximizeButton.ToolTip = maximized ? "Restaurar" : "Maximizar";
+        BindMaximizeText(maximized ? "main.restore" : "main.maximize");
     }
 }

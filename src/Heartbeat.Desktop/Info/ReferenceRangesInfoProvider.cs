@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 
+using Heartbeat.Desktop.Localization;
 using Heartbeat.Shared;
 
 namespace Heartbeat.Desktop.Info;
@@ -15,29 +16,12 @@ namespace Heartbeat.Desktop.Info;
 /// </remarks>
 public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
 {
-    // Los cinco peligros de la salud humana en el espacio según NASA HRP (campo "hazard" del contrato).
-    private static readonly Dictionary<string, string> HazardNames = new(StringComparer.Ordinal)
-    {
-        ["spaceRadiation"] = "Radiación espacial",
-        ["isolationAndConfinement"] = "Aislamiento y confinamiento",
-        ["distanceFromEarth"] = "Distancia de la Tierra",
-        ["gravityFields"] = "Campos de gravedad",
-        ["hostileClosedEnvironment"] = "Entorno cerrado y hostil",
-    };
-
-    // Nombres en español mientras el contrato esté en inglés (AliaJimenez/HeartbeatBackend#79). Si el contrato
-    // ya trae el nombre traducido, borrar este diccionario y usar directamente el campo "name".
-    private static readonly Dictionary<string, string> SpanishNames = new(StringComparer.Ordinal)
-    {
-        ["bloodPressure"] = "Presión arterial",
-        ["heartRate"] = "Frecuencia cardíaca",
-        ["bloodSugar"] = "Glucosa",
-        ["bodyTemperature"] = "Temperatura corporal",
-        ["sleep"] = "Sueño",
-        ["mood"] = "Estado de ánimo",
-    };
-
-    private readonly Dictionary<string, IndicatorInfo> _byId;
+    // El contrato (reference-ranges.json) está en inglés. Los nombres de los indicadores y de los cinco peligros de la
+    // salud humana en el espacio (NASA HRP, campo "hazard") se traducen con las claves "ind.<id>" y "hazard.<id>" de
+    // Localization/Strings.cs; el resto del texto de cada ficha (por qué importa, cómo medirlo, riesgos y fuentes) sale
+    // tal cual del contrato. Cuando el contrato traiga ambos idiomas (AliaJimenez/HeartbeatBackend#79) bastará con leerlos.
+    private readonly Dictionary<AppLanguage, IReadOnlyList<IndicatorInfo>> _indicators = [];
+    private readonly Dictionary<AppLanguage, Dictionary<string, IndicatorInfo>> _byId = [];
 
     public ReferenceRangesInfoProvider()
         : this(ReferenceRanges.Json)
@@ -54,26 +38,29 @@ public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
         RangesVersion = RequiredString(root, "version", "raíz");
         Dictionary<string, InfoSource> sources = ReadSources(root);
 
-        List<IndicatorInfo> indicators = [];
-        foreach (JsonElement indicator in Required(root, "indicators", "raíz").EnumerateArray())
+        foreach (AppLanguage language in Enum.GetValues<AppLanguage>())
         {
-            indicators.Add(ReadIndicator(indicator, sources));
-        }
+            List<IndicatorInfo> indicators = [];
+            foreach (JsonElement indicator in Required(root, "indicators", "raíz").EnumerateArray())
+            {
+                indicators.Add(ReadIndicator(indicator, sources, language));
+            }
 
-        if (indicators.Count == 0)
-        {
-            throw new InvalidDataException("reference-ranges.json no define ningún indicador.");
-        }
+            if (indicators.Count == 0)
+            {
+                throw new InvalidDataException("reference-ranges.json no define ningún indicador.");
+            }
 
-        Indicators = indicators;
-        _byId = indicators.ToDictionary(i => i.Id, StringComparer.Ordinal);
+            _indicators[language] = indicators;
+            _byId[language] = indicators.ToDictionary(i => i.Id, StringComparer.Ordinal);
+        }
     }
 
     public string RangesVersion { get; }
 
-    public IReadOnlyList<IndicatorInfo> Indicators { get; }
+    public IReadOnlyList<IndicatorInfo> Indicators => _indicators[Loc.Language];
 
-    public IndicatorInfo? Find(string id) => id is not null && _byId.TryGetValue(id, out IndicatorInfo? info) ? info : null;
+    public IndicatorInfo? Find(string id) => id is not null && _byId[Loc.Language].TryGetValue(id, out IndicatorInfo? info) ? info : null;
 
     private static Dictionary<string, InfoSource> ReadSources(JsonElement root)
     {
@@ -95,13 +82,13 @@ public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
         return sources;
     }
 
-    private static IndicatorInfo ReadIndicator(JsonElement indicator, Dictionary<string, InfoSource> sources)
+    private static IndicatorInfo ReadIndicator(JsonElement indicator, Dictionary<string, InfoSource> sources, AppLanguage language)
     {
         string id = RequiredString(indicator, "id", "indicador");
         string where = $"indicador '{id}'";
 
         string hazardId = RequiredString(indicator, "hazard", where);
-        string hazardName = HazardNames.GetValueOrDefault(hazardId) ?? hazardId;
+        string hazardName = Translate($"hazard.{hazardId}", language) ?? hazardId;
 
         List<string> howToMeasure = Required(indicator, "howToMeasure", where)
             .EnumerateArray()
@@ -124,7 +111,7 @@ public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
 
         return new IndicatorInfo(
             id,
-            SpanishNames.GetValueOrDefault(id) ?? RequiredString(indicator, "name", where),
+            Translate($"ind.{id}", language) ?? RequiredString(indicator, "name", where),
             RequiredString(indicator, "unit", where),
             hazardName,
             RequiredString(indicator, "whyItMatters", where),
@@ -133,6 +120,10 @@ public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
             indicatorSources,
             RequiredString(indicator, "bodyRegion", where));
     }
+
+    /// <summary>Texto de la clave en ese idioma, o <c>null</c> si no hay traducción (se usa el texto del contrato).</summary>
+    private static string? Translate(string key, AppLanguage language) =>
+        Strings.All.ContainsKey(key) ? Strings.Get(key, language) : null;
 
     private static JsonElement Required(JsonElement element, string property, string where)
     {

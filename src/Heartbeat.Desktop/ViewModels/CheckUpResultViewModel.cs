@@ -8,6 +8,7 @@ using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -71,7 +72,7 @@ public sealed partial class CheckUpResultViewModel : PageViewModel
         SummaryText = string.Empty;
     }
 
-    public override string Title => "Resultado del check-up";
+    public override string Title => Loc.T("result.title");
 
     // El resultado cuelga de Check-up en el menú.
     public override Type? NavigationSection => typeof(CheckUpViewModel);
@@ -119,32 +120,32 @@ public sealed partial class CheckUpResultViewModel : PageViewModel
         OnPropertyChanged(nameof(Readings));
 
         OverallStatus = checkUp.OverallStatus;
-        OverallText = $"Estado general: {StatusPalette.Name(checkUp.OverallStatus)}";
+        OverallText = Loc.T("status.overall", StatusPalette.Name(checkUp.OverallStatus));
         Note = checkUp.Note;
 
-        string count = Readings.Count == 1 ? "1 indicador" : $"{Readings.Count} indicadores";
+        string count = Readings.Count == 1 ? Loc.T("result.count.one") : Loc.T("result.count.many", Readings.Count);
         string when = checkUp.RecordedAt.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
         SummaryText = _connectivity.IsOnline
-            ? $"Guardado a las {when} · {count} · Enviado a control de misión"
-            : $"Guardado a las {when} · {count} · Se sincronizará cuando haya enlace";
+            ? Loc.T("result.saved.sent", when, count)
+            : Loc.T("result.saved.queued", when, count);
 
         List<ResultReadingViewModel> critical = Readings.Where(r => r.Status == HealthStatus.Critical).ToList();
         bool contactOfficer = checkUp.Readings.Any(r => r.Evaluation.Escalation?.Contact == EscalationContact.CrewMedicalOfficer);
         Escalation = critical.Count > 0 && contactOfficer
             ? new EscalationViewModel(
-                "Resultado crítico",
-                "Tu oficial médico de la tripulación",
-                "Avísale ahora. Este resultado queda marcado para los cirujanos de vuelo en tierra y les llegará en la próxima sincronización.",
+                Loc.T("result.critical.title"),
+                Loc.T("result.critical.contact"),
+                Loc.T("result.critical.message"),
                 string.Join(", ", critical.Select(r => r.Name)))
             : null;
         OnPropertyChanged(nameof(HasEscalation));
 
         WatchNotice = Readings.Any(r => r.Status == HealthStatus.Watch)
-            ? "Hay lecturas en vigilancia: vuelve a medirlas en tu próximo check-up. Control de misión verá el resultado tras la próxima sincronización."
+            ? Loc.T("result.watch.message")
             : null;
 
         ReportSent = _store.HasReport(checkUp.Id);
-        ReportText = ReportSent ? "Ya enviaste un reporte de este check-up a control de misión." : null;
+        ReportText = ReportSent ? Loc.T("result.reportAlready") : null;
     }
 
     /// <summary>Envía a control de misión un reporte que adjunta este check-up (MR-11). Sin enlace queda en cola.</summary>
@@ -161,8 +162,8 @@ public sealed partial class CheckUpResultViewModel : PageViewModel
 
         ReportSent = true;
         ReportText = _connectivity.IsOnline
-            ? "Reporte enviado a control de misión."
-            : "Reporte en cola: saldrá hacia control de misión cuando haya enlace.";
+            ? Loc.T("result.reportSent")
+            : Loc.T("result.reportQueued");
     }
 
     private bool CanSendReport() => _checkUp is not null && !ReportSent;

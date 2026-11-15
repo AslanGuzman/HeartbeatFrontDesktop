@@ -19,4 +19,13 @@ public abstract class PageViewModel : ObservableObject
 
     /// <summary>Indica si el menú lateral se muestra con esta pantalla (el login lo oculta).</summary>
     public virtual bool ShowsNavigation => true;
+
+    /// <summary>
+    /// Al cambiar el idioma, la pantalla se vuelve a crear (sus textos se calculan al construirla). Las que no deben
+    /// perder lo que el usuario escribe (el login) devuelven <c>false</c> y recalculan sus textos con <see cref="RefreshLanguage"/>.
+    /// </summary>
+    public virtual bool RebuildsOnLanguageChange => true;
+
+    /// <summary>Vuelve a leer los textos calculados; solo se llama si <see cref="RebuildsOnLanguageChange"/> es <c>false</c>.</summary>
+    public virtual void RefreshLanguage() => OnPropertyChanged(string.Empty);
 }

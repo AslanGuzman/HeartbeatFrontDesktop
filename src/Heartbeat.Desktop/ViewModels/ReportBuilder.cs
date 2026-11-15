@@ -4,6 +4,7 @@ using System.Text;
 using Heartbeat.Desktop.Converters;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -16,7 +17,7 @@ public static class ReportBuilder
     public static string Subject(CheckUpRecord checkUp)
     {
         ArgumentNullException.ThrowIfNull(checkUp);
-        return $"Check-up {checkUp.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)} · {StatusPalette.Name(checkUp.OverallStatus)}";
+        return Loc.T("report.subject", checkUp.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture), StatusPalette.Name(checkUp.OverallStatus));
     }
 
     public static string Body(CheckUpRecord checkUp, IIndicatorInfoProvider info)
@@ -25,7 +26,7 @@ public static class ReportBuilder
         ArgumentNullException.ThrowIfNull(info);
 
         StringBuilder text = new();
-        text.Append(CultureInfo.CurrentCulture, $"Estado general: {StatusPalette.Name(checkUp.OverallStatus)}.");
+        text.Append(Loc.T("report.overall", StatusPalette.Name(checkUp.OverallStatus)));
         foreach (ReadingRecord reading in checkUp.Readings)
         {
             string id = IndicatorPresentation.IdOf(reading.Input.Indicator);
@@ -36,7 +37,7 @@ public static class ReportBuilder
 
         if (!string.IsNullOrWhiteSpace(checkUp.Note))
         {
-            text.Append("\nNota: ").Append(checkUp.Note);
+            text.Append('\n').Append(Loc.T("report.note")).Append(checkUp.Note);
         }
 
         return text.ToString();

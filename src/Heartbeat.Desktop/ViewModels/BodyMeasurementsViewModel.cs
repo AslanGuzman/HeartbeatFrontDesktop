@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -76,7 +77,7 @@ public sealed partial class BodyMetricViewModel : ObservableObject
         {
             > 0 => string.Create(culture, $"▲ +{delta:0.0} cm"),
             < 0 => string.Create(culture, $"▼ {delta:0.0} cm"),
-            _ => "= sin cambios",
+            _ => Loc.T("body.noChange"),
         };
     }
 }
@@ -98,12 +99,12 @@ public sealed partial class BodyMeasurementsViewModel : ObservableObject
         // Aros sobre la figura de 170 px de ancho (la figura ocupa de x = 25 a 145).
         Metrics =
         [
-            new(BodyRegion.Height, "Altura", 100, 250, 0, 0, 0),
-            new(BodyRegion.Neck, "Cuello", 20, 70, 44, 68, 34),
-            new(BodyRegion.Chest, "Pecho", 50, 200, 74, 43, 84),
-            new(BodyRegion.Waist, "Cintura", 40, 200, 128, 50, 70),
-            new(BodyRegion.Thigh, "Muslo", 20, 110, 218, 54, 36),
-            new(BodyRegion.Calf, "Pantorrilla", 15, 70, 278, 59, 26),
+            new(BodyRegion.Height, Loc.T("body.height"), 100, 250, 0, 0, 0),
+            new(BodyRegion.Neck, Loc.T("body.neck"), 20, 70, 44, 68, 34),
+            new(BodyRegion.Chest, Loc.T("body.chest"), 50, 200, 74, 43, 84),
+            new(BodyRegion.Waist, Loc.T("body.waist"), 40, 200, 128, 50, 70),
+            new(BodyRegion.Thigh, Loc.T("body.thigh"), 20, 110, 218, 54, 36),
+            new(BodyRegion.Calf, Loc.T("body.calf"), 15, 70, 278, 59, 26),
         ];
 
         Refresh();
@@ -151,7 +152,7 @@ public sealed partial class BodyMeasurementsViewModel : ObservableObject
 
         if (_session.CurrentUser is not { } user)
         {
-            Error = "Inicia sesión para guardar medidas.";
+            Error = Loc.T("body.err.signIn");
             return;
         }
 
@@ -160,14 +161,14 @@ public sealed partial class BodyMeasurementsViewModel : ObservableObject
         {
             if (!decimal.TryParse(metric.Input.Trim().Replace(',', '.'), NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out decimal value))
             {
-                Error = $"{metric.Name}: escribe un número en centímetros.";
+                Error = Loc.T("body.err.number", metric.Name);
                 Select(metric);
                 return;
             }
 
             if (value < metric.Min || value > metric.Max)
             {
-                Error = string.Create(CultureInfo.CurrentCulture, $"{metric.Name}: el valor debe estar entre {metric.Min:0} y {metric.Max:0} cm.");
+                Error = Loc.T("body.err.range", metric.Name, metric.Min, metric.Max);
                 Select(metric);
                 return;
             }
@@ -177,7 +178,7 @@ public sealed partial class BodyMeasurementsViewModel : ObservableObject
 
         if (values.Count == 0)
         {
-            Error = "Escribe al menos una medida.";
+            Error = Loc.T("body.err.empty");
             return;
         }
 
@@ -188,7 +189,7 @@ public sealed partial class BodyMeasurementsViewModel : ObservableObject
         }
 
         Refresh();
-        SavedText = values.Count == 1 ? "Medida guardada." : $"{values.Count} medidas guardadas.";
+        SavedText = values.Count == 1 ? Loc.T("body.saved.one") : Loc.T("body.saved.many", values.Count);
     }
 
     private void Refresh()

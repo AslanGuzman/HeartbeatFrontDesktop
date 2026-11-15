@@ -5,6 +5,7 @@ using Heartbeat.Desktop.Demo;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -38,15 +39,18 @@ public sealed partial class LoginViewModel : PageViewModel, IDisposable
         _connectivity.IsOnlineChanged += OnConnectivityChanged;
     }
 
-    public override string Title => "Iniciar sesión";
+    public override string Title => Loc.T("login.title");
 
-    public override string? Description => "Entra a tu perfil de astronauta. También funciona sin enlace con la Tierra.";
+    public override string? Description => Loc.T("login.desc");
 
     public override bool ShowsNavigation => false;
 
+    /// <summary>El formulario conserva lo escrito al cambiar el idioma: sus textos son propiedades calculadas.</summary>
+    public override bool RebuildsOnLanguageChange => false;
+
     /// <summary>Texto de ayuda en modo demostración; <c>null</c> con el servidor real.</summary>
     public string? DemoHint => _options.IsDemo
-        ? $"Modo demostración · usuarios: {string.Join(", ", DemoAccounts.All.Select(a => a.UserName))} · contraseña: {DemoAccounts.Password}"
+        ? Loc.T("login.demoHint", string.Join(", ", DemoAccounts.All.Select(a => a.UserName)), DemoAccounts.Password)
         : null;
 
     public bool IsOnline => _connectivity.IsOnline;
@@ -54,7 +58,7 @@ public sealed partial class LoginViewModel : PageViewModel, IDisposable
     /// <summary>Aviso cuando no hay enlace: qué se puede hacer y qué no.</summary>
     public string? OfflineNotice => IsOnline
         ? null
-        : "Sin conexión: solo puedes entrar con una cuenta que ya hayas usado en este equipo. El primer acceso debe ser en línea.";
+        : Loc.T("login.offlineNotice");
 
     [ObservableProperty]
     public partial string Username { get; set; }
@@ -70,7 +74,7 @@ public sealed partial class LoginViewModel : PageViewModel, IDisposable
 
     public bool IsNotBusy => !IsBusy;
 
-    public string SignInText => IsBusy ? "Entrando…" : "Entrar";
+    public string SignInText => IsBusy ? Loc.T("login.signingIn") : Loc.T("login.signIn");
 
     public void Dispose() => _connectivity.IsOnlineChanged -= OnConnectivityChanged;
 
@@ -94,7 +98,7 @@ public sealed partial class LoginViewModel : PageViewModel, IDisposable
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            Error = "No se pudo iniciar sesión por un problema inesperado. Inténtalo de nuevo.";
+            Error = Loc.T("login.err.unexpected");
         }
         finally
         {
