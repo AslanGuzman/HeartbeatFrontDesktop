@@ -64,15 +64,6 @@
                             Click="Assistant_Click"
                             ToolTip="{loc:Loc assistant.open}"
                             AutomationProperties.Name="{loc:Loc assistant.open}" />
-                    <!-- Galaxy Watch 5: FC en vivo (Live/) y resumen de Samsung Health (Salud/), en ventanas aparte -->
-                    <Button Content="&#xE95E;" Style="{StaticResource RailButtonStyle}"
-                            Click="FrecuenciaEnVivo_Click"
-                            ToolTip="FC en vivo"
-                            AutomationProperties.Name="FC en vivo" />
-                    <Button Content="&#xE9D2;" Style="{StaticResource RailButtonStyle}"
-                            Click="ResumenSalud_Click"
-                            ToolTip="Resumen de salud"
-                            AutomationProperties.Name="Resumen de salud" />
                     <Button Content="&#xE946;" Style="{StaticResource RailButtonStyle}"
                             Command="{Binding ShowInfoCommand}"
                             ToolTip="{loc:Loc main.infoSources}"

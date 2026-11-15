@@ -59,7 +59,8 @@ public sealed record ReadingRowViewModel(
     string ValueText,
     HealthStatus Status,
     string StatusText,
-    string Guidance);
+    string Guidance,
+    bool FromWatch = false);
 
 /// <summary>Un check-up del historial con sus lecturas.</summary>
 public sealed record CheckUpRowViewModel(

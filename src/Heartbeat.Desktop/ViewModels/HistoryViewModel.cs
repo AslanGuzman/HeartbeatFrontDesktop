@@ -205,6 +205,7 @@ public sealed partial class HistoryViewModel : PageViewModel, IDisposable
                 IndicatorPresentation.FormatValue(r.Input),
                 r.Evaluation.Status,
                 StatusPalette.Name(r.Evaluation.Status),
-                IndicatorPresentation.GuidanceOf(r.Evaluation)))
+                IndicatorPresentation.GuidanceOf(r.Evaluation),
+                r.FromWatch))
             .ToList());
 }

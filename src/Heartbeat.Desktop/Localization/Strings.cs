@@ -22,6 +22,7 @@ public static partial class Strings
         Dictionary<string, (string En, string Es)> table = new(StringComparer.Ordinal);
         AddCode(table);
         AddViews(table);
+        AddWatch(table);
         AddSimple(table);
         AddVision(table);
         return table;

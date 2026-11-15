@@ -7,7 +7,8 @@ namespace Heartbeat.Desktop.ViewModels;
 public sealed record ChartBand(HealthStatus Status, double From, double To);
 
 /// <summary>Una lectura dibujada: cuándo, cuánto y en qué estado estaba.</summary>
-public sealed record ChartPoint(DateTimeOffset At, double Value, HealthStatus Status);
+/// <param name="FromWatch">La lectura viene del reloj (<c>source = wearable</c>): se dibuja con otro marcador.</param>
+public sealed record ChartPoint(DateTimeOffset At, double Value, HealthStatus Status, bool FromWatch = false);
 
 /// <summary>
 /// Todo lo que necesita dibujar la gráfica de un indicador (NR-02): tramos de color, puntos, ejes y marcas. Es un dato
@@ -26,6 +27,9 @@ public sealed record TrendChartModel(
     DateTimeOffset XMax)
 {
     public bool HasData => Points.Count > 0;
+
+    /// <summary>Hay al menos un punto del reloj: la vista muestra la leyenda del marcador.</summary>
+    public bool HasWatchPoints => Points.Any(p => p.FromWatch);
 
     /// <summary>Gráfica sin lecturas, con el eje del indicador y el período pedidos.</summary>
     public static TrendChartModel Empty { get; } = new(
@@ -62,7 +66,7 @@ public static class TrendChartBuilder
             double? value = reading is null ? null : metric.ValueOf(reading.Input);
             if (value is { } v)
             {
-                points.Add(new ChartPoint(checkUp.RecordedAt, v, metric.StatusOf(v)));
+                points.Add(new ChartPoint(checkUp.RecordedAt, v, metric.StatusOf(v), reading!.FromWatch));
             }
         }
 

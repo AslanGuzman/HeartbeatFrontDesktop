@@ -42,43 +42,17 @@ public partial class MainWindow : Window
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
-    // ===== Galaxy Watch 5 (Live/ y Salud/): ventanas nuevas que se abren desde el rail =====
-
-    private readonly Services.Auth.CrewApiOptions? _liveApiOptions;
-    private readonly Heartbeat.Client.ICrewApiClient? _liveApiClient;
     private readonly IAssistantWindowPresenter? _assistantPresenter;
 
-    /// <summary>Constructor que usa la inyección de dependencias: añade la URL base y el token para las ventanas nuevas.</summary>
     public MainWindow(
         MainWindowViewModel viewModel,
-        Services.Auth.CrewApiOptions apiOptions,
-        Heartbeat.Client.ICrewApiClient apiClient,
         IAssistantWindowPresenter assistantPresenter)
         : this(viewModel)
     {
-        _liveApiOptions = apiOptions;
-        _liveApiClient = apiClient;
         _assistantPresenter = assistantPresenter;
     }
 
     private void Assistant_Click(object sender, RoutedEventArgs e) => _assistantPresenter?.Show(this);
-
-    private void FrecuenciaEnVivo_Click(object sender, RoutedEventArgs e)
-    {
-        var window = _liveApiOptions is null ? new Live.FrecuenciaEnVivoWindow() : new Live.FrecuenciaEnVivoWindow(_liveApiOptions.BaseUrl);
-        window.Owner = this;
-        window.Show();
-    }
-
-    private void ResumenSalud_Click(object sender, RoutedEventArgs e)
-    {
-        var window = _liveApiOptions is null
-            ? new Salud.ResumenSaludWindow()
-            : new Salud.ResumenSaludWindow(_liveApiOptions.BaseUrl, () => _liveApiClient?.AccessToken);
-        window.Owner = this;
-        window.Show();
-    }
-
     // Una ventana sin borde se desborda unos píxeles por cada lado al maximizarla: se compensa con un margen.
     private void OnStateChanged()
     {
