@@ -2,7 +2,14 @@
 
 NASA Space Apps 2026. App WPF de autoevaluación de salud para astronautas (funciona sin conexión y sincroniza con la API cuando hay enlace).
 
-> Herramienta de autoevaluación, no diagnóstico médico.
+> **Datos simulados.** El modo Demo usa datos ficticios para probar los flujos de la aplicación.
+>
+> **Herramienta de apoyo a la decisión; no diagnóstico médico.** Los resultados no sustituyen el criterio de profesionales cualificados.
+>
+> **No es un dispositivo médico ni diagnostica, previene o trata enfermedades.**
+> No uses sus estados, alertas ni umbrales como consejo médico.
+
+Los umbrales y fórmulas son configurables y se mantienen en el catálogo compartido de indicadores, no en la UI. Cada entrada documenta su `source` y el estado de la evidencia (`verified` o `heuristic`). Consulta el catálogo vigente en [HeartbeatBackend](https://github.com/AliaJimenez/HeartbeatBackend/blob/dev/contracts/indicators.catalog.json).
 
 El backend, los contratos y **todos los tickets** viven en [AliaJimenez/HeartbeatBackend](https://github.com/AliaJimenez/HeartbeatBackend). Este repo contiene solo el cliente de escritorio.
 
