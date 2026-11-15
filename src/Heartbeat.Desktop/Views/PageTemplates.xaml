@@ -26,7 +26,7 @@
         <views:MessagesView />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:ProfileViewModel}">
-        <views:ComingSoonView />
+        <views:ProfileView />
     </DataTemplate>
 
 </ResourceDictionary>

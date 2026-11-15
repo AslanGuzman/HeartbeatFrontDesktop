@@ -5,7 +5,10 @@ using System.Text.Json;
 using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
+using Heartbeat.Desktop.Services.Profile;
 using Heartbeat.Shared;
+
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Heartbeat.Desktop.Tests;
 
@@ -67,8 +70,8 @@ public sealed class AuthServiceTests : IDisposable
 
         await _world.Auth.SignInAsync("a.rivera", "clave-1");
 
-        AstronautProfile? cached = JsonSerializer.Deserialize<AstronautProfile>(_world.Accounts().Single().ProfileJson!, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-        Assert.Equal("Ana Rivera", cached!.DisplayName);
+        AstronautProfile cached = ProfileCache.Read(_world.Accounts().Single().ProfileJson)!.Profile;
+        Assert.Equal("Ana Rivera", cached.DisplayName);
         Assert.Equal("Comet", cached.CallSign);
         Assert.Equal(new DateOnly(1988, 3, 12), cached.DateOfBirth);
     }
@@ -445,5 +448,68 @@ public sealed class AuthServiceTests : IDisposable
         Assert.Empty(store.GetMessages(kenjiUser.Id));
         Assert.Equal([62m], store.GetCheckUps(anaUser.Id).Select(c => c.Readings[0].Input.Value));
         Assert.Equal("mensaje de Ana", store.GetMessages(anaUser.Id).Single().Body);
+    }
+
+    // ---- Perfil editado sin conexión ----
+
+    private LocalProfileStore ProfileStore() =>
+        new(_world.Services.GetRequiredService<IServiceScopeFactory>(), _world.Clock, new ImmediateSynchronizationContext());
+
+    [Fact]
+    public async Task A_profile_edit_made_offline_survives_the_next_online_sign_in_if_it_is_newer_than_the_server_profile()
+    {
+        Guid id = _world.ServerAccepts("a.rivera", "clave-1", "Ana Rivera");
+        await _world.Auth.SignInAsync("a.rivera", "clave-1");
+        _world.Auth.SignOut();
+        _world.Clock.Now = TestWorld.Now.AddDays(1);
+        ProfileStore().Save(id, "Ana R.", "Cometa", null);
+        _world.Clock.Now = TestWorld.Now.AddDays(2);
+
+        // El servidor devuelve su perfil, que no ha cambiado desde el primer acceso.
+        SignInResult result = await _world.Auth.SignInAsync("a.rivera", "clave-1");
+
+        Assert.Equal("Ana R.", result.User!.DisplayName);
+        ProfileView view = ProfileStore().Get(id)!;
+        Assert.True(view.HasPendingEdit);
+        Assert.Equal("Cometa", view.Profile.CallSign);
+        Assert.Equal(TestWorld.Now.AddDays(1), ProfileStore().GetPendingEdit(id)!.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task A_newer_profile_from_the_server_replaces_an_older_local_edit()
+    {
+        Guid id = _world.ServerAccepts("a.rivera", "clave-1", "Ana Rivera");
+        await _world.Auth.SignInAsync("a.rivera", "clave-1");
+        _world.Auth.SignOut();
+        ProfileStore().Save(id, "Ana R.", null, null);
+
+        // En tierra cambiaron el nombre después de la edición local (el servidor devuelve un updatedAt posterior).
+        _world.Api.OnLogin = request =>
+        {
+            AstronautProfile newer = new(id, "a.rivera", "Cambiada en tierra", "Comet",
+                new MissionInfo(Guid.NewGuid(), "Artemis Demo 1", "station", TestWorld.Now.AddDays(-30)),
+                null, null, TestWorld.Now.AddHours(5));
+            return new CrewLoginResponse("a", TestWorld.Now.AddHours(1), "r", TestWorld.Now.AddDays(14), newer);
+        };
+
+        SignInResult result = await _world.Auth.SignInAsync("a.rivera", "clave-1");
+
+        Assert.Equal("Cambiada en tierra", result.User!.DisplayName);
+        Assert.False(ProfileStore().Get(id)!.HasPendingEdit);
+    }
+
+    [Fact]
+    public async Task Offline_the_edited_name_is_the_one_shown()
+    {
+        Guid id = _world.ServerAccepts("a.rivera", "clave-1", "Ana Rivera");
+        await _world.Auth.SignInAsync("a.rivera", "clave-1");
+        _world.Auth.SignOut();
+        ProfileStore().Save(id, "Ana R.", null, null);
+        _world.Connectivity.Set(false);
+
+        SignInResult result = await _world.Auth.SignInAsync("a.rivera", "clave-1");
+
+        Assert.Equal("Ana R.", result.User!.DisplayName);
+        Assert.True(result.IsOffline);
     }
 }

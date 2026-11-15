@@ -3,6 +3,7 @@ using Heartbeat.Desktop.Demo;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Services.Profile;
 using Heartbeat.Shared;
 
 using Microsoft.Data.Sqlite;
@@ -17,7 +18,7 @@ internal sealed class TestWorld : IDisposable
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
     public static readonly DateTimeOffset Now = new(2026, 11, 14, 12, 0, 0, TimeSpan.Zero);
 
-    public TestWorld(string? signedInUser = "ana", bool online = true)
+    public TestWorld(string? signedInUser = "ana", bool online = true, bool demoSync = true)
     {
         Clock = new FixedTimeProvider(Now);
         Evaluator = new HealthEvaluator();
@@ -35,12 +36,14 @@ internal sealed class TestWorld : IDisposable
             scope.ServiceProvider.GetRequiredService<LocalDbContext>().Database.EnsureCreated();
         }
 
+        SeedAccounts();
         DemoDataSeeder.Seed(Services);
+        ProfileStore = NewProfileStore(new ImmediateSynchronizationContext());
         Store = NewStore(new ImmediateSynchronizationContext());
         Connectivity = new FakeConnectivityService(online);
         Presenter = new FakeIndicatorInfoPresenter();
         Session = new SessionContext();
-        Sync = new DemoSyncStatusProvider(Store, Connectivity, Clock);
+        Sync = demoSync ? new DemoSyncStatusProvider(Store, ProfileStore, Connectivity, Clock) : null!;
 
         Navigation = new RecordingNavigation(type =>
             type == typeof(CheckUpResultViewModel) ? new CheckUpResultViewModel(Navigation!, Store, Session, Info, Presenter, Connectivity)
@@ -73,6 +76,41 @@ internal sealed class TestWorld : IDisposable
     public ServiceProvider Services { get; }
 
     public LocalHealthRecordStore Store { get; }
+
+    public LocalProfileStore ProfileStore { get; }
+
+    public LocalProfileStore NewProfileStore(SynchronizationContext? ui) =>
+        new(Services.GetRequiredService<IServiceScopeFactory>(), Clock, ui);
+
+    /// <summary>Perfil del servidor tal como quedaría guardado tras el primer acceso en línea de un astronauta de demostración.</summary>
+    public static AstronautProfile ServerProfile(string userName, DateTimeOffset? updatedAt = null)
+    {
+        SessionUser account = DemoAccounts.All.First(a => a.UserName == userName);
+        return new AstronautProfile(
+            account.Id, account.UserName, account.DisplayName, "Comet",
+            new MissionInfo(Guid.Parse("0197c2a0-0000-7000-8000-0000000000ff"), "Artemis Demo 1", "station", Now.AddDays(-100)),
+            new DateOnly(1988, 3, 12), "Alergia a la penicilina", updatedAt ?? Now.AddDays(-10));
+    }
+
+    // Una cuenta local por astronauta de demostración, con su perfil guardado (como tras el primer acceso en línea).
+    private void SeedAccounts()
+    {
+        using IServiceScope scope = Services.CreateScope();
+        LocalDbContext db = scope.ServiceProvider.GetRequiredService<LocalDbContext>();
+        foreach (SessionUser account in DemoAccounts.All)
+        {
+            db.LocalAccounts.Add(new LocalAccount
+            {
+                AstronautId = account.Id,
+                UserName = account.UserName,
+                PasswordHash = "1.AAAA",
+                Salt = "AAAA",
+                ProfileJson = ProfileCache.Write(new CachedProfile(ServerProfile(account.UserName), null)),
+            });
+        }
+
+        db.SaveChanges();
+    }
 
     public static Guid IdOf(string userName) => DemoAccounts.All.First(a => a.UserName == userName).Id;
 

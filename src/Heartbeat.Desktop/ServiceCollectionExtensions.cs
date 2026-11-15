@@ -6,6 +6,7 @@ using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
+using Heartbeat.Desktop.Services.Profile;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Views;
 using Heartbeat.Shared;
@@ -57,7 +58,12 @@ public static class ServiceCollectionExtensions
         // Check-ups y mensajes se guardan en la base local (#8). Provisional: la sincronización simulada (#32), que se
         // sustituye registrando el motor real en su lugar.
         services.AddSingleton<IHealthRecordStore, LocalHealthRecordStore>();
-        services.AddSingleton<ISyncStatusProvider, DemoSyncStatusProvider>();
+        services.AddSingleton<IProfileStore, LocalProfileStore>();
+
+        // Con el servidor real todavía no hay quien envíe lo pendiente (#32): solo se informa, sin fingir un envío.
+        services.AddSingleton<ISyncStatusProvider>(sp => sp.GetRequiredService<CrewApiOptions>().IsDemo
+            ? ActivatorUtilities.CreateInstance<DemoSyncStatusProvider>(sp)
+            : ActivatorUtilities.CreateInstance<PendingOnlySyncStatusProvider>(sp));
         services.AddSingleton<IBodyMeasurementStore, DemoBodyMeasurementStore>();
         services.AddTransient<BodyMeasurementsViewModel>();
 
