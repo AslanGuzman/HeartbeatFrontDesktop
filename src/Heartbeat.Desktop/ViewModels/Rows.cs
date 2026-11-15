@@ -21,6 +21,23 @@ public sealed record IndicatorCardViewModel(
     public bool NeedsAttention => Status is HealthStatus.Watch or HealthStatus.Critical;
 }
 
+/// <summary>Un indicador dentro de una región del cuerpo.</summary>
+public sealed record RegionIndicatorViewModel(string Id, string Name, HealthStatus? Status, string StatusText, string ValueText);
+
+/// <summary>
+/// Una región de la figura humana (NR-04): su color es el peor estado de los indicadores que le corresponden según
+/// <c>bodyRegion</c> del contrato. <c>Geometry</c> es el trazo de la región sobre la figura.
+/// </summary>
+public sealed record BodyRegionViewModel(
+    string Id,
+    string Name,
+    string Geometry,
+    HealthStatus? Status,
+    string StatusText,
+    string SummaryText,
+    string InfoIndicatorId,
+    IReadOnlyList<RegionIndicatorViewModel> Indicators);
+
 /// <summary>Una lectura evaluada (resultado de un check-up o detalle del historial).</summary>
 public sealed record ReadingRowViewModel(
     string Name,

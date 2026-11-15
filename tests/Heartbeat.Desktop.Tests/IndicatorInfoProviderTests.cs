@@ -7,7 +7,7 @@ namespace Heartbeat.Desktop.Tests;
 public sealed class IndicatorInfoProviderTests
 {
     private const string ValidIndicator = """
-        { "id": "heartRate", "name": "Heart rate", "unit": "bpm", "hazard": "gravityFields",
+        { "id": "heartRate", "name": "Heart rate", "unit": "bpm", "hazard": "gravityFields", "bodyRegion": "heart",
           "whyItMatters": "why", "howToMeasure": ["step"], "risks": "risk", "sources": ["s1"] }
         """;
 

@@ -15,4 +15,5 @@ public sealed record IndicatorInfo(
     string WhyItMatters,
     IReadOnlyList<string> HowToMeasure,
     string Risks,
-    IReadOnlyList<InfoSource> Sources);
+    IReadOnlyList<InfoSource> Sources,
+    string BodyRegion = "");

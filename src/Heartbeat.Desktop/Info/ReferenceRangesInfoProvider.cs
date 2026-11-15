@@ -130,7 +130,8 @@ public sealed class ReferenceRangesInfoProvider : IIndicatorInfoProvider
             RequiredString(indicator, "whyItMatters", where),
             howToMeasure,
             RequiredString(indicator, "risks", where),
-            indicatorSources);
+            indicatorSources,
+            RequiredString(indicator, "bodyRegion", where));
     }
 
     private static JsonElement Required(JsonElement element, string property, string where)
