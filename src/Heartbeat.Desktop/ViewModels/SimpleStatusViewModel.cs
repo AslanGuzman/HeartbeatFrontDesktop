@@ -129,23 +129,18 @@ public sealed class SimpleStatusViewModel
         List<EnvironmentReadingStatus> vision = [];
         foreach (EnvironmentReadingRecord record in environment)
         {
-            IndicatorCatalogEntry? entry = IndicatorsCatalog.Find(record.IndicatorId);
-            if (entry is null)
+            EnvironmentReadingStatus? status = EnvironmentStatusFactory.From(record);
+            if (status is null)
             {
                 continue;
             }
 
-            IndicatorBand band = IndicatorsCatalog.Evaluate(entry, record.Value);
-            EnvironmentReadingStatus status = new(
-                record.Id, record.RecordedAt, record.ReceivedAt, entry.Id, entry.Name, record.Value, record.SecondaryValue,
-                entry.Unit, band.Status, band.Label, entry.Status, IndicatorsCatalog.SourceFor(entry), null);
-
-            if (entry.Hazard == Hazard.HostileClosedEnvironment)
+            if (IndicatorsCatalog.Find(status.IndicatorId)?.Hazard == Hazard.HostileClosedEnvironment)
             {
                 habitat.Add(status);
                 withData.Add(Hazard.HostileClosedEnvironment);
             }
-            else if (entry.Id is "iop" or "visualAcuity")
+            else if (VisionAnalysis.IsVisionIndicator(status.IndicatorId))
             {
                 vision.Add(status);
                 withData.Add(Hazard.GravityFields);

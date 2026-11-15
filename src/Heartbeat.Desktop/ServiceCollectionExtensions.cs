@@ -72,6 +72,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IHealthRecordStore, LocalHealthRecordStore>();
         services.AddSingleton<IEnvironmentReadingStore, LocalEnvironmentReadingStore>();
         services.AddSingleton<IProfileStore, LocalProfileStore>();
+        services.AddSingleton<IVisionStore, LocalVisionStore>();
 
         // Sincronización en segundo plano: servicio hospedado, estado para la barra de estado y petición manual.
         services.AddSingleton<SyncEngine>();
@@ -101,6 +102,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<HistoryViewModel>();
         services.AddTransient<MessagesViewModel>();
         services.AddTransient<RadiationViewModel>();
+        services.AddTransient<VisionViewModel>();
         services.AddTransient<ProfileViewModel>();
 
         return services;

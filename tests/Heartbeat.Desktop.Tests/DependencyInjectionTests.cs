@@ -30,6 +30,7 @@ public sealed class DependencyInjectionTests
     [InlineData(typeof(CheckUpViewModel))]
     [InlineData(typeof(HistoryViewModel))]
     [InlineData(typeof(MessagesViewModel))]
+    [InlineData(typeof(VisionViewModel))]
     [InlineData(typeof(ProfileViewModel))]
     public void Every_page_can_be_navigated_to(Type pageType)
     {
