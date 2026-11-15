@@ -79,8 +79,36 @@ public sealed partial class ViewRenderingTests : IDisposable
 
         ServiceCollection services = TestContainer.Services(out _);
         services.AddSingleton<Heartbeat.Desktop.Services.IConnectivityService>(new FakeConnectivityService());
+        // El reloj de verdad se conectaría por red: se sustituye por uno falso con datos de ejemplo.
+        services.AddTransient<Heartbeat.Desktop.Services.Watch.IHeartRateFeed>(_ => new FakeHeartRateFeed());
+        services.AddSingleton<Heartbeat.Desktop.Services.Watch.ISamsungHealthClient>(new FakeSamsungHealthClient(
+            new Heartbeat.Desktop.Services.Watch.SamsungHealthData(
+                new Heartbeat.Desktop.Salud.DailySummaryDto
+                {
+                    Latest = new Heartbeat.Desktop.Salud.LatestValuesDto
+                    {
+                        HeartRate = new Heartbeat.Desktop.Salud.LatestValueDto { Value = 68, MeasuredAt = DateTimeOffset.Now },
+                    },
+                },
+                [new Heartbeat.Desktop.Salud.DailyActivityDto { LocalDate = DateOnly.FromDateTime(DateTime.Now), Steps = 5400 }],
+                [],
+                [new Heartbeat.Desktop.Salud.SyncStatusDto { LastSyncedAt = DateTimeOffset.Now.AddMinutes(-5) }],
+                [])));
+        services.AddSingleton<Heartbeat.Desktop.Services.Watch.ILastWatchReadingStore>(new InMemoryLastWatchStore());
         await using ServiceProvider provider = services.BuildServiceProvider();
         DemoDataSeeder.Seed(provider);
+
+        // Las lecturas de FC del historial de ejemplo pasan a ser del reloj, para ver su marcador en historial y gráfica.
+        using (IServiceScope scope = provider.CreateScope())
+        {
+            Heartbeat.Desktop.Data.LocalDbContext db = scope.ServiceProvider.GetRequiredService<Heartbeat.Desktop.Data.LocalDbContext>();
+            foreach (Heartbeat.Desktop.Data.LocalReading reading in db.Set<Heartbeat.Desktop.Data.LocalReading>().Where(r => r.Indicator == Heartbeat.Shared.IndicatorType.HeartRate))
+            {
+                reading.Source = Heartbeat.Shared.ReadingSource.Wearable;
+            }
+
+            db.SaveChanges();
+        }
         INavigationService navigation = provider.GetRequiredService<INavigationService>();
         MainWindowViewModel viewModel = provider.GetRequiredService<MainWindowViewModel>();
 
@@ -91,7 +119,7 @@ public sealed partial class ViewRenderingTests : IDisposable
         Type[] pages =
         [
             typeof(LoginViewModel), typeof(DashboardViewModel), typeof(CheckUpViewModel), typeof(HistoryViewModel),
-            typeof(MessagesViewModel), typeof(RadiationViewModel), typeof(ProfileViewModel),
+            typeof(MessagesViewModel), typeof(RadiationViewModel), typeof(WatchViewModel), typeof(ProfileViewModel),
         ];
 
         FrameworkElement root = WpfHost.Run(() =>
@@ -117,6 +145,16 @@ public sealed partial class ViewRenderingTests : IDisposable
             Assert.Contains("Link to Earth", texts);
             Assert.Contains("ES", texts);
             RenderIfRequested(root, $"en-{page.Name}");
+            if (page == typeof(WatchViewModel))
+            {
+                // La pestaña de Samsung Health del reloj.
+                Assert.Contains("Watch data, not clinically validated", texts);
+                WpfHost.Run(() => { ((WatchViewModel)navigation.CurrentPage!).ShowHealthCommand.Execute(null); return 0; });
+                List<string> health = Show(root, navigation, page);
+                AssertLanguage(health, AppLanguage.English, page);
+                RenderIfRequested(root, "en-WatchHealth");
+                WpfHost.Run(() => { ((WatchViewModel)navigation.CurrentPage!).ShowLiveCommand.Execute(null); return 0; });
+            }
         }
 
         // ---- El mismo recorrido tras cambiar de idioma con la ventana abierta ----

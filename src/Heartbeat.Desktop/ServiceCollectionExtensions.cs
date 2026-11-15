@@ -8,6 +8,7 @@ using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
 using Heartbeat.Desktop.Services.Profile;
 using Heartbeat.Desktop.Services.Sync;
+using Heartbeat.Desktop.Services.Watch;
 using Heartbeat.Desktop.ViewModels;
 using Heartbeat.Desktop.Views;
 using Heartbeat.Shared;
@@ -103,6 +104,12 @@ public static class ServiceCollectionExtensions
         services.AddTransient<MessagesViewModel>();
         services.AddTransient<RadiationViewModel>();
         services.AddTransient<VisionViewModel>();
+
+        // Reloj (WR-DESKTOP): FC en vivo con el token del tripulante, datos de Samsung Health y la última lectura guardada.
+        services.AddSingleton<ILastWatchReadingStore, FileLastWatchReadingStore>();
+        services.AddSingleton<ISamsungHealthClient, HttpSamsungHealthClient>();
+        services.AddTransient<IHeartRateFeed, SignalRHeartRateFeed>();
+        services.AddTransient<WatchViewModel>();
         services.AddTransient<ProfileViewModel>();
 
         return services;

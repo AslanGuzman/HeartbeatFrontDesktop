@@ -3,7 +3,11 @@ using Heartbeat.Shared;
 namespace Heartbeat.Desktop.Services;
 
 /// <summary>Una lectura guardada, con lo que se midió y cómo se evaluó.</summary>
-public sealed record ReadingRecord(ReadingInput Input, ReadingEvaluation Evaluation);
+/// <param name="Source">De dónde viene: tecleada por el astronauta (<c>Manual</c>) o importada del reloj (<c>Wearable</c>).</param>
+public sealed record ReadingRecord(ReadingInput Input, ReadingEvaluation Evaluation, ReadingSource Source = ReadingSource.Manual)
+{
+    public bool FromWatch => Source == ReadingSource.Wearable;
+}
 
 /// <summary>Un check-up: una sesión con sus lecturas y un único instante (MR-13).</summary>
 public sealed class CheckUpRecord(Guid id, DateTimeOffset recordedAt, HealthStatus overallStatus, IReadOnlyList<ReadingRecord> readings, string? note = null)

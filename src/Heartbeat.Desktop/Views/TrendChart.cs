@@ -132,7 +132,29 @@ public sealed class TrendChart : FrameworkElement
         ring.Freeze();
         for (int i = 0; i < pixels.Length; i++)
         {
-            dc.DrawEllipse(StatusPalette.Dot(model.Points[i].Status), ring, pixels[i], 5, 5);
+            if (model.Points[i].FromWatch)
+            {
+                // Lectura del reloj: rombo del color del estado, para distinguirla de las tecleadas (círculo).
+                Pen outline = new(StatusPalette.Dot(model.Points[i].Status), 2);
+                outline.Freeze();
+                Point c = pixels[i];
+                StreamGeometry diamond = new();
+                using (StreamGeometryContext ctx = diamond.Open())
+                {
+                    ctx.BeginFigure(new Point(c.X, c.Y - 7), true, true);
+                    ctx.LineTo(new Point(c.X + 7, c.Y), true, false);
+                    ctx.LineTo(new Point(c.X, c.Y + 7), true, false);
+                    ctx.LineTo(new Point(c.X - 7, c.Y), true, false);
+                }
+
+                diamond.Freeze();
+                dc.DrawGeometry(Brushes.White, outline, diamond);
+                dc.DrawEllipse(StatusPalette.Dot(model.Points[i].Status), null, c, 2.5, 2.5);
+            }
+            else
+            {
+                dc.DrawEllipse(StatusPalette.Dot(model.Points[i].Status), ring, pixels[i], 5, 5);
+            }
         }
     }
 
@@ -174,7 +196,8 @@ public sealed class TrendChart : FrameworkElement
     {
         string format = model.Decimals == 0 ? "0" : "0." + new string('0', model.Decimals);
         string value = point.Value.ToString(format, CultureInfo.CurrentCulture);
-        return $"{value} {model.Unit} · {StatusPalette.Name(point.Status)}{Environment.NewLine}{point.At.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)}";
+        string text = $"{value} {model.Unit} · {StatusPalette.Name(point.Status)}{Environment.NewLine}{point.At.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)}";
+        return point.FromWatch ? text + Environment.NewLine + Loc.T("watch.readingFromWatch") : text;
     }
 
     private static Point ToPixel(ChartPoint point, TrendChartModel model, Rect plot, Func<double, double> scaleY)
