@@ -78,7 +78,7 @@ internal sealed class ScriptedCrewApiClient : ICrewApiClient
 
     public static SyncResponse AcceptAll(SyncRequest request, DateTimeOffset? serverTime = null, AstronautProfile? profile = null, bool rangesUpdate = false, SyncInbound? inbound = null) =>
         new(serverTime ?? TestWorld.Now,
-            request.CheckUps.Select(c => c.Id).Concat(request.Messages.Select(m => m.Id)).ToList(),
+            request.CheckUps.Select(c => c.Id).Concat(request.Messages.Select(m => m.Id)).Concat((request.RadiationDoses ?? []).Select(d => d.Id)).ToList(),
             [],
             profile,
             inbound ?? new SyncInbound([], []),

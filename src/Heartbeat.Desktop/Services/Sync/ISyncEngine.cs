@@ -34,7 +34,8 @@ public sealed record SyncReport(
     int AcknowledgedAlerts,
     bool ProfileSynced,
     bool RangesDownloaded,
-    DateTimeOffset ServerTime);
+    DateTimeOffset ServerTime,
+    int RadiationDosesSent = 0);
 
 public sealed record SyncResult(SyncOutcome Outcome, SyncReport? Report = null, string? Detail = null)
 {

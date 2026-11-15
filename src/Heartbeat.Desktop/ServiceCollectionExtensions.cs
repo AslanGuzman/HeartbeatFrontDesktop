@@ -89,6 +89,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<CheckUpResultViewModel>();
         services.AddTransient<HistoryViewModel>();
         services.AddTransient<MessagesViewModel>();
+        services.AddTransient<RadiationViewModel>();
         services.AddTransient<ProfileViewModel>();
 
         return services;

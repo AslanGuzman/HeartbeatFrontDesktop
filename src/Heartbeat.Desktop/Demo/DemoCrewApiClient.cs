@@ -110,6 +110,9 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
             }
         }
 
+        // Las dosis de radiación se aceptan tal cual.
+        accepted.AddRange((request.RadiationDoses ?? []).Select(d => d.Id));
+
         // Como el servidor real: el perfil solo vuelve cuando se aplicó la edición (updatedAt estrictamente posterior).
         AstronautProfile? applied = null;
         if (request.Profile is { } edit && _profile is { } mine && _serverProfiles.TryGetValue(mine.Id, out AstronautProfile? current) && edit.UpdatedAt > current.UpdatedAt)

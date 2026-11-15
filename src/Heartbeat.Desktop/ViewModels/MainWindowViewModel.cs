@@ -40,6 +40,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             new NavigationItemViewModel("Check-up", "", typeof(CheckUpViewModel)),
             new NavigationItemViewModel("Historial", "", typeof(HistoryViewModel)),
             new NavigationItemViewModel("Mensajes", "", typeof(MessagesViewModel)),
+            new NavigationItemViewModel("Radiaci\u00f3n", "\uE7BA", typeof(RadiationViewModel)),
             new NavigationItemViewModel("Perfil", "", typeof(ProfileViewModel)),
         ];
 

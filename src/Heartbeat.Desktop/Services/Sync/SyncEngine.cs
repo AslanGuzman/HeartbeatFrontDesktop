@@ -18,7 +18,7 @@ namespace Heartbeat.Desktop.Services.Sync;
 /// Motor de sincronización (MR-10, CONTRACTS.md §5). Corre en segundo plano y sincroniza al abrir la sesión, tras
 /// guardar, al volver el enlace y cada 60 s con conexión. En cada intento, para el astronauta con la sesión abierta:
 /// <list type="number">
-/// <item>sube sus check-ups en lotes de hasta 500, del más viejo al más nuevo (con sus mensajes y reportes, sin
+/// <item>sube sus check-ups y dosis de radiación en lotes de hasta 500, del más viejo al más nuevo (con sus mensajes y reportes, sin
 /// adelantarse al check-up que adjuntan, y su edición de perfil);</item>
 /// <item>marca <c>synced</c> solo los Id que el servidor devolvió en <c>accepted</c>, y <c>rejected</c> —con el
 /// motivo— los que rechazó; lo demás sigue pendiente;</item>
@@ -280,6 +280,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
 
         int checkUpsSent = 0;
         int messagesSent = 0;
+        int dosesSent = 0;
         int inbound = 0;
         int acknowledged = 0;
         bool profileSynced = false;
@@ -303,7 +304,8 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
                 _ranges.LatestVersion,
                 first ? profileEdit : null,
                 batch.CheckUps,
-                batch.Messages);
+                batch.Messages,
+                batch.RadiationDoses);
 
             SyncResponse response = await _client.SyncAsync(request, ct);
             serverTime = response.ServerTime;
@@ -315,6 +317,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             ApplyResult applied = ApplyResponse(id, batch, response);
             checkUpsSent += applied.CheckUpsAccepted;
             messagesSent += applied.MessagesAccepted;
+            dosesSent += applied.DosesAccepted;
             inbound += applied.InboundStored;
             acknowledged += response.Inbound?.AcknowledgedAlerts?.Count ?? 0;
             rejections.AddRange(applied.Rejections);
@@ -343,14 +346,14 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             }
         }
 
-        return new SyncReport(checkUpsSent, messagesSent, rejections, inbound, acknowledged, profileSynced, rangesDownloaded, serverTime);
+        return new SyncReport(checkUpsSent, messagesSent, rejections, inbound, acknowledged, profileSynced, rangesDownloaded, serverTime, dosesSent);
     }
 
     // ---------------- Lotes ----------------
 
-    private sealed record Batch(IReadOnlyList<CheckUpDto> CheckUps, IReadOnlyList<MessageDto> Messages)
+    private sealed record Batch(IReadOnlyList<CheckUpDto> CheckUps, IReadOnlyList<MessageDto> Messages, IReadOnlyList<RadiationDoseDto> RadiationDoses)
     {
-        public bool IsEmpty => CheckUps.Count == 0 && Messages.Count == 0;
+        public bool IsEmpty => CheckUps.Count == 0 && Messages.Count == 0 && RadiationDoses.Count == 0;
     }
 
     private Batch LoadBatch(Guid astronautId, HashSet<Guid> messagesAlreadyTried)
@@ -376,7 +379,18 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             .Take(_options.BatchSize)
             .ToList();
 
-        return new Batch(thisBatch.Select(ToDto).ToList(), messages.Select(ToDto).ToList());
+        // Las dosis de radiación viajan igual que los check-ups: del más viejo al más nuevo, de a lotes.
+        List<LocalRadiationDose> doses = db.RadiationDoses.AsNoTracking()
+            .Where(d => d.AstronautId == astronautId && d.SyncState == SyncState.Pending)
+            .ToList()
+            .OrderBy(d => d.RecordedAt)
+            .Take(_options.BatchSize)
+            .ToList();
+
+        return new Batch(
+            thisBatch.Select(ToDto).ToList(),
+            messages.Select(ToDto).ToList(),
+            doses.Select(d => new RadiationDoseDto(d.Id, d.RecordedAt, null, d.DoseMsv, d.Note)).ToList());
     }
 
     private static CheckUpDto ToDto(LocalCheckUp c) => new(
@@ -402,9 +416,9 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
 
     // ---------------- Respuesta ----------------
 
-    private sealed record ApplyResult(int CheckUpsAccepted, int MessagesAccepted, int InboundStored, IReadOnlyList<SyncRejection> Rejections)
+    private sealed record ApplyResult(int CheckUpsAccepted, int MessagesAccepted, int DosesAccepted, int InboundStored, IReadOnlyList<SyncRejection> Rejections)
     {
-        public int Handled => CheckUpsAccepted + MessagesAccepted + Rejections.Count;
+        public int Handled => CheckUpsAccepted + MessagesAccepted + DosesAccepted + Rejections.Count;
     }
 
     private ApplyResult ApplyResponse(Guid astronautId, Batch batch, SyncResponse response)
@@ -416,6 +430,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
 
         int checkUpsAccepted = 0;
         int messagesAccepted = 0;
+        int dosesAccepted = 0;
         List<SyncRejection> rejections = [];
 
         using IServiceScope scope = _scopes.CreateScope();
@@ -458,6 +473,24 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             }
         }
 
+        List<Guid> doseIds = batch.RadiationDoses.Select(d => d.Id).ToList();
+        foreach (LocalRadiationDose dose in db.RadiationDoses.Where(d => doseIds.Contains(d.Id) && d.AstronautId == astronautId))
+        {
+            if (accepted.Contains(dose.Id))
+            {
+                dose.SyncState = SyncState.Synced;
+                dose.ReceivedAt = response.ServerTime;
+                dose.SyncError = null;
+                dosesAccepted++;
+            }
+            else if (rejected.TryGetValue(dose.Id, out string? reason))
+            {
+                dose.SyncState = SyncState.Rejected;
+                dose.SyncError = reason;
+                rejections.Add(new SyncRejection(dose.Id, "dosis de radiación", reason));
+            }
+        }
+
         // serverTime es el lastPulledAt de la próxima sincronización.
         SyncCursor? cursor = db.SyncCursors.FirstOrDefault(c => c.AstronautId == astronautId);
         if (cursor is null)
@@ -495,12 +528,12 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
         db.SaveChanges();
 
         // El motor escribe por su cuenta: las pantallas abiertas (Historial, Mensajes) deben enterarse.
-        if (checkUpsAccepted + messagesAccepted + stored + rejections.Count > 0)
+        if (checkUpsAccepted + messagesAccepted + dosesAccepted + stored + rejections.Count > 0)
         {
             _store.NotifyChanged();
         }
 
-        return new ApplyResult(checkUpsAccepted, messagesAccepted, stored, rejections);
+        return new ApplyResult(checkUpsAccepted, messagesAccepted, dosesAccepted, stored, rejections);
     }
 
     private DateTimeOffset? ReadCursor(Guid astronautId)
