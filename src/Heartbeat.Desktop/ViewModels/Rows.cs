@@ -38,9 +38,28 @@ public sealed record CheckUpRowViewModel(
     bool IsSynced,
     IReadOnlyList<ReadingRowViewModel> Readings);
 
-/// <summary>Un mensaje a control de misión.</summary>
-public sealed record MessageRowViewModel(
+/// <summary>Un mensaje o reporte que el astronauta escribió a control de misión, con su estado.</summary>
+public sealed record OutgoingRowViewModel(
+    string Title,
     string Body,
-    string CreatedText,
+    string WhenText,
+    Services.MessageStatus Status,
     string StatusText,
-    bool IsSent);
+    bool IsReport)
+{
+    /// <summary>El cuerpo se omite cuando solo repite el asunto (un mensaje de una línea sin asunto propio).</summary>
+    public bool ShowBody => !string.Equals(Body.Trim(), Title, StringComparison.Ordinal);
+}
+
+/// <summary>Una entrada de la bandeja: una respuesta de control de misión o una alerta que reconocieron.</summary>
+public sealed record InboxRowViewModel(
+    Guid? MessageId,
+    string Title,
+    string Body,
+    string From,
+    string WhenText,
+    bool IsAlert,
+    bool IsUnread);
+
+/// <summary>Un check-up que se puede adjuntar a un reporte.</summary>
+public sealed record CheckUpOptionViewModel(Services.CheckUpRecord CheckUp, string Label, bool AlreadyReported);

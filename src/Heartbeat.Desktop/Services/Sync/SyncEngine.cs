@@ -520,15 +520,48 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
                 CreatedAt = dto.CreatedAt,
                 ReceivedAt = dto.ReceivedAt ?? response.ServerTime,
                 ReadAt = dto.ReadAt,
+                SenderName = dto.SenderName,
                 SyncState = SyncState.Synced,
             });
             stored++;
         }
 
+        // Alertas de check-ups críticos que control de misión reconoció: la clave es el check-up, así que repetirlas
+        // solo actualiza. Se ignoran las de check-ups que no son de este astronauta.
+        int alertsStored = 0;
+        List<AcknowledgedAlert> alerts = (response.Inbound?.AcknowledgedAlerts ?? [])
+            .GroupBy(a => a.CheckUpId).Select(g => g.Last()).ToList();
+        List<Guid> alertCheckUpIds = alerts.Select(a => a.CheckUpId).ToList();
+        HashSet<Guid> mine = db.CheckUps.Where(c => alertCheckUpIds.Contains(c.Id) && c.AstronautId == astronautId)
+            .Select(c => c.Id).ToHashSet();
+        Dictionary<Guid, LocalAlertAcknowledgement> existing = db.AlertAcknowledgements
+            .Where(a => alertCheckUpIds.Contains(a.CheckUpId)).ToDictionary(a => a.CheckUpId);
+        foreach (AcknowledgedAlert alert in alerts.Where(a => mine.Contains(a.CheckUpId)))
+        {
+            if (existing.TryGetValue(alert.CheckUpId, out LocalAlertAcknowledgement? row))
+            {
+                row.AcknowledgedAt = alert.AcknowledgedAt;
+                row.AcknowledgedBy = alert.By;
+                row.Note = alert.Note;
+            }
+            else
+            {
+                db.AlertAcknowledgements.Add(new LocalAlertAcknowledgement
+                {
+                    CheckUpId = alert.CheckUpId,
+                    AstronautId = astronautId,
+                    AcknowledgedAt = alert.AcknowledgedAt,
+                    AcknowledgedBy = alert.By,
+                    Note = alert.Note,
+                });
+                alertsStored++;
+            }
+        }
+
         db.SaveChanges();
 
         // El motor escribe por su cuenta: las pantallas abiertas (Historial, Mensajes) deben enterarse.
-        if (checkUpsAccepted + messagesAccepted + dosesAccepted + stored + rejections.Count > 0)
+        if (checkUpsAccepted + messagesAccepted + dosesAccepted + stored + alertsStored + rejections.Count > 0)
         {
             _store.NotifyChanged();
         }

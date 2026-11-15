@@ -56,6 +56,17 @@ public static class LocalDatabase
             "CREATE INDEX IF NOT EXISTS IX_RadiationDoses_AstronautId_RecordedAt ON RadiationDoses (AstronautId, RecordedAt)");
         db.Database.ExecuteSqlRaw(
             "CREATE INDEX IF NOT EXISTS IX_RadiationDoses_AstronautId_SyncState ON RadiationDoses (AstronautId, SyncState)");
+
+        // Alertas reconocidas por control de misión (#33).
+        db.Database.ExecuteSqlRaw(
+            "CREATE TABLE IF NOT EXISTS AlertAcknowledgements (" +
+            "CheckUpId TEXT NOT NULL CONSTRAINT PK_AlertAcknowledgements PRIMARY KEY, " +
+            "AstronautId TEXT NOT NULL, " +
+            "AcknowledgedAt TEXT NOT NULL, " +
+            "AcknowledgedBy TEXT NOT NULL, " +
+            "Note TEXT NULL)");
+        db.Database.ExecuteSqlRaw(
+            "CREATE INDEX IF NOT EXISTS IX_AlertAcknowledgements_AstronautId_AcknowledgedAt ON AlertAcknowledgements (AstronautId, AcknowledgedAt)");
     }
 
     // EnsureCreated no altera tablas que ya existen: las bases creadas antes de #9 no tienen Source ni DeviceId.
@@ -63,6 +74,7 @@ public static class LocalDatabase
     {
         AddColumnIfMissing(db, "Readings", "Source", "ALTER TABLE Readings ADD COLUMN Source TEXT NOT NULL DEFAULT 'manual'");
         AddColumnIfMissing(db, "Readings", "DeviceId", "ALTER TABLE Readings ADD COLUMN DeviceId TEXT NULL");
+        AddColumnIfMissing(db, "Messages", "SenderName", "ALTER TABLE Messages ADD COLUMN SenderName TEXT NULL");
     }
 
     private static void AddColumnIfMissing(LocalDbContext db, string table, string column, string alterSql)

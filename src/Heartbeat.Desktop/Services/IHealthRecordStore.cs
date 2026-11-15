@@ -31,9 +31,47 @@ public sealed class CheckUpRecord(Guid id, DateTimeOffset recordedAt, HealthStat
     public string? SyncError { get; internal set; }
 }
 
-/// <summary>Mensaje a control de misión (MR-11).</summary>
-public sealed class MessageRecord(Guid id, string body, DateTimeOffset createdAt, Guid? checkUpId = null, string? subject = null)
+/// <summary>Estado de un mensaje en la bandeja (MR-11).</summary>
+public enum MessageStatus
 {
+    /// <summary>Saliente que espera conexión.</summary>
+    Queued,
+
+    /// <summary>Saliente que ya llegó a control de misión.</summary>
+    Sent,
+
+    /// <summary>Saliente que control de misión ya leyó.</summary>
+    Read,
+
+    /// <summary>Saliente que el servidor rechazó; no se reintenta.</summary>
+    Rejected,
+
+    /// <summary>Entrante (respuesta de control de misión) sin leer.</summary>
+    Unread,
+
+    /// <summary>Entrante ya leída.</summary>
+    Opened,
+}
+
+/// <summary>
+/// Mensaje o reporte (MR-11). Saliente (<c>toMissionControl</c>): se escribe en el equipo y sale al sincronizar; un
+/// reporte adjunta un check-up. Entrante (<c>toAstronaut</c>): una respuesta de control de misión que llegó por sync.
+/// </summary>
+public sealed class MessageRecord(
+    Guid id,
+    string body,
+    DateTimeOffset createdAt,
+    Guid? checkUpId = null,
+    string? subject = null,
+    MessageDirection direction = MessageDirection.ToMissionControl,
+    string? senderName = null)
+{
+    public Guid Id { get; } = id;
+
+    public MessageDirection Direction { get; } = direction;
+
+    public bool IsInbound => Direction == MessageDirection.ToAstronaut;
+
     /// <summary>Check-up que adjunta un reporte; <c>null</c> en un mensaje normal.</summary>
     public Guid? CheckUpId { get; } = checkUpId;
 
@@ -41,22 +79,38 @@ public sealed class MessageRecord(Guid id, string body, DateTimeOffset createdAt
 
     public bool IsReport => CheckUpId is not null;
 
-    public Guid Id { get; } = id;
-
     public string Body { get; } = body;
 
     public DateTimeOffset CreatedAt { get; } = createdAt;
+
+    /// <summary>Quién escribió, en los mensajes entrantes («Dr. J. Okafor»).</summary>
+    public string? SenderName { get; } = senderName;
 
     /// <summary>Cuándo salió hacia control de misión; <c>null</c> mientras está en cola.</summary>
     public DateTimeOffset? SentAt { get; internal set; }
 
     public bool IsSent => SentAt is not null;
 
+    /// <summary>Saliente: cuándo lo leyó control de misión. Entrante: cuándo lo leyó el astronauta en el equipo.</summary>
+    public DateTimeOffset? ReadAt { get; internal set; }
+
+    public bool IsRead => ReadAt is not null;
+
     /// <summary>El servidor lo rechazó (ver <see cref="SyncError"/>); no se reintenta.</summary>
     public bool IsRejected { get; internal set; }
 
     public string? SyncError { get; internal set; }
+
+    public MessageStatus Status => IsInbound
+        ? (IsRead ? MessageStatus.Opened : MessageStatus.Unread)
+        : IsRejected ? MessageStatus.Rejected
+        : IsRead ? MessageStatus.Read
+        : IsSent ? MessageStatus.Sent
+        : MessageStatus.Queued;
 }
+
+/// <summary>Una alerta de un check-up crítico que control de misión reconoció.</summary>
+public sealed record AlertAcknowledgementRecord(Guid CheckUpId, DateTimeOffset AcknowledgedAt, string AcknowledgedBy, string? Note);
 
 /// <summary>Una dosis de radiacion registrada, en milisieverts (NR-07).</summary>
 public sealed record RadiationDoseRecord(Guid Id, decimal DoseMsv, DateTimeOffset RecordedAt, string? Note, DateTimeOffset? SyncedAt)
@@ -85,15 +139,34 @@ public interface IHealthRecordStore
     /// <summary>Check-ups del usuario, del más reciente al más antiguo.</summary>
     IReadOnlyList<CheckUpRecord> GetCheckUps(Guid astronautId);
 
-    /// <summary>Mensajes del usuario, del más reciente al más antiguo.</summary>
+    /// <summary>Mensajes y reportes que el usuario escribió a control de misión, del más reciente al más antiguo.</summary>
     IReadOnlyList<MessageRecord> GetMessages(Guid astronautId);
+
+    /// <summary>Respuestas de control de misión recibidas por sync, de la más reciente a la más antigua.</summary>
+    IReadOnlyList<MessageRecord> GetInbox(Guid astronautId);
+
+    /// <summary>Respuestas aún sin leer.</summary>
+    int GetUnreadCount(Guid astronautId);
+
+    /// <summary>Marca una respuesta como leída. Devuelve <c>false</c> si no existe, no es suya o ya estaba leída.</summary>
+    bool MarkRead(Guid astronautId, Guid messageId);
+
+    /// <summary>Marca todas las respuestas como leídas. Devuelve cuántas cambiaron.</summary>
+    int MarkAllRead(Guid astronautId);
+
+    /// <summary>Alertas de sus check-ups críticos que control de misión reconoció, de la más reciente a la más antigua.</summary>
+    IReadOnlyList<AlertAcknowledgementRecord> GetAcknowledgedAlerts(Guid astronautId);
 
     /// <summary>
     /// Guarda un check-up (1 a 6 lecturas, una por indicador, con un solo instante) como pendiente de sincronizar.
     /// </summary>
     CheckUpRecord AddCheckUp(Guid astronautId, IReadOnlyList<ReadingInput> inputs, CheckUpEvaluation evaluation, string? note = null);
 
-    MessageRecord QueueMessage(Guid astronautId, string body);
+    /// <summary>
+    /// Escribe un mensaje a control de misión. Sin <paramref name="subject"/> se usa la primera línea del texto (hasta
+    /// 120 caracteres).
+    /// </summary>
+    MessageRecord QueueMessage(Guid astronautId, string body, string? subject = null);
 
     /// <summary>Encola un reporte a control de misión que adjunta el check-up indicado (<c>Kind = report</c>).</summary>
     MessageRecord QueueReport(Guid astronautId, Guid checkUpId, string subject, string body);

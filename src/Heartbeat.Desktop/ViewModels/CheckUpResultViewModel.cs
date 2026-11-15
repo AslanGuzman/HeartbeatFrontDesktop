@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -158,8 +157,7 @@ public sealed partial class CheckUpResultViewModel : PageViewModel
             return;
         }
 
-        string subject = $"Check-up {_checkUp.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)} · {StatusPalette.Name(_checkUp.OverallStatus)}";
-        _store.QueueReport(user.Id, _checkUp.Id, subject, BuildReportBody(_checkUp));
+        _store.QueueReport(user.Id, _checkUp.Id, ReportBuilder.Subject(_checkUp), ReportBuilder.Body(_checkUp, _info));
 
         ReportSent = true;
         ReportText = _connectivity.IsOnline
@@ -190,22 +188,5 @@ public sealed partial class CheckUpResultViewModel : PageViewModel
             StatusPalette.Name(evaluation.Status),
             evaluation.Label,
             evaluation.Status == HealthStatus.Normal ? [] : evaluation.Guidance);
-    }
-
-    private string BuildReportBody(CheckUpRecord checkUp)
-    {
-        StringBuilder text = new();
-        text.Append(CultureInfo.CurrentCulture, $"Estado general: {StatusPalette.Name(checkUp.OverallStatus)}.");
-        foreach (ResultReadingViewModel reading in Readings)
-        {
-            text.Append(CultureInfo.CurrentCulture, $"\n- {reading.Name}: {reading.ValueText} — {reading.StatusText} ({reading.Label})");
-        }
-
-        if (!string.IsNullOrWhiteSpace(checkUp.Note))
-        {
-            text.Append("\nNota: ").Append(checkUp.Note);
-        }
-
-        return text.ToString();
     }
 }
