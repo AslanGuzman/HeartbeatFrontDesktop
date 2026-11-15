@@ -19,6 +19,7 @@ public sealed partial class DashboardViewModel : PageViewModel
 {
     private readonly IIndicatorInfoPresenter _infoPresenter;
     private readonly INavigationService _navigation;
+    private readonly CheckUpReminder _reminder;
 
     public DashboardViewModel(
         IHealthRecordStore store,
@@ -26,10 +27,12 @@ public sealed partial class DashboardViewModel : PageViewModel
         IIndicatorInfoProvider info,
         IIndicatorInfoPresenter infoPresenter,
         INavigationService navigation,
-        TimeProvider clock)
+        TimeProvider clock,
+        CheckUpReminder reminder)
     {
         _infoPresenter = infoPresenter;
         _navigation = navigation;
+        _reminder = reminder;
 
         SessionUser? user = session.CurrentUser;
         IReadOnlyList<CheckUpRecord> checkUps = user is null ? [] : store.GetCheckUps(user.Id);
@@ -59,6 +62,12 @@ public sealed partial class DashboardViewModel : PageViewModel
         int critical = withData.Count(c => c.Status == HealthStatus.Critical);
         SummaryText = BuildSummary(withData.Count, watch, critical, checkUps.FirstOrDefault(), clock);
 
+        CheckUpReminderSettings reminderSettings = _reminder.Settings;
+        IsCheckUpPending = _reminder.IsPending;
+        PendingCheckUpText = reminderSettings.Enabled
+            ? $"Aún no registras tu check-up de hoy. Te avisaremos a las {reminderSettings.Time.ToString("HH:mm", CultureInfo.InvariantCulture)}."
+            : "Aún no registras tu check-up de hoy. Activa el recordatorio en tu perfil.";
+
         CriticalNames = string.Join(", ", withData.Where(c => c.Status == HealthStatus.Critical).Select(c => c.Name));
         HasCritical = critical > 0;
     }
@@ -78,6 +87,12 @@ public sealed partial class DashboardViewModel : PageViewModel
 
     /// <summary>Qué requiere atención y cuándo fue el último check-up, por ejemplo «1 en vigilancia · Último check-up: Hoy, 19:45».</summary>
     public string SummaryText { get; }
+
+    /// <summary>Hoy todavía no hay check-up: se muestra el aviso para registrarlo (P2-REMIND).</summary>
+    public bool IsCheckUpPending { get; }
+
+    /// <summary>Explica cuándo llegará el recordatorio o cómo activarlo.</summary>
+    public string PendingCheckUpText { get; }
 
     /// <summary>Hay al menos un indicador crítico: se destaca el aviso de contactar al oficial médico (MR-06).</summary>
     public bool HasCritical { get; }

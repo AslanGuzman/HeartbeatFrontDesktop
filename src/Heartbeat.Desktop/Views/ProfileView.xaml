@@ -132,6 +132,31 @@
                                        Text="Estos datos los gestiona control de misión." />
                         </StackPanel>
                     </ContentControl>
+
+                    <!-- Recordatorio diario de check-up (P2-REMIND) -->
+                    <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,14,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Recordatorio de check-up" Style="{StaticResource SectionHeadingStyle}" />
+                            <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,12" TextWrapping="Wrap"
+                                       Text="Elige cuándo quieres que Windows te avise si aún no has registrado el check-up del día." />
+                            <CheckBox Content="Avisarme todos los días" IsChecked="{Binding ReminderEnabled}"
+                                      Foreground="{DynamicResource TextBodyBrush}"
+                                      AutomationProperties.Name="Recordatorio diario de check-up" />
+                            <TextBlock Text="HORA · HH:MM" Style="{StaticResource FieldLabelStyle}" Margin="0,12,0,4" />
+                            <TextBox Text="{Binding ReminderTimeText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
+                                     MaxLength="5" AutomationProperties.Name="Hora del recordatorio"
+                                     AutomationProperties.HelpText="Formato HH:mm, por ejemplo 09:00" />
+                            <TextBlock Text="{Binding ReminderError}" Foreground="{DynamicResource BrandRedBrush}" FontSize="12" Margin="0,4,0,0"
+                                       Visibility="{Binding ReminderError, Converter={StaticResource NonEmptyToVisibility}}"
+                                       AutomationProperties.LiveSetting="Polite" />
+                            <Button Content="Guardar recordatorio" Command="{Binding SaveReminderCommand}"
+                                    HorizontalAlignment="Left" Margin="0,12,0,0" />
+                            <TextBlock Text="{Binding ReminderSavedText}" Foreground="{DynamicResource BrandBlueBrush}" FontSize="12.5"
+                                       FontWeight="SemiBold" Margin="0,10,0,0"
+                                       Visibility="{Binding ReminderSavedText, Converter={StaticResource NonEmptyToVisibility}}"
+                                       AutomationProperties.LiveSetting="Polite" />
+                        </StackPanel>
+                    </ContentControl>
                 </StackPanel>
             </Grid>
         </StackPanel>

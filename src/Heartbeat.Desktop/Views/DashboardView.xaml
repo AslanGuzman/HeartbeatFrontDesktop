@@ -82,6 +82,23 @@
                 </DockPanel>
             </Border>
 
+            <!-- Check-up de rutina de hoy pendiente (P2-REMIND) -->
+            <Border Background="{DynamicResource BrandBlueSoftBrush}" CornerRadius="14" Padding="18,12" Margin="0,0,14,16"
+                    Visibility="{Binding IsCheckUpPending, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Registrar check-up" Command="{Binding NewCheckUpCommand}"
+                            Style="{StaticResource SecondaryButtonStyle}" VerticalAlignment="Center" Margin="14,0,0,0" />
+                    <TextBlock DockPanel.Dock="Left" Text="&#xE823;" Style="{StaticResource IconTextStyle}" FontSize="20"
+                               Foreground="{DynamicResource BrandBlueBrush}" VerticalAlignment="Top" Margin="0,1,14,0" />
+                    <StackPanel>
+                        <TextBlock Text="Check-up de hoy pendiente" FontSize="14" FontWeight="Bold"
+                                   Foreground="{DynamicResource BrandBlueBrush}" AutomationProperties.LiveSetting="Polite" />
+                        <TextBlock Text="{Binding PendingCheckUpText}" Margin="0,4,0,0" FontSize="12.5"
+                                   Foreground="{DynamicResource TextBodyBrush}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
             <!-- Los seis indicadores en una pantalla (MR-05) -->
             <ItemsControl ItemsSource="{Binding Cards}" AutomationProperties.Name="Indicadores de salud">
                 <ItemsControl.ItemsPanel>
