@@ -55,6 +55,7 @@ dotnet run --project src/Heartbeat.Desktop/Heartbeat.Desktop.csproj
 - **Navegación ViewModel primero**: `INavigationService.NavigateTo<TViewModel>()`. Cada página se crea en su propio scope de DI y se libera al salir. La vista de cada ViewModel se declara en `Views/PageTemplates.xaml`.
 - **Tema** en `Themes/` (claro, paleta de marca: blanco ~70 %, azul `#110559` ~20 %, rojo `#990E0E` ~10 %). El semáforo verde / ámbar / rojo (NR-01) vive en `Converters/StatusPalette.cs`: verde y ámbar significan solo normal / watch, y el estado nunca se comunica solo con color (cada chip lleva su texto). Chrome propio de ventana, rail azul de navegación, tarjetas con elevación y animación de entrada por página.
 - **Check-up** (`CheckUpViewModel`, #28): de 1 a 6 indicadores en una sola sesión (los campos vacíos se omiten). Presión (sistólica y diastólica juntas), pulso, glucosa y temperatura por teclado; sueño por teclado o deslizador (paso de 0,5 h) y ánimo con 5 botones. Cada valor se valida con `IHealthEvaluator.Validate` antes de guardar y el resultado se evalúa al instante en el equipo. Se guarda en SQLite (`LocalHealthRecordStore`) con `SyncState = pending`, la versión de rangos y la nota opcional.
+- **Acceso** (`AuthService`, #27): el primer acceso de cada astronauta es **en línea** (`POST /auth/login`); la app guarda su perfil, un hash PBKDF2-SHA256 propio (210 000 iteraciones, sal por cuenta) en `LocalAccount` y los tokens protegidos con **DPAPI** (usuario actual de Windows) en `TokenCache`. Sin conexión se valida la contraseña contra ese hash y se abre la sesión con el perfil guardado, devolviendo los tokens al cliente para que la sincronización retome al volver el enlace. Una respuesta 401/400/403 del servidor es definitiva (no se cae al hash local); si el servidor no responde, se usa la cuenta local si existe. Los datos se filtran por el `AstronautId` del servidor, así que varios astronautas pueden compartir el equipo sin ver datos ajenos. Cerrar sesión borra los tokens y conserva la cuenta local. Es un mecanismo de nivel demostración, como declara el contrato.
 - **Dashboard** (`DashboardViewModel`, #30): el estado actual de los 6 indicadores en una pantalla. Arriba el estado general (el peor de las últimas lecturas) y qué requiere atención; una tarjeta por indicador con su último valor, unidad, estado en color y texto, y hora («Hoy, 19:45», «Ayer…»); aviso destacado si hay críticos; y el botón **Nuevo check-up**. Como un check-up puede omitir indicadores, cada tarjeta usa la lectura más reciente de su indicador.
 - **Resultado** (`CheckUpResultViewModel`, #29): al guardar un check-up se abre su pantalla de resultado, con el estado y la etiqueta de cada lectura (color + texto), la guía de las que no están en rango, el aviso destacado de escalamiento si hay críticos (a quién contactar y qué indicadores) y el botón **Enviar reporte a control de misión**, que encola un mensaje `report` con el check-up adjunto (uno por check-up; sin enlace sale al reconectar).
 - **Modo demostración** (`Demo/`): mientras no estén los tickets reales hay un acceso de demostración (`ana`, `luis`, `mara` con contraseña `demo123`, sustituye #27), un historial de ejemplo sembrado en la base local la primera vez y una sincronización simulada (sustituye #32). Las pantallas solo conocen `IAuthenticator`, `IHealthRecordStore` e `ISyncStatusProvider`; el check-up se evalúa con el `HealthEvaluator` real de `Heartbeat.Shared`. El interruptor **Enlace con la Tierra** de la barra superior simula perder el enlace: apagado, los check-ups y mensajes quedan *Pendientes* y salen al volver a encenderlo.
@@ -67,6 +68,19 @@ dotnet run --project src/Heartbeat.Desktop/Heartbeat.Desktop.csproj
 1. Crear `XxxViewModel : PageViewModel` y registrarlo con `AddTransient` en `ServiceCollectionExtensions`.
 2. Crear su vista y asociarla en `Views/PageTemplates.xaml`.
 3. Si va en el menú lateral, añadirla a `MainWindowViewModel.NavigationItems`.
+
+## Servidor real o modo demostración
+
+`src/Heartbeat.Desktop/appsettings.json` (sección `CrewApi`) decide con quién habla la app. Por defecto es **`Demo`**: tres astronautas ficticios (`ana`, `luis`, `mara`, contraseña `demo123`), sin servidor y con un historial de ejemplo. Para usar la Crew API real:
+
+```bash
+# PowerShell, con la API corriendo (por defecto en http://localhost:5027)
+$env:CrewApi__Mode = "Live"
+$env:CrewApi__BaseUrl = "http://localhost:5027/"
+dotnet run --project src/Heartbeat.Desktop/Heartbeat.Desktop.csproj
+```
+
+En modo `Live` no se siembran datos de ejemplo y se entra con las cuentas de astronauta del servidor. El interruptor **Enlace con la Tierra** (también en el login) simula perder la conexión para probar el acceso sin conexión.
 
 ## Flujo de trabajo
 

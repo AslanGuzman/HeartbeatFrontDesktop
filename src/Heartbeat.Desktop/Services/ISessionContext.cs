@@ -12,9 +12,12 @@ public interface ISessionContext
 {
     SessionUser? CurrentUser { get; }
 
+    /// <summary>La sesión se abrió sin conexión, con la contraseña guardada en el equipo.</summary>
+    bool IsOfflineSession { get; }
+
     event EventHandler? Changed;
 
-    void SignIn(SessionUser user);
+    void SignIn(SessionUser user, bool offline = false);
 
     void SignOut();
 }
@@ -23,18 +26,22 @@ public sealed class SessionContext : ISessionContext
 {
     public SessionUser? CurrentUser { get; private set; }
 
+    public bool IsOfflineSession { get; private set; }
+
     public event EventHandler? Changed;
 
-    public void SignIn(SessionUser user)
+    public void SignIn(SessionUser user, bool offline = false)
     {
         ArgumentNullException.ThrowIfNull(user);
         CurrentUser = user;
+        IsOfflineSession = offline;
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
     public void SignOut()
     {
         CurrentUser = null;
+        IsOfflineSession = false;
         Changed?.Invoke(this, EventArgs.Empty);
     }
 }

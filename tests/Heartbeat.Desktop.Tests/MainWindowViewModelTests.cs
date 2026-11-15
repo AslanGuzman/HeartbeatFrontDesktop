@@ -46,12 +46,12 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Signing_in_opens_the_dashboard_shows_the_menu_and_the_user_name()
+    public async Task Signing_in_opens_the_dashboard_shows_the_menu_and_the_user_name()
     {
         LoginViewModel login = _navigation.NavigateTo<LoginViewModel>();
         login.Username = "ana";
 
-        login.SignInCommand.Execute("demo123");
+        await login.SignInCommand.ExecuteAsync("demo123");
 
         Assert.IsType<DashboardViewModel>(_window.CurrentPage);
         Assert.True(_window.IsNavigationVisible);
@@ -73,11 +73,11 @@ public sealed class MainWindowViewModelTests : IDisposable
     }
 
     [Fact]
-    public void Sign_out_returns_to_login_and_closes_the_session()
+    public async Task Sign_out_returns_to_login_and_closes_the_session()
     {
         LoginViewModel login = _navigation.NavigateTo<LoginViewModel>();
         login.Username = "ana";
-        login.SignInCommand.Execute("demo123");
+        await login.SignInCommand.ExecuteAsync("demo123");
 
         _window.SignOutCommand.Execute(null);
 

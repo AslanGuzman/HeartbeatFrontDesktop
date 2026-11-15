@@ -1,4 +1,5 @@
 using Heartbeat.Desktop.Data;
+using Heartbeat.Desktop.Services.Auth;
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,9 @@ internal static class TestContainer
         ServiceCollection services = new();
         services.AddHeartbeatDesktop();
 
+        // El id del equipo no se escribe en %LOCALAPPDATA% durante las pruebas.
+        services.AddSingleton<IDeviceIdProvider>(new FixedDeviceId("equipo-de-pruebas"));
+
         // El último registro gana: se sustituye la base de %LOCALAPPDATA% por una en memoria.
         SqliteConnection shared = connection;
         services.AddDbContext<LocalDbContext>(o => o.UseSqlite(shared));
@@ -28,4 +32,9 @@ internal static class TestContainer
 
         return services;
     }
+}
+
+internal sealed class FixedDeviceId(string id) : IDeviceIdProvider
+{
+    public string DeviceId { get; } = id;
 }

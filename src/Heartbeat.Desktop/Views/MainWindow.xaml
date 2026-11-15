@@ -111,7 +111,6 @@
                         <ToggleButton IsChecked="{Binding IsLinkEnabled}" Style="{StaticResource SwitchStyle}"
                                       Content="Enlace con la Tierra" Margin="0,0,18,0"
                                       WindowChrome.IsHitTestVisibleInChrome="True"
-                                      Visibility="{Binding IsNavigationVisible, Converter={StaticResource BoolToVisibility}}"
                                       ToolTip="Simula la disponibilidad del enlace. Apagado, la app funciona como sin conexión y acumula lo pendiente."
                                       AutomationProperties.Name="Enlace con la Tierra" />
 
@@ -123,6 +122,9 @@
                                            Foreground="{DynamicResource BrandBlueBrush}" />
                                 <TextBlock Text="{Binding CurrentUserName}" FontSize="12" FontWeight="SemiBold"
                                            Foreground="{DynamicResource BrandBlueBrush}" Margin="7,0,0,0" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding SessionModeText, StringFormat=· {0}}" FontSize="11"
+                                           Foreground="{DynamicResource TextSecondaryBrush}" Margin="6,0,0,0" VerticalAlignment="Center"
+                                           Visibility="{Binding SessionModeText, Converter={StaticResource NonEmptyToVisibility}}" />
                             </StackPanel>
                         </Border>
 

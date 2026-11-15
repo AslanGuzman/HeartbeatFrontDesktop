@@ -23,7 +23,7 @@ public static class DemoDataSeeder
 
         void Add(string user, TimeSpan ago, decimal sys, decimal dia, decimal hr, decimal sugar, decimal temp, decimal sleep, decimal mood)
         {
-            Guid id = DemoAuthenticator.Accounts.First(a => a.UserName == user).Id;
+            Guid id = DemoAccounts.All.First(a => a.UserName == user).Id;
             List<ReadingInput> inputs =
             [
                 new(IndicatorType.BloodPressure, sys, dia),
@@ -41,7 +41,7 @@ public static class DemoDataSeeder
         }
 
         bool seeded = false;
-        foreach (SessionUser account in DemoAuthenticator.Accounts)
+        foreach (SessionUser account in DemoAccounts.All)
         {
             if (db.CheckUps.Any(c => c.AstronautId == account.Id))
             {
