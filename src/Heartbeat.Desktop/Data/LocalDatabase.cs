@@ -33,5 +33,27 @@ public static class LocalDatabase
         // No hay migraciones: la base local es una cache del servidor. Si el esquema cambia, hay que introducir
         // migraciones (o recrear la base) antes de publicar una version con datos pendientes de sync.
         db.Database.EnsureCreated();
+
+        AddMissingColumns(db);
+    }
+
+    // EnsureCreated no altera tablas que ya existen: las bases creadas antes de #9 no tienen Source ni DeviceId.
+    private static void AddMissingColumns(LocalDbContext db)
+    {
+        AddColumnIfMissing(db, "Readings", "Source", "ALTER TABLE Readings ADD COLUMN Source TEXT NOT NULL DEFAULT 'manual'");
+        AddColumnIfMissing(db, "Readings", "DeviceId", "ALTER TABLE Readings ADD COLUMN DeviceId TEXT NULL");
+    }
+
+    private static void AddColumnIfMissing(LocalDbContext db, string table, string column, string alterSql)
+    {
+        bool exists = db.Database
+            .SqlQuery<int>($"SELECT COUNT(*) AS Value FROM pragma_table_info({table}) WHERE name = {column}")
+            .AsEnumerable()
+            .Single() > 0;
+
+        if (!exists)
+        {
+            db.Database.ExecuteSqlRaw(alterSql);
+        }
     }
 }
