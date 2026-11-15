@@ -11,6 +11,7 @@ using Heartbeat.Shared;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.Services.Sync;
 
@@ -196,7 +197,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             // Nada de lo que pase en un ciclo puede detener los siguientes.
-            SetState(false, $"No se pudo sincronizar: {ex.Message} Se reintentará.");
+            SetState(false, Loc.T("syncmsg.failed", ex.Message));
         }
     }
 
@@ -240,7 +241,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
 
         if (string.IsNullOrEmpty(_client.AccessToken) && string.IsNullOrEmpty(_client.RefreshToken))
         {
-            const string text = "Vuelve a iniciar sesión con conexión para sincronizar.";
+            string text = Loc.T("syncmsg.signInAgain");
             SetState(false, text);
             return SyncResult.Of(SyncOutcome.NeedsSignIn, text);
         }
@@ -255,19 +256,19 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
         catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.Unauthorized)
         {
             // El cliente ya intentó renovar el token: la sesión con el servidor caducó.
-            const string text = "La sesión con el servidor caducó. Vuelve a iniciar sesión con conexión.";
+            string text = Loc.T("syncmsg.expired");
             SetState(false, text);
             return SyncResult.Of(SyncOutcome.NeedsSignIn, text);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException && !ct.IsCancellationRequested)
         {
-            const string text = "Sin respuesta del servidor. Se reintentará.";
+            string text = Loc.T("syncmsg.noResponse");
             SetState(false, text);
             return SyncResult.Of(SyncOutcome.ServerUnreachable, text);
         }
         catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
         {
-            string text = $"No se pudo sincronizar: {ex.Message} Se reintentará.";
+            string text = Loc.T("syncmsg.failed", ex.Message);
             SetState(false, text);
             return SyncResult.Of(SyncOutcome.Failed, text);
         }
@@ -342,7 +343,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             // Si el servidor no confirmó ni rechazó nada de lo enviado, repetir el lote no serviría de nada.
             if (!batch.IsEmpty && applied.Handled == 0)
             {
-                throw new InvalidOperationException("El servidor no confirmó los elementos enviados.");
+                throw new InvalidOperationException(Loc.T("syncmsg.unconfirmed"));
             }
         }
 
@@ -451,7 +452,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             {
                 checkUp.SyncState = SyncState.Rejected;
                 checkUp.SyncError = reason;
-                rejections.Add(new SyncRejection(checkUp.Id, "check-up", reason));
+                rejections.Add(new SyncRejection(checkUp.Id, Loc.T("syncmsg.kind.checkUp"), reason));
             }
         }
 
@@ -469,7 +470,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             {
                 message.SyncState = SyncState.Rejected;
                 message.SyncError = reason;
-                rejections.Add(new SyncRejection(message.Id, "mensaje", reason));
+                rejections.Add(new SyncRejection(message.Id, Loc.T("syncmsg.kind.message"), reason));
             }
         }
 
@@ -487,7 +488,7 @@ public sealed class SyncEngine : BackgroundService, ISyncEngine, ISyncStatusProv
             {
                 dose.SyncState = SyncState.Rejected;
                 dose.SyncError = reason;
-                rejections.Add(new SyncRejection(dose.Id, "dosis de radiación", reason));
+                rejections.Add(new SyncRejection(dose.Id, Loc.T("syncmsg.kind.dose"), reason));
             }
         }
 

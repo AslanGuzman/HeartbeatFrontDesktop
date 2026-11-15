@@ -8,6 +8,7 @@ using Heartbeat.Desktop.Converters;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -82,7 +83,7 @@ public sealed partial class HistoryViewModel : PageViewModel, IDisposable
         _store.Changed += OnStoreChanged;
     }
 
-    public override string Title => "Historial";
+    public override string Title => Loc.T("nav.history");
 
     public ObservableCollection<CheckUpRowViewModel> CheckUps { get; } = [];
 
@@ -102,9 +103,9 @@ public sealed partial class HistoryViewModel : PageViewModel, IDisposable
 
     public string RangeText => Range switch
     {
-        HistoryRange.Week => "últimos 7 días",
-        HistoryRange.Month => "últimos 30 días",
-        _ => "toda la misión",
+        HistoryRange.Week => Loc.T("hist.range.week"),
+        HistoryRange.Month => Loc.T("hist.range.month"),
+        _ => Loc.T("hist.range.all"),
     };
 
     public MetricOptionViewModel? SelectedMetric { get; private set; }
@@ -163,13 +164,13 @@ public sealed partial class HistoryViewModel : PageViewModel, IDisposable
         }
 
         EmptyText = all.Count == 0
-            ? "Aún no hay check-ups. Registra el primero desde la sección Check-up."
-            : "No hay check-ups en este período.";
+            ? Loc.T("hist.empty.none")
+            : Loc.T("hist.empty.period");
 
         if (SelectedMetric is { } selected)
         {
             Chart = TrendChartBuilder.Build(selected.Metric, selected.Name, inRange, from, to);
-            string count = Chart.Points.Count == 1 ? "1 lectura" : $"{Chart.Points.Count} lecturas";
+            string count = Chart.Points.Count == 1 ? Loc.T("hist.reading.one") : Loc.T("hist.reading.many", Chart.Points.Count);
             ChartSummary = $"{selected.Name} · {count} · {RangeText}";
         }
 
@@ -188,7 +189,7 @@ public sealed partial class HistoryViewModel : PageViewModel, IDisposable
     {
         string name = _info.Find(IndicatorPresentation.IdOf(metric.Indicator))?.Name ?? metric.Indicator.ToString();
         return metric.Indicator == IndicatorType.BloodPressure
-            ? name + (metric.IsSecondary ? " · diastólica" : " · sistólica")
+            ? name + (metric.IsSecondary ? Loc.T("hist.diastolic") : Loc.T("hist.systolic"))
             : name;
     }
 
@@ -196,7 +197,7 @@ public sealed partial class HistoryViewModel : PageViewModel, IDisposable
         checkUp.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
         checkUp.OverallStatus,
         StatusPalette.Name(checkUp.OverallStatus),
-        checkUp.IsRejected ? $"Rechazado: {checkUp.SyncError}" : checkUp.IsSynced ? "Sincronizado" : "Pendiente de sincronizar",
+        checkUp.IsRejected ? Loc.T("hist.rejected", checkUp.SyncError) : checkUp.IsSynced ? Loc.T("hist.synced") : Loc.T("hist.pending"),
         checkUp.IsSynced,
         checkUp.Readings
             .Select(r => new ReadingRowViewModel(

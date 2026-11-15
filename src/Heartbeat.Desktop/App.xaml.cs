@@ -4,6 +4,7 @@ using System.Windows.Markup;
 
 using Heartbeat.Desktop.Data;
 using Heartbeat.Desktop.Demo;
+using Heartbeat.Desktop.Localization;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services.Auth;
 using Heartbeat.Desktop.ViewModels;
@@ -20,6 +21,10 @@ public partial class App : Application
 
     public App()
     {
+        // El inglés es el idioma por defecto; se recuerda el que el usuario eligió con el botón de la barra superior.
+        LocalizationManager.Instance.SetLanguage(LanguagePreference.Load());
+        LocalizationManager.Instance.LanguageChanged += (_, _) => LanguagePreference.Save(LocalizationManager.Instance.Language);
+
         // Por defecto WPF formatea fechas y números del XAML con en-US; se usa la cultura del usuario.
         FrameworkElement.LanguageProperty.OverrideMetadata(
             typeof(FrameworkElement),

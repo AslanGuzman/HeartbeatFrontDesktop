@@ -12,6 +12,8 @@ namespace Heartbeat.Desktop.Navigation;
 public sealed class NavigationService(IServiceProvider services) : INavigationService
 {
     private IServiceScope? _currentScope;
+    private Type? _currentType;
+    private Action<PageViewModel>? _currentInitialize;
 
     public PageViewModel? CurrentPage { get; private set; }
 
@@ -31,6 +33,20 @@ public sealed class NavigationService(IServiceProvider services) : INavigationSe
             return CurrentPage;
         }
 
+        return Create(pageType, initialize);
+    }
+
+    /// <summary>Vuelve a crear la página actual con los mismos parámetros; la anterior se libera.</summary>
+    public void Reload()
+    {
+        if (CurrentPage is not null && _currentType is not null)
+        {
+            Create(_currentType, _currentInitialize);
+        }
+    }
+
+    private PageViewModel Create(Type pageType, Action<PageViewModel>? initialize)
+    {
         IServiceScope scope = services.CreateScope();
         PageViewModel page;
         try
@@ -47,6 +63,8 @@ public sealed class NavigationService(IServiceProvider services) : INavigationSe
 
         IServiceScope? previousScope = _currentScope;
         _currentScope = scope;
+        _currentType = pageType;
+        _currentInitialize = initialize;
         CurrentPage = page;
 
         CurrentPageChanged?.Invoke(this, EventArgs.Empty);

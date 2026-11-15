@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -59,11 +60,11 @@ public sealed partial class StatusBarViewModel : ObservableObject
     public partial string? SyncStatusText { get; private set; }
 
     /// <summary>«Sincronizando…» mientras corre, o el aviso del último intento («Sin respuesta del servidor…»); vacío si todo va bien.</summary>
-    public string SyncStateText => IsSyncing ? "Sincronizando…" : SyncStatusText ?? string.Empty;
+    public string SyncStateText => IsSyncing ? Loc.T("bar.syncing") : SyncStatusText ?? string.Empty;
 
     public bool HasSyncState => SyncStateText.Length > 0;
 
-    public string RejectedText => RejectedCount == 1 ? "1 rechazado" : $"{RejectedCount} rechazados";
+    public string RejectedText => RejectedCount == 1 ? Loc.T("bar.rejected.one") : Loc.T("bar.rejected.many", RejectedCount);
 
     public bool HasRejected => RejectedCount > 0;
 
@@ -71,15 +72,18 @@ public sealed partial class StatusBarViewModel : ObservableObject
     [RelayCommand]
     private void SyncNow() => _syncStatus.SyncNow();
 
-    public string ConnectionText => IsOnline ? "En línea" : "Sin conexión";
+    public string ConnectionText => IsOnline ? Loc.T("bar.online") : Loc.T("bar.offline");
 
     public string LastSyncText => LastSyncAt is { } at
-        ? $"Último sync: {at.ToLocalTime().ToString("g", CultureInfo.CurrentCulture)}"
-        : "Último sync: nunca";
+        ? Loc.T("bar.lastSync", at.ToLocalTime().ToString("g", CultureInfo.CurrentCulture))
+        : Loc.T("bar.neverSynced");
 
-    public string PendingText => $"Pendientes: {PendingCount}";
+    public string PendingText => Loc.T("bar.pending", PendingCount);
 
     public bool HasPending => PendingCount > 0;
+
+    /// <summary>Vuelve a leer todos los textos tras cambiar el idioma.</summary>
+    public void RefreshLanguage() => OnPropertyChanged(string.Empty);
 
     private void OnSourceChanged(object? sender, EventArgs e)
     {

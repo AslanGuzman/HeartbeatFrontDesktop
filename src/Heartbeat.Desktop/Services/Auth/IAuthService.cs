@@ -1,3 +1,5 @@
+using Heartbeat.Desktop.Localization;
+
 namespace Heartbeat.Desktop.Services.Auth;
 
 public enum SignInFailure
@@ -26,13 +28,13 @@ public sealed record SignInResult(SessionUser? User, bool IsOffline, SignInFailu
 
     public static SignInResult Fail(SignInFailure failure) => new(null, false, failure);
 
-    /// <summary>Mensaje para el astronauta, en español.</summary>
+    /// <summary>Mensaje para el astronauta, en el idioma activo.</summary>
     public string? Message => Failure switch
     {
-        SignInFailure.MissingFields => "Escribe tu usuario y tu contraseña.",
-        SignInFailure.InvalidCredentials => "Usuario o contraseña incorrectos.",
-        SignInFailure.FirstSignInNeedsConnection => "Sin conexión. El primer acceso en este equipo debe hacerse en línea; después podrás entrar sin enlace.",
-        SignInFailure.ServerUnavailable => "No se pudo contactar con el servidor. El primer acceso en este equipo requiere conexión: inténtalo de nuevo en unos minutos.",
+        SignInFailure.MissingFields => Loc.T("auth.missing"),
+        SignInFailure.InvalidCredentials => Loc.T("auth.invalid"),
+        SignInFailure.FirstSignInNeedsConnection => Loc.T("auth.firstOnline"),
+        SignInFailure.ServerUnavailable => Loc.T("auth.server"),
         _ => null,
     };
 }

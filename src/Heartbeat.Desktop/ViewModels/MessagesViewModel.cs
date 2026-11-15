@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Heartbeat.Desktop.Converters;
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -40,7 +41,7 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
         _store.Changed += OnStoreChanged;
     }
 
-    public override string Title => "Mensajes";
+    public override string Title => Loc.T("nav.messages");
 
     /// <summary>Texto del mensaje o del reporte.</summary>
     [ObservableProperty]
@@ -94,7 +95,7 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
 
     public bool HasSent => Sent.Count > 0;
 
-    public string InboxTabText => UnreadCount > 0 ? $"Bandeja ({UnreadCount})" : "Bandeja";
+    public string InboxTabText => UnreadCount > 0 ? Loc.T("msg.inbox", UnreadCount) : Loc.T("msg.inboxPlain");
 
     public void Dispose() => _store.Changed -= OnStoreChanged;
 
@@ -145,12 +146,12 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
                 CheckUpRecord checkUp = SelectedCheckUp!.CheckUp;
                 string subject = string.IsNullOrWhiteSpace(Subject) ? ReportBuilder.Subject(checkUp) : Subject;
                 _store.QueueReport(user.Id, checkUp.Id, subject, NewMessage);
-                Feedback = "Reporte guardado: sale hacia control de misión cuando haya enlace.";
+                Feedback = Loc.T("msg.feedback.report");
             }
             else
             {
                 _store.QueueMessage(user.Id, NewMessage, Subject);
-                Feedback = "Mensaje guardado: sale hacia control de misión cuando haya enlace.";
+                Feedback = Loc.T("msg.feedback.message");
             }
         }
         catch (ArgumentException ex)
@@ -216,9 +217,11 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
             foreach (CheckUpRecord checkUp in checkUps.Take(MaxCheckUpOptions))
             {
                 bool reported = _store.HasReport(checkUp.Id);
-                string label = string.Create(
-                    CultureInfo.CurrentCulture,
-                    $"{checkUp.RecordedAt.ToLocalTime():g} · {StatusPalette.Name(checkUp.OverallStatus)} · {checkUp.Readings.Count} lect.{(reported ? " · ya reportado" : string.Empty)}");
+                string label = Loc.T(
+                    "msg.attach.line",
+                    checkUp.RecordedAt.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
+                    StatusPalette.Name(checkUp.OverallStatus),
+                    checkUp.Readings.Count) + (reported ? Loc.T("msg.attach.reported") : string.Empty);
                 CheckUps.Add(new CheckUpOptionViewModel(checkUp, label, reported));
             }
 
@@ -232,9 +235,9 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
             {
                 inbox.Add((message.CreatedAt, new InboxRowViewModel(
                     message.Id,
-                    string.IsNullOrWhiteSpace(message.Subject) ? "Mensaje de control de misión" : message.Subject!,
+                    string.IsNullOrWhiteSpace(message.Subject) ? Loc.T("msg.fromMc") : message.Subject!,
                     message.Body,
-                    message.SenderName ?? "Control de misión",
+                    message.SenderName ?? Loc.T("mc.name"),
                     Format(message.CreatedAt),
                     false,
                     !message.IsRead)));
@@ -244,10 +247,10 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
             {
                 DateTimeOffset checkUpTime = checkUps.FirstOrDefault(c => c.Id == alert.CheckUpId)?.RecordedAt ?? alert.AcknowledgedAt;
                 string body = string.IsNullOrWhiteSpace(alert.Note)
-                    ? $"{alert.AcknowledgedBy} reconoció la alerta de tu check-up del {Format(checkUpTime)}."
-                    : $"{alert.AcknowledgedBy} reconoció la alerta de tu check-up del {Format(checkUpTime)}: {alert.Note}";
+                    ? Loc.T("msg.alertAck", alert.AcknowledgedBy, Format(checkUpTime))
+                    : Loc.T("msg.alertAckNote", alert.AcknowledgedBy, Format(checkUpTime), alert.Note);
                 inbox.Add((alert.AcknowledgedAt, new InboxRowViewModel(
-                    null, "Alerta reconocida", body, alert.AcknowledgedBy, Format(alert.AcknowledgedAt), true, false)));
+                    null, Loc.T("msg.alertTitle"), body, alert.AcknowledgedBy, Format(alert.AcknowledgedAt), true, false)));
             }
 
             foreach ((DateTimeOffset _, InboxRowViewModel row) in inbox.OrderByDescending(i => i.When))
@@ -274,15 +277,15 @@ public sealed partial class MessagesViewModel : PageViewModel, IDisposable
     {
         string status = message.Status switch
         {
-            MessageStatus.Rejected => $"Rechazado: {message.SyncError}",
-            MessageStatus.Read => $"Leído {Format(message.ReadAt ?? message.SentAt ?? message.CreatedAt)}",
-            MessageStatus.Sent => $"Enviado {Format(message.SentAt ?? message.CreatedAt)}",
-            _ => "En cola (sin enlace)",
+            MessageStatus.Rejected => Loc.T("msg.status.rejected", message.SyncError),
+            MessageStatus.Read => Loc.T("msg.status.read", Format(message.ReadAt ?? message.SentAt ?? message.CreatedAt)),
+            MessageStatus.Sent => Loc.T("msg.status.sent", Format(message.SentAt ?? message.CreatedAt)),
+            _ => Loc.T("sync.queued"),
         };
 
         string title = message.IsReport
-            ? $"Reporte de check-up: {message.Subject}"
-            : string.IsNullOrWhiteSpace(message.Subject) ? "Mensaje" : message.Subject!;
+            ? Loc.T("msg.subject.report", message.Subject)
+            : string.IsNullOrWhiteSpace(message.Subject) ? Loc.T("msg.subject.plain") : message.Subject!;
         return new OutgoingRowViewModel(title, message.Body, Format(message.CreatedAt), message.Status, status, message.IsReport);
     }
 

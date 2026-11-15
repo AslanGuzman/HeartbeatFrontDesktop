@@ -8,6 +8,7 @@ using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Navigation;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -59,11 +60,11 @@ public sealed partial class CheckUpViewModel : PageViewModel
 
         MoodOptions =
         [
-            new(1, "Muy mal"),
-            new(2, "Mal"),
-            new(3, "Normal"),
-            new(4, "Bien"),
-            new(5, "Muy bien"),
+            new(1, Loc.T("mood.1")),
+            new(2, Loc.T("mood.2")),
+            new(3, Loc.T("mood.3")),
+            new(4, Loc.T("mood.4")),
+            new(5, Loc.T("mood.5")),
         ];
 
         Systolic = string.Empty;
@@ -75,7 +76,7 @@ public sealed partial class CheckUpViewModel : PageViewModel
         Note = string.Empty;
     }
 
-    public override string Title => "Check-up";
+    public override string Title => Loc.T("checkup.title");
 
     /// <summary>Panel de medidas corporales que acompaña al formulario.</summary>
     public BodyMeasurementsViewModel Body { get; }
@@ -142,7 +143,7 @@ public sealed partial class CheckUpViewModel : PageViewModel
 
         if (_session.CurrentUser is not { } user)
         {
-            Error = "Inicia sesión para guardar un check-up.";
+            Error = Loc.T("checkup.err.signIn");
             return;
         }
 
@@ -151,7 +152,7 @@ public sealed partial class CheckUpViewModel : PageViewModel
 
         if (problems.Count == 0 && inputs.Count == 0)
         {
-            Error = "Registra al menos un indicador. Puedes omitir los que no midas hoy.";
+            Error = Loc.T("checkup.err.none");
             return;
         }
 
@@ -159,13 +160,13 @@ public sealed partial class CheckUpViewModel : PageViewModel
         {
             if (_evaluator.Validate(input).Count > 0)
             {
-                problems.Add($"{NameOf(input.Indicator)} (fuera de lo que se puede medir)");
+                problems.Add(Loc.T("checkup.prob.range", NameOf(input.Indicator)));
             }
         }
 
         if (problems.Count > 0)
         {
-            Error = "Revisa: " + string.Join("; ", problems) + ".";
+            Error = Loc.T("checkup.err.review", string.Join("; ", problems));
             return;
         }
 
@@ -213,7 +214,7 @@ public sealed partial class CheckUpViewModel : PageViewModel
         bool hasDia = !string.IsNullOrWhiteSpace(Diastolic);
         if (hasSys != hasDia)
         {
-            problems.Add($"{NameOf(IndicatorType.BloodPressure)} (escribe la sistólica y la diastólica)");
+            problems.Add(Loc.T("checkup.prob.bpBoth", NameOf(IndicatorType.BloodPressure)));
         }
         else if (hasSys)
         {
@@ -223,7 +224,7 @@ public sealed partial class CheckUpViewModel : PageViewModel
             }
             else
             {
-                problems.Add($"{NameOf(IndicatorType.BloodPressure)} (escribe números)");
+                problems.Add(Loc.T("checkup.prob.bpNumbers", NameOf(IndicatorType.BloodPressure)));
             }
         }
 
@@ -253,7 +254,7 @@ public sealed partial class CheckUpViewModel : PageViewModel
         }
         else
         {
-            problems.Add($"{NameOf(type)} (escribe un número)");
+            problems.Add(Loc.T("checkup.prob.number", NameOf(type)));
         }
     }
 

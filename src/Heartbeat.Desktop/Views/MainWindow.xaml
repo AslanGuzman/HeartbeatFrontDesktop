@@ -1,6 +1,7 @@
 <Window x:Class="Heartbeat.Desktop.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:Heartbeat.Desktop.Localization"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:Heartbeat.Desktop.Views"
@@ -61,17 +62,17 @@
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,14" HorizontalAlignment="Center">
                     <Button Content="&#xE946;" Style="{StaticResource RailButtonStyle}"
                             Command="{Binding ShowInfoCommand}"
-                            ToolTip="Información y fuentes de los indicadores"
-                            AutomationProperties.Name="Información y fuentes de los indicadores" />
+                            ToolTip="{loc:Loc main.infoSources}"
+                            AutomationProperties.Name="{loc:Loc main.infoSources}" />
                     <Button Content="&#xE7E8;" Style="{StaticResource RailDangerButtonStyle}"
                             Command="{Binding SignOutCommand}"
-                            ToolTip="Cerrar sesión"
-                            AutomationProperties.Name="Cerrar sesión" />
+                            ToolTip="{loc:Loc main.signOut}"
+                            AutomationProperties.Name="{loc:Loc main.signOut}" />
                 </StackPanel>
 
                 <!-- Pantallas -->
                 <ItemsControl ItemsSource="{Binding NavigationItems}" VerticalAlignment="Center" HorizontalAlignment="Center"
-                              AutomationProperties.Name="Navegación principal">
+                              AutomationProperties.Name="{loc:Loc main.navAria}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Content="{Binding Glyph}"
@@ -102,17 +103,30 @@
                         <TextBlock Text="Heartbeat" FontSize="17" FontWeight="Bold"
                                    Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
                         <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" Margin="14,0" />
-                        <TextBlock Text="Monitoreo de salud de la tripulación" Style="{StaticResource CaptionTextStyle}"
+                        <TextBlock Text="{loc:Loc main.subtitle}" Style="{StaticResource CaptionTextStyle}"
                                    VerticalAlignment="Center" TextWrapping="NoWrap" />
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <!-- Interruptor del enlace (MR-10 / MR-11) -->
                         <ToggleButton IsChecked="{Binding IsLinkEnabled}" Style="{StaticResource SwitchStyle}"
-                                      Content="Enlace con la Tierra" Margin="0,0,18,0"
+                                      Content="{loc:Loc main.link}" Margin="0,0,18,0"
                                       WindowChrome.IsHitTestVisibleInChrome="True"
-                                      ToolTip="Simula la disponibilidad del enlace. Apagado, la app funciona como sin conexión y acumula lo pendiente."
-                                      AutomationProperties.Name="Enlace con la Tierra" />
+                                      ToolTip="{loc:Loc main.linkHint}"
+                                      AutomationProperties.Name="{loc:Loc main.link}" />
+
+                        <!-- Idioma: muestra al que se cambiaría (ES mientras la app está en inglés) -->
+                        <Button Command="{Binding ToggleLanguageCommand}" Style="{StaticResource SecondaryButtonStyle}"
+                                Padding="10,4" Margin="0,0,14,0" FontSize="12"
+                                WindowChrome.IsHitTestVisibleInChrome="True"
+                                ToolTip="{Binding LanguageButtonTip}"
+                                AutomationProperties.Name="{Binding LanguageButtonTip}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE774;" Style="{StaticResource IconTextStyle}" FontSize="12"
+                                           Foreground="{DynamicResource BrandBlueBrush}" />
+                                <TextBlock Text="{Binding LanguageButtonText}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
 
                         <!-- Usuario -->
                         <Border Background="{DynamicResource BrandBlueSoftBrush}" CornerRadius="999" Padding="12,5" Margin="0,0,14,0"
@@ -130,11 +144,11 @@
 
                         <!-- Botones de ventana -->
                         <Button Content="&#xE921;" Style="{StaticResource WindowButtonStyle}" Click="Minimize_Click"
-                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Minimizar" AutomationProperties.Name="Minimizar" />
+                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="{loc:Loc main.minimize}" AutomationProperties.Name="{loc:Loc main.minimize}" />
                         <Button x:Name="MaximizeButton" Content="&#xE922;" Style="{StaticResource WindowButtonStyle}" Click="MaximizeRestore_Click"
-                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Maximizar" AutomationProperties.Name="Maximizar" />
+                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="{loc:Loc main.maximize}" AutomationProperties.Name="{loc:Loc main.maximize}" />
                         <Button Content="&#xE8BB;" Style="{StaticResource WindowCloseButtonStyle}" Click="Close_Click"
-                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="Cerrar" AutomationProperties.Name="Cerrar" />
+                                WindowChrome.IsHitTestVisibleInChrome="True" ToolTip="{loc:Loc main.close}" AutomationProperties.Name="{loc:Loc main.close}" />
                     </StackPanel>
                 </DockPanel>
             </Border>

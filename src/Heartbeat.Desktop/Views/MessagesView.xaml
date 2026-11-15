@@ -1,6 +1,7 @@
 <UserControl x:Class="Heartbeat.Desktop.Views.MessagesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Heartbeat.Desktop.Localization"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
@@ -11,23 +12,23 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="760" HorizontalAlignment="Left">
-            <TextBlock Text="Mensajes y reportes" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
-            <TextBlock Text="Escribe a control de misión. Si no hay enlace, queda en cola y sale cuando vuelvas a tenerlo."
+            <TextBlock Text="{loc:Loc msg.heading}" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
+            <TextBlock Text="{loc:Loc msg.intro}"
                        Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,16" />
 
             <!-- Redactar -->
             <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,18">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                        <Button Content="Mensaje" Style="{StaticResource SegmentButtonStyle}" Margin="0,0,8,0"
+                        <Button Content="{loc:Loc msg.tabMessage}" Style="{StaticResource SegmentButtonStyle}" Margin="0,0,8,0"
                                 Command="{Binding ComposeMessageCommand}" Tag="{Binding IsMessageMode}" />
-                        <Button Content="Reporte con check-up" Style="{StaticResource SegmentButtonStyle}"
+                        <Button Content="{loc:Loc msg.tabReport}" Style="{StaticResource SegmentButtonStyle}"
                                 Command="{Binding ComposeReportCommand}" Tag="{Binding IsReportMode}" />
                     </StackPanel>
 
                     <StackPanel Visibility="{Binding IsReportMode, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,12">
-                        <TextBlock Text="Check-up que adjuntas" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,6" />
-                        <TextBlock Text="Todavía no tienes check-ups: registra uno para poder adjuntarlo."
+                        <TextBlock Text="{loc:Loc msg.attachLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,6" />
+                        <TextBlock Text="{loc:Loc msg.noCheckUps}"
                                    Style="{StaticResource CaptionTextStyle}"
                                    Visibility="{Binding HasCheckUps, Converter={StaticResource InverseBoolToVisibility}}" />
                         <Border BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1.5" CornerRadius="12" Padding="4"
@@ -36,7 +37,7 @@
                                      BorderThickness="0" Background="Transparent" MaxHeight="150"
                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                      ItemContainerStyle="{StaticResource IndicatorListItemStyle}"
-                                     AutomationProperties.Name="Check-ups que se pueden adjuntar">
+                                     AutomationProperties.Name="{loc:Loc msg.attachAria}">
                                 <ListBox.ItemTemplate>
                                     <DataTemplate>
                                         <TextBlock Text="{Binding Label}" Style="{StaticResource BodyTextStyle}" />
@@ -44,25 +45,25 @@
                                 </ListBox.ItemTemplate>
                             </ListBox>
                         </Border>
-                        <TextBlock Text="De este check-up ya enviaste un reporte."
+                        <TextBlock Text="{loc:Loc msg.alreadyReported}"
                                    Foreground="{DynamicResource BrandRedBrush}" FontSize="12" Margin="0,6,0,0"
                                    Visibility="{Binding SelectedAlreadyReported, Converter={StaticResource BoolToVisibility}}" />
                     </StackPanel>
 
-                    <TextBlock Text="Asunto (opcional)" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:Loc msg.subjectLabel}" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,6" />
                     <TextBox Text="{Binding Subject, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
-                             MaxLength="120" Margin="0,0,0,12" AutomationProperties.Name="Asunto" />
+                             MaxLength="120" Margin="0,0,0,12" AutomationProperties.Name="{loc:Loc msg.subjectAria}" />
 
-                    <TextBlock Text="Mensaje" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,6" />
+                    <TextBlock Text="{loc:Loc msg.tabMessage}" Style="{StaticResource FieldLabelStyle}" Margin="0,0,0,6" />
                     <TextBox Text="{Binding NewMessage, UpdateSourceTrigger=PropertyChanged}"
                              Style="{StaticResource InputStyle}" AcceptsReturn="True" TextWrapping="Wrap"
                              MinHeight="96" MaxLength="4000" VerticalContentAlignment="Top"
-                             AutomationProperties.Name="Mensaje para control de misión" />
+                             AutomationProperties.Name="{loc:Loc msg.bodyAria}" />
 
                     <TextBlock Text="{Binding Error}" Foreground="{DynamicResource BrandRedBrush}" FontSize="12" Margin="0,8,0,0"
                                TextWrapping="Wrap" Visibility="{Binding Error, Converter={StaticResource NonEmptyToVisibility}}" />
                     <DockPanel Margin="0,12,0,0">
-                        <Button DockPanel.Dock="Right" Content="Enviar a control de misión" Command="{Binding SendCommand}"
+                        <Button DockPanel.Dock="Right" Content="{loc:Loc msg.send}" Command="{Binding SendCommand}"
                                 Padding="20,9" />
                         <TextBlock Text="{Binding Feedback}" Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center"
                                    TextWrapping="Wrap" Margin="0,0,12,0"
@@ -73,13 +74,13 @@
 
             <!-- Bandeja / Enviados -->
             <DockPanel Margin="0,0,0,12">
-                <Button DockPanel.Dock="Right" Content="Marcar todo como leído" Command="{Binding MarkAllReadCommand}"
+                <Button DockPanel.Dock="Right" Content="{loc:Loc msg.markAll}" Command="{Binding MarkAllReadCommand}"
                         Style="{StaticResource LinkButtonStyle}" VerticalAlignment="Center"
                         Visibility="{Binding IsInboxTab, Converter={StaticResource BoolToVisibility}}" />
                 <StackPanel Orientation="Horizontal">
                     <Button Content="{Binding InboxTabText}" Style="{StaticResource SegmentButtonStyle}" Margin="0,0,8,0"
                             Command="{Binding ShowInboxCommand}" Tag="{Binding IsInboxTab}" />
-                    <Button Content="Enviados" Style="{StaticResource SegmentButtonStyle}"
+                    <Button Content="{loc:Loc msg.tabSent}" Style="{StaticResource SegmentButtonStyle}"
                             Command="{Binding ShowSentCommand}" Tag="{Binding IsSentTab}" />
                 </StackPanel>
             </DockPanel>
@@ -88,11 +89,11 @@
             <StackPanel Visibility="{Binding IsInboxTab, Converter={StaticResource BoolToVisibility}}">
                 <ContentControl Style="{StaticResource HoverCardStyle}"
                                 Visibility="{Binding HasInbox, Converter={StaticResource InverseBoolToVisibility}}">
-                    <TextBlock Text="No hay respuestas ni alertas reconocidas todavía. Llegan cuando control de misión responde y se sincroniza."
+                    <TextBlock Text="{loc:Loc msg.emptyInbox}"
                                Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
                 </ContentControl>
 
-                <ItemsControl ItemsSource="{Binding Inbox}" AutomationProperties.Name="Bandeja de entrada">
+                <ItemsControl ItemsSource="{Binding Inbox}" AutomationProperties.Name="{loc:Loc msg.inboxAria}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <ContentControl Style="{StaticResource HoverCardStyle}" Padding="14" Margin="0,0,0,10">
@@ -107,7 +108,7 @@
                                     </DockPanel>
                                     <TextBlock Text="{Binding From}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,8" />
                                     <TextBlock Text="{Binding Body}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
-                                    <Button Content="Marcar como leído" Style="{StaticResource LinkButtonStyle}" HorizontalAlignment="Left"
+                                    <Button Content="{loc:Loc msg.markRead}" Style="{StaticResource LinkButtonStyle}" HorizontalAlignment="Left"
                                             Margin="0,8,0,0"
                                             Command="{Binding DataContext.MarkReadCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding MessageId}"
@@ -123,10 +124,10 @@
             <StackPanel Visibility="{Binding IsSentTab, Converter={StaticResource BoolToVisibility}}">
                 <ContentControl Style="{StaticResource HoverCardStyle}"
                                 Visibility="{Binding HasSent, Converter={StaticResource InverseBoolToVisibility}}">
-                    <TextBlock Text="Todavía no has enviado mensajes ni reportes." Style="{StaticResource BodyTextStyle}" />
+                    <TextBlock Text="{loc:Loc msg.emptySent}" Style="{StaticResource BodyTextStyle}" />
                 </ContentControl>
 
-                <ItemsControl ItemsSource="{Binding Sent}" AutomationProperties.Name="Mensajes enviados">
+                <ItemsControl ItemsSource="{Binding Sent}" AutomationProperties.Name="{loc:Loc msg.sentAria}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <ContentControl Style="{StaticResource HoverCardStyle}" Padding="14" Margin="0,0,0,10">

@@ -4,6 +4,7 @@ using System.Net;
 using Heartbeat.Client;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.Demo;
 
@@ -41,7 +42,7 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
         SessionUser? account = DemoAccounts.All.FirstOrDefault(a => string.Equals(a.UserName, request.UserName, StringComparison.OrdinalIgnoreCase));
         if (account is null || !string.Equals(request.Password, DemoAccounts.Password, StringComparison.Ordinal))
         {
-            throw new HttpRequestException("Credenciales de demostración inválidas.", null, HttpStatusCode.Unauthorized);
+            throw new HttpRequestException(Loc.T("demo.badCredentials"), null, HttpStatusCode.Unauthorized);
         }
 
         DateTimeOffset now = clock.GetUtcNow();
@@ -90,7 +91,7 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
         {
             if (checkUp.Note?.Contains(RejectMarker, StringComparison.OrdinalIgnoreCase) == true)
             {
-                rejected.Add(new SyncRejected(checkUp.Id, "Rechazado por el servidor de demostración (la nota contiene " + RejectMarker + ")."));
+                rejected.Add(new SyncRejected(checkUp.Id, Loc.T("demo.rejectedCheckUp", RejectMarker)));
             }
             else
             {
@@ -103,7 +104,7 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
         {
             if (message.Body.Contains(RejectMarker, StringComparison.OrdinalIgnoreCase))
             {
-                rejected.Add(new SyncRejected(message.Id, "Rechazado por el servidor de demostración (el mensaje contiene " + RejectMarker + ")."));
+                rejected.Add(new SyncRejected(message.Id, Loc.T("demo.rejectedMessage", RejectMarker)));
             }
             else
             {
@@ -129,12 +130,12 @@ public sealed class DemoCrewApiClient(TimeProvider clock) : ICrewApiClient
             .Where(m => accepted.Contains(m.Id) && m.Kind == MessageKind.Report)
             .Select(m => new MessageDto(
                 DerivedId(m.Id), MessageDirection.ToAstronaut, MessageKind.Message, m.CheckUpId,
-                "Re: " + m.Subject, "Recibimos tu reporte. Seguimos tus indicadores; avísanos si algo empeora.",
-                now, now, null, "Control de misión (demo)"))
+                "Re: " + m.Subject, Loc.T("demo.replyBody"),
+                now, now, null, Loc.T("demo.mcName")))
             .ToList();
         List<AcknowledgedAlert> alerts = request.CheckUps
             .Where(c => accepted.Contains(c.Id) && c.OverallStatus == HealthStatus.Critical)
-            .Select(c => new AcknowledgedAlert(c.Id, now, "Control de misión (demo)", "Alerta recibida por los cirujanos de vuelo."))
+            .Select(c => new AcknowledgedAlert(c.Id, now, Loc.T("demo.mcName"), Loc.T("demo.alertNote")))
             .ToList();
 
         return Task.FromResult(new SyncResponse(now, accepted, rejected, applied, new SyncInbound(replies, alerts), false));

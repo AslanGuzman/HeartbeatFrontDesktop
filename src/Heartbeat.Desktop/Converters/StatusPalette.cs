@@ -1,6 +1,7 @@
 using System.Windows.Media;
 
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.Converters;
 
@@ -39,13 +40,13 @@ public static class StatusPalette
         _ => NoneSoft,
     };
 
-    /// <summary>Nombre del estado en español, para mostrarlo siempre junto al color.</summary>
+    /// <summary>Nombre del estado en el idioma activo, para mostrarlo siempre junto al color.</summary>
     public static string Name(HealthStatus? status) => status switch
     {
-        HealthStatus.Normal => "Normal",
-        HealthStatus.Watch => "Vigilancia",
-        HealthStatus.Critical => "Crítico",
-        _ => "Sin datos",
+        HealthStatus.Normal => Loc.T("status.normal"),
+        HealthStatus.Watch => Loc.T("status.watch"),
+        HealthStatus.Critical => Loc.T("status.critical"),
+        _ => Loc.T("status.noData"),
     };
 
     private static readonly Brush NormalDot = Frozen(0x2E, 0x9E, 0x5B);

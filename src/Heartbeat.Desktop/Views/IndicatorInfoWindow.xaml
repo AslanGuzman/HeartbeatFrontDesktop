@@ -1,12 +1,13 @@
 <Window x:Class="Heartbeat.Desktop.Views.IndicatorInfoWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:Heartbeat.Desktop.Localization"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:IndicatorInfoViewModel}"
-        Title="Información de indicadores - Heartbeat"
+        Title="{loc:Loc info.windowTitle}"
         Width="900" Height="640"
         MinWidth="640" MinHeight="420"
         WindowStartupLocation="CenterOwner"
@@ -37,7 +38,7 @@
                 BorderThickness="0,0,1,0">
             <DockPanel Margin="12">
                 <TextBlock DockPanel.Dock="Top"
-                           Text="Indicadores"
+                           Text="{loc:Loc info.indicators}"
                            Style="{StaticResource SectionHeadingStyle}"
                            Margin="8,4,8,10" />
                 <ListBox ItemsSource="{Binding Indicators}"
@@ -45,7 +46,7 @@
                          ItemContainerStyle="{StaticResource IndicatorListItemStyle}"
                          Background="Transparent"
                          BorderThickness="0"
-                         AutomationProperties.Name="Lista de indicadores">
+                         AutomationProperties.Name="{loc:Loc info.listAria}">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel>
@@ -63,13 +64,13 @@
             <StackPanel Margin="32,24,32,24" DataContext="{Binding SelectedIndicator}">
                 <TextBlock Text="{Binding Name}" Style="{StaticResource TitleTextStyle}" />
                 <TextBlock Style="{StaticResource SecondaryTextStyle}" Margin="0,4,0,0">
-                    <Run Text="Unidad: " /><Run Text="{Binding Unit, Mode=OneWay}" /><Run Text=" · Peligro NASA relacionado: " /><Run Text="{Binding HazardName, Mode=OneWay}" />
+                    <Run Text="{loc:Loc info.unit}" /><Run Text="{Binding Unit, Mode=OneWay}" /><Run Text="{loc:Loc info.hazard}" /><Run Text="{Binding HazardName, Mode=OneWay}" />
                 </TextBlock>
 
-                <TextBlock Text="Por qué importa" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,6" />
+                <TextBlock Text="{loc:Loc info.why}" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,6" />
                 <TextBlock Text="{Binding WhyItMatters}" TextWrapping="Wrap" LineHeight="21" />
 
-                <TextBlock Text="Cómo medirlo" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,6" />
+                <TextBlock Text="{loc:Loc info.how}" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,6" />
                 <ItemsControl ItemsSource="{Binding HowToMeasure}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -85,13 +86,13 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <TextBlock Text="Riesgos" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,6" />
+                <TextBlock Text="{loc:Loc info.risks}" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,6" />
                 <TextBlock Text="{Binding Risks}" TextWrapping="Wrap" LineHeight="21" />
 
-                <TextBlock Text="Fuentes y referencias" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,2" />
-                <TextBlock Text="Los enlaces se abren en tu navegador." Style="{StaticResource SecondaryTextStyle}" FontSize="{DynamicResource CaptionFontSize}" Margin="0,0,0,8" />
+                <TextBlock Text="{loc:Loc info.sources}" Style="{StaticResource SectionHeadingStyle}" Margin="0,24,0,2" />
+                <TextBlock Text="{loc:Loc info.linksHint}" Style="{StaticResource SecondaryTextStyle}" FontSize="{DynamicResource CaptionFontSize}" Margin="0,0,0,8" />
                 <ItemsControl ItemsSource="{Binding Sources}"
-                              AutomationProperties.Name="Fuentes del indicador">
+                              AutomationProperties.Name="{loc:Loc info.sourcesAria}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Style="{StaticResource LinkButtonStyle}"

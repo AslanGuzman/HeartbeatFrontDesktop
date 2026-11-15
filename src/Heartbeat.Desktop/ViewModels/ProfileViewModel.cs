@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Profile;
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -51,7 +52,7 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
         _store.Changed += OnStoreChanged;
     }
 
-    public override string Title => "Perfil";
+    public override string Title => Loc.T("nav.profile");
 
     // ---- Datos que no se editan ----
 
@@ -90,13 +91,13 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
     public string NotesCounterText => string.Create(CultureInfo.CurrentCulture, $"{Notes.Length} / {ProfileLimits.Notes}");
 
     public string? DisplayNameError =>
-        string.IsNullOrWhiteSpace(DisplayName) ? "El nombre es obligatorio."
-        : DisplayName.Trim().Length > ProfileLimits.DisplayName ? $"Máximo {ProfileLimits.DisplayName} caracteres."
+        string.IsNullOrWhiteSpace(DisplayName) ? Loc.T("profile.err.nameRequired")
+        : DisplayName.Trim().Length > ProfileLimits.DisplayName ? Loc.T("profile.err.max", ProfileLimits.DisplayName)
         : null;
 
-    public string? CallSignError => CallSign.Trim().Length > ProfileLimits.CallSign ? $"Máximo {ProfileLimits.CallSign} caracteres." : null;
+    public string? CallSignError => CallSign.Trim().Length > ProfileLimits.CallSign ? Loc.T("profile.err.max", ProfileLimits.CallSign) : null;
 
-    public string? NotesError => Notes.Trim().Length > ProfileLimits.Notes ? $"Máximo {ProfileLimits.Notes} caracteres." : null;
+    public string? NotesError => Notes.Trim().Length > ProfileLimits.Notes ? Loc.T("profile.err.max", ProfileLimits.Notes) : null;
 
     /// <summary>Hay cambios sin guardar respecto al perfil mostrado.</summary>
     public bool IsDirty => _loaded is not null
@@ -151,7 +152,7 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
 
         if (_session.CurrentUser is not { } user)
         {
-            Error = "Inicia sesión para editar tu perfil.";
+            Error = Loc.T("profile.err.signIn");
             return;
         }
 
@@ -162,7 +163,7 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
 
             // El nombre de la barra superior sigue al perfil.
             _session.Update(user with { DisplayName = saved.Profile.DisplayName });
-            SavedText = "Cambios guardados en este equipo.";
+            SavedText = Loc.T("profile.saved.local");
         }
         catch (ArgumentException ex)
         {
@@ -170,7 +171,7 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
         }
         catch (InvalidOperationException)
         {
-            Error = "No se encontró tu perfil en este equipo. Vuelve a iniciar sesión con conexión.";
+            Error = Loc.T("profile.err.notFound");
         }
     }
 
@@ -260,9 +261,9 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
         DateOfBirthText = profile.DateOfBirth?.ToString("D", CultureInfo.CurrentCulture);
         HasPendingEdit = view.HasPendingEdit;
         SyncText = view.HasPendingEdit
-            ? "Cambios guardados en este equipo. Se enviarán en la próxima sincronización."
-            : "Perfil sincronizado.";
-        UpdatedText = $"Última edición: {IndicatorPresentation.FormatWhen(profile.UpdatedAt, _clock)}";
+            ? Loc.T("profile.saved.pending")
+            : Loc.T("profile.synced");
+        UpdatedText = Loc.T("profile.updated", IndicatorPresentation.FormatWhen(profile.UpdatedAt, _clock));
 
         SetFields(profile);
         OnPropertyChanged(nameof(UserName));
@@ -293,15 +294,15 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
 
         HasPendingEdit = view.HasPendingEdit;
         SyncText = view.HasPendingEdit
-            ? "Cambios guardados en este equipo. Se enviarán en la próxima sincronización."
-            : "Perfil sincronizado.";
+            ? Loc.T("profile.saved.pending")
+            : Loc.T("profile.synced");
     }
 
     private static string EnvironmentName(string environment) => environment.ToLowerInvariant() switch
     {
-        "station" => "estación espacial",
-        "moon" => "Luna",
-        "mars" => "Marte",
+        "station" => Loc.T("profile.env.station"),
+        "moon" => Loc.T("profile.env.moon"),
+        "mars" => Loc.T("profile.env.mars"),
         _ => environment,
     };
 
@@ -309,7 +310,7 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
     {
         int day = (_clock.GetLocalNow().Date - TimeZoneInfo.ConvertTime(startsAt, _clock.LocalTimeZone).Date).Days + 1;
         return day >= 1
-            ? $"Día {day} de la misión"
-            : $"La misión comienza el {TimeZoneInfo.ConvertTime(startsAt, _clock.LocalTimeZone).ToString("d", CultureInfo.CurrentCulture)}";
+            ? Loc.T("profile.missionDay", day)
+            : Loc.T("profile.missionStarts", TimeZoneInfo.ConvertTime(startsAt, _clock.LocalTimeZone).ToString("d", CultureInfo.CurrentCulture));
     }
 }

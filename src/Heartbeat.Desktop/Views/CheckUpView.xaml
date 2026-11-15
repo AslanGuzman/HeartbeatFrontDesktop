@@ -1,6 +1,7 @@
 <UserControl x:Class="Heartbeat.Desktop.Views.CheckUpView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Heartbeat.Desktop.Localization"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
@@ -16,7 +17,7 @@
             <Setter Property="Height" Value="24" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="Command" Value="{Binding ShowInfoCommand}" />
-            <Setter Property="ToolTip" Value="Por qué importa, cómo medirlo y fuentes" />
+            <Setter Property="ToolTip" Value="{loc:Loc info.tooltip}" />
         </Style>
     </UserControl.Resources>
 
@@ -32,66 +33,66 @@
             <!-- Formulario -->
             <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,14">
                 <StackPanel>
-                    <TextBlock Text="Check-up de rutina" Style="{StaticResource TitleTextStyle}" />
+                    <TextBlock Text="{loc:Loc checkup.heading}" Style="{StaticResource TitleTextStyle}" />
                     <TextBlock Style="{StaticResource CaptionTextStyle}" Margin="0,6,0,18"
-                               Text="Registra de 1 a 6 indicadores en una sola sesión; deja en blanco los que no midas hoy. Se evalúan en tu equipo aunque no haya enlace." />
+                               Text="{loc:Loc checkup.intro}" />
 
                     <UniformGrid Columns="2">
                         <StackPanel Margin="0,0,12,14">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
-                                        CommandParameter="bloodPressure" AutomationProperties.Name="Información de presión arterial" />
-                                <TextBlock Text="PRESIÓN SISTÓLICA · mmHg" Style="{StaticResource FieldLabelStyle}" />
+                                        CommandParameter="bloodPressure" AutomationProperties.Name="{loc:Loc checkup.infoBp}" />
+                                <TextBlock Text="{loc:Loc checkup.sys}" Style="{StaticResource FieldLabelStyle}" />
                             </DockPanel>
                             <TextBox Text="{Binding Systolic, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
-                                     Margin="0,4,0,0" AutomationProperties.Name="Presión sistólica en mmHg" />
+                                     Margin="0,4,0,0" AutomationProperties.Name="{loc:Loc checkup.sysAria}" />
                         </StackPanel>
                         <StackPanel Margin="0,0,0,14">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
-                                        CommandParameter="bloodPressure" AutomationProperties.Name="Información de presión arterial" />
-                                <TextBlock Text="PRESIÓN DIASTÓLICA · mmHg" Style="{StaticResource FieldLabelStyle}" />
+                                        CommandParameter="bloodPressure" AutomationProperties.Name="{loc:Loc checkup.infoBp}" />
+                                <TextBlock Text="{loc:Loc checkup.dia}" Style="{StaticResource FieldLabelStyle}" />
                             </DockPanel>
                             <TextBox Text="{Binding Diastolic, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
-                                     Margin="0,4,0,0" AutomationProperties.Name="Presión diastólica en mmHg" />
+                                     Margin="0,4,0,0" AutomationProperties.Name="{loc:Loc checkup.diaAria}" />
                         </StackPanel>
 
                         <StackPanel Margin="0,0,12,14">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
-                                        CommandParameter="heartRate" AutomationProperties.Name="Información de frecuencia cardíaca" />
-                                <TextBlock Text="FRECUENCIA CARDÍACA · lpm" Style="{StaticResource FieldLabelStyle}" />
+                                        CommandParameter="heartRate" AutomationProperties.Name="{loc:Loc checkup.infoHr}" />
+                                <TextBlock Text="{loc:Loc checkup.hr}" Style="{StaticResource FieldLabelStyle}" />
                             </DockPanel>
                             <TextBox Text="{Binding HeartRate, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
-                                     Margin="0,4,0,0" AutomationProperties.Name="Frecuencia cardíaca en latidos por minuto" />
+                                     Margin="0,4,0,0" AutomationProperties.Name="{loc:Loc checkup.hrAria}" />
                         </StackPanel>
                         <StackPanel Margin="0,0,0,14">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
-                                        CommandParameter="bloodSugar" AutomationProperties.Name="Información de glucosa" />
-                                <TextBlock Text="GLUCOSA · mg/dL" Style="{StaticResource FieldLabelStyle}" />
+                                        CommandParameter="bloodSugar" AutomationProperties.Name="{loc:Loc checkup.infoGlucose}" />
+                                <TextBlock Text="{loc:Loc checkup.glucose}" Style="{StaticResource FieldLabelStyle}" />
                             </DockPanel>
                             <TextBox Text="{Binding BloodSugar, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
-                                     Margin="0,4,0,0" AutomationProperties.Name="Glucosa en mg/dL" />
+                                     Margin="0,4,0,0" AutomationProperties.Name="{loc:Loc checkup.glucoseAria}" />
                         </StackPanel>
 
                         <StackPanel Margin="0,0,12,14">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
-                                        CommandParameter="bodyTemperature" AutomationProperties.Name="Información de temperatura corporal" />
-                                <TextBlock Text="TEMPERATURA · °C" Style="{StaticResource FieldLabelStyle}" />
+                                        CommandParameter="bodyTemperature" AutomationProperties.Name="{loc:Loc checkup.infoTemp}" />
+                                <TextBlock Text="{loc:Loc checkup.temp}" Style="{StaticResource FieldLabelStyle}" />
                             </DockPanel>
                             <TextBox Text="{Binding Temperature, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
-                                     Margin="0,4,0,0" AutomationProperties.Name="Temperatura corporal en grados Celsius" />
+                                     Margin="0,4,0,0" AutomationProperties.Name="{loc:Loc checkup.tempAria}" />
                         </StackPanel>
                         <StackPanel Margin="0,0,0,14">
                             <DockPanel>
                                 <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
-                                        CommandParameter="sleep" AutomationProperties.Name="Información de sueño" />
-                                <TextBlock Text="SUEÑO · horas/día" Style="{StaticResource FieldLabelStyle}" />
+                                        CommandParameter="sleep" AutomationProperties.Name="{loc:Loc checkup.infoSleep}" />
+                                <TextBlock Text="{loc:Loc checkup.sleep}" Style="{StaticResource FieldLabelStyle}" />
                             </DockPanel>
                             <TextBox Text="{Binding SleepHours, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
-                                     Margin="0,4,0,0" AutomationProperties.Name="Horas de sueño al día" />
+                                     Margin="0,4,0,0" AutomationProperties.Name="{loc:Loc checkup.sleepAria}" />
                         </StackPanel>
                     </UniformGrid>
 
@@ -102,15 +103,15 @@
                                    Foreground="{DynamicResource BrandBlueBrush}" Width="46" TextAlignment="Right" VerticalAlignment="Center" />
                         <Slider Minimum="0" Maximum="24" TickFrequency="0.5" IsSnapToTickEnabled="True" SmallChange="0.5" LargeChange="1"
                                 Value="{Binding SleepSlider}" Style="{StaticResource MoodSliderStyle}" VerticalAlignment="Center"
-                                AutomationProperties.Name="Horas de sueño con deslizador, de 0 a 24 en pasos de media hora" />
+                                AutomationProperties.Name="{loc:Loc checkup.sleepSliderAria}" />
                     </DockPanel>
 
                     <DockPanel Margin="0,2,0,8">
                         <Button DockPanel.Dock="Right" Content="&#xE946;" Style="{StaticResource FieldInfoButton}"
-                                CommandParameter="mood" AutomationProperties.Name="Información de estado de ánimo" />
-                        <TextBlock Text="ESTADO DE ÁNIMO · opcional (vuelve a pulsar para quitarlo)" Style="{StaticResource FieldLabelStyle}" />
+                                CommandParameter="mood" AutomationProperties.Name="{loc:Loc checkup.infoMood}" />
+                        <TextBlock Text="{loc:Loc checkup.mood}" Style="{StaticResource FieldLabelStyle}" />
                     </DockPanel>
-                    <ItemsControl ItemsSource="{Binding MoodOptions}" AutomationProperties.Name="Estado de ánimo">
+                    <ItemsControl ItemsSource="{Binding MoodOptions}" AutomationProperties.Name="{loc:Loc checkup.moodAria}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <UniformGrid Rows="1" />
@@ -131,12 +132,12 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <TextBlock Text="NOTA · opcional" Style="{StaticResource FieldLabelStyle}" Margin="0,16,0,4" />
+                    <TextBlock Text="{loc:Loc checkup.note}" Style="{StaticResource FieldLabelStyle}" Margin="0,16,0,4" />
                     <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputStyle}"
                              MaxLength="500" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" VerticalContentAlignment="Top"
-                             AutomationProperties.Name="Nota opcional del check-up, hasta 500 caracteres" />
+                             AutomationProperties.Name="{loc:Loc checkup.noteAria}" />
 
-                    <Button Content="Guardar check-up" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" Margin="0,20,0,0" />
+                    <Button Content="{loc:Loc checkup.save}" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" Margin="0,20,0,0" />
 
                     <Border Background="{DynamicResource BrandRedSoftBrush}" CornerRadius="10" Padding="12,8" Margin="0,12,0,0"
                             Visibility="{Binding Error, Converter={StaticResource NonEmptyToVisibility}}">

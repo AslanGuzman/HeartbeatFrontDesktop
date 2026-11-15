@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 
 using Heartbeat.Desktop.Info;
 using Heartbeat.Desktop.Services;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -21,7 +22,7 @@ public sealed partial class IndicatorInfoViewModel : ObservableObject
 
     public IReadOnlyList<IndicatorInfo> Indicators => _provider.Indicators;
 
-    public string RangesVersionText => $"Rangos de referencia v{_provider.RangesVersion}";
+    public string RangesVersionText => Loc.T("info.rangesVersion", _provider.RangesVersion);
 
     public string DisclaimerText => AppText.MedicalDisclaimer;
 
@@ -54,7 +55,7 @@ public sealed partial class IndicatorInfoViewModel : ObservableObject
 
         LinkErrorText = _launcher.TryOpen(source.Url)
             ? null
-            : $"No se pudo abrir el enlace. Copia esta dirección en tu navegador: {source.Url.AbsoluteUri}";
+            : Loc.T("info.linkFailed", source.Url.AbsoluteUri);
     }
 
     partial void OnSelectedIndicatorChanged(IndicatorInfo value) => LinkErrorText = null;

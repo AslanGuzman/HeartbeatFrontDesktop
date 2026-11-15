@@ -1,6 +1,7 @@
 using System.Globalization;
 
 using Heartbeat.Shared;
+using Heartbeat.Desktop.Localization;
 
 namespace Heartbeat.Desktop.ViewModels;
 
@@ -26,11 +27,11 @@ internal static class IndicatorPresentation
         _ => "",
     };
 
-    /// <summary>Unidad corta en español (por ejemplo «lpm»).</summary>
+    /// <summary>Unidad corta en el idioma activo (por ejemplo «bpm» o «lpm»).</summary>
     public static string UnitOf(IndicatorType type) => type switch
     {
         IndicatorType.BloodPressure => "mmHg",
-        IndicatorType.HeartRate => "lpm",
+        IndicatorType.HeartRate => Loc.T("unit.heartRate"),
         IndicatorType.BloodSugar => "mg/dL",
         IndicatorType.BodyTemperature => "°C",
         IndicatorType.Sleep => "h",
@@ -63,9 +64,9 @@ internal static class IndicatorPresentation
         int days = (clock.GetLocalNow().Date - local.Date).Days;
         return days switch
         {
-            <= 0 => $"Hoy, {time}",
-            1 => $"Ayer, {time}",
-            < 7 => $"Hace {days} días, {time}",
+            <= 0 => Loc.T("when.today", time),
+            1 => Loc.T("when.yesterday", time),
+            < 7 => Loc.T("when.daysAgo", days, time),
             _ => local.ToString("g", culture),
         };
     }
@@ -73,6 +74,6 @@ internal static class IndicatorPresentation
     /// <summary>Resumen de la guía de una lectura: el texto de la guía, o una frase estándar si está en rango.</summary>
     public static string GuidanceOf(ReadingEvaluation evaluation) =>
         evaluation.Status == HealthStatus.Normal
-            ? "Dentro del rango de referencia."
+            ? Loc.T("result.inRange")
             : string.Join(" ", evaluation.Guidance);
 }
