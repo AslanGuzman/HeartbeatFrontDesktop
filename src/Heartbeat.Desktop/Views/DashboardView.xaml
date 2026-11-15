@@ -10,24 +10,49 @@
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
-            <!-- Encabezado -->
-            <DockPanel Margin="0,0,14,18">
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <!-- Estado general: color + texto (NR-01) -->
-                    <Border CornerRadius="999" Padding="14,7" Background="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="8" Height="8" VerticalAlignment="Center"
-                                     Fill="{Binding OverallStatus, Converter={StaticResource StatusToBrush}}" />
-                            <TextBlock Text="{Binding OverallText}" FontSize="12.5" FontWeight="SemiBold" Margin="8,0,0,0"
-                                       Foreground="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+            <!-- Encabezado: saludo, estado general y botón de nuevo check-up -->
+            <DockPanel Margin="0,0,14,6">
+                <Button DockPanel.Dock="Right" Command="{Binding NewCheckUpCommand}" VerticalAlignment="Center"
+                        AutomationProperties.Name="Nuevo check-up">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE710;" Style="{StaticResource IconTextStyle}" FontSize="13" Foreground="White" Margin="0,0,8,0" />
+                        <TextBlock Text="Nuevo check-up" />
+                    </StackPanel>
+                </Button>
+                <!-- Estado general: color + texto (NR-01) -->
+                <Border DockPanel.Dock="Right" CornerRadius="999" Padding="14,8" Margin="0,0,14,0" VerticalAlignment="Center"
+                        Background="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Soft}">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="9" Height="9" VerticalAlignment="Center"
+                                 Fill="{Binding OverallStatus, Converter={StaticResource StatusToBrush}}" />
+                        <TextBlock Text="{Binding OverallText}" FontSize="13" FontWeight="SemiBold" Margin="8,0,0,0"
+                                   Foreground="{Binding OverallStatus, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}"
+                                   AutomationProperties.AutomationId="OverallStatus" />
+                    </StackPanel>
+                </Border>
                 <StackPanel>
                     <TextBlock Text="{Binding Greeting}" Style="{StaticResource TitleTextStyle}" />
                     <TextBlock Text="{Binding DateText}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,0" />
                 </StackPanel>
             </DockPanel>
+            <TextBlock Text="{Binding SummaryText}" Style="{StaticResource SecondaryTextStyle}" FontSize="13" Margin="0,0,14,16"
+                       AutomationProperties.AutomationId="Summary" />
+
+            <!-- Aviso destacado cuando hay indicadores críticos (MR-06) -->
+            <Border Background="{DynamicResource BrandRedBrush}" CornerRadius="14" Padding="18,12" Margin="0,0,14,16"
+                    Visibility="{Binding HasCritical, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="&#xE7BA;" Style="{StaticResource IconTextStyle}" FontSize="20"
+                               Foreground="White" VerticalAlignment="Top" Margin="0,1,14,0" />
+                    <StackPanel>
+                        <TextBlock Text="Hay indicadores críticos: avisa a tu oficial médico de la tripulación" FontSize="14"
+                                   FontWeight="Bold" Foreground="White" TextWrapping="Wrap" AutomationProperties.LiveSetting="Assertive" />
+                        <TextBlock Margin="0,4,0,0" FontSize="12.5" Foreground="#FFE3E3" TextWrapping="Wrap">
+                            <Run Text="Críticos:" FontWeight="SemiBold" /> <Run Text="{Binding CriticalNames, Mode=OneWay}" />
+                        </TextBlock>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
 
             <!-- Los seis indicadores en una pantalla (MR-05) -->
             <ItemsControl ItemsSource="{Binding Cards}" AutomationProperties.Name="Indicadores de salud">
@@ -64,8 +89,12 @@
                                         <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"
                                                    Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
                                     </Border>
-                                    <TextBlock Text="{Binding ValueText}" FontSize="26" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Bottom">
+                                        <TextBlock Text="{Binding ValueText}" FontSize="26" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{Binding UnitText}" FontSize="13" Margin="6,0,0,4" VerticalAlignment="Bottom"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
                                 </DockPanel>
                                 <TextBlock Text="{Binding TakenAtText}" Style="{StaticResource CaptionTextStyle}" Margin="0,2,0,0" />
 

@@ -12,9 +12,14 @@ public sealed record IndicatorCardViewModel(
     HealthStatus? Status,
     string StatusText,
     string ValueText,
+    string UnitText,
     string TakenAtText,
     string Guidance,
-    bool HasData);
+    bool HasData)
+{
+    /// <summary>Si el indicador necesita atención (vigilancia o crítico).</summary>
+    public bool NeedsAttention => Status is HealthStatus.Watch or HealthStatus.Critical;
+}
 
 /// <summary>Una lectura evaluada (resultado de un check-up o detalle del historial).</summary>
 public sealed record ReadingRowViewModel(
