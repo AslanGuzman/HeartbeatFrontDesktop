@@ -455,7 +455,7 @@ public sealed class LocalHealthRecordStore : IHealthRecordStore
             .Select(r =>
             {
                 ReadingInput input = new(r.Indicator, r.Value, r.SecondaryValue);
-                return new ReadingRecord(input, _evaluator.Evaluate(input));
+                return new ReadingRecord(input, _evaluator.Evaluate(input), r.Source);
             })
             .ToList();
 

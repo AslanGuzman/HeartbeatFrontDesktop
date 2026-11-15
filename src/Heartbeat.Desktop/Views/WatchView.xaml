@@ -1,0 +1,154 @@
+<UserControl x:Class="Heartbeat.Desktop.Views.WatchView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:loc="clr-namespace:Heartbeat.Desktop.Localization"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Heartbeat.Desktop.ViewModels"
+             xmlns:views="clr-namespace:Heartbeat.Desktop.Views"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:WatchViewModel}"
+             Style="{StaticResource PageViewStyle}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel MinWidth="620" MaxWidth="780" HorizontalAlignment="Center">
+            <TextBlock Text="{loc:Loc watch.heading}" Style="{StaticResource TitleTextStyle}" Margin="0,0,0,4" />
+
+            <!-- Aviso fijo: lo que mide el reloj no es una medición clínica -->
+            <Border Background="{DynamicResource BrandBlueSoftBrush}" CornerRadius="999" Padding="12,5"
+                    HorizontalAlignment="Left" Margin="0,2,0,16">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE946;" Style="{StaticResource IconTextStyle}" FontSize="12"
+                               Foreground="{DynamicResource BrandBlueBrush}" />
+                    <TextBlock Text="{Binding DisclaimerText}" FontSize="12" FontWeight="SemiBold" Margin="7,0,0,0"
+                               Foreground="{DynamicResource BrandBlueBrush}" VerticalAlignment="Center"
+                               AutomationProperties.AutomationId="WatchDisclaimer" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                <Button Content="{loc:Loc watch.tabLive}" Style="{StaticResource SegmentButtonStyle}" Margin="0,0,8,0"
+                        Command="{Binding ShowLiveCommand}" Tag="{Binding IsLiveTab}" />
+                <Button Content="{loc:Loc watch.tabHealth}" Style="{StaticResource SegmentButtonStyle}"
+                        Command="{Binding ShowHealthCommand}" Tag="{Binding IsHealthTab}" />
+            </StackPanel>
+
+            <!-- ===== FC en vivo ===== -->
+            <ContentControl Style="{StaticResource HoverCardStyle}"
+                            Visibility="{Binding IsLiveTab, Converter={StaticResource BoolToVisibility}}">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding BpmText}" FontSize="72" FontWeight="Bold"
+                                   Foreground="{DynamicResource BrandRedBrush}"
+                                   AutomationProperties.Name="{loc:Loc ind.heartRate}" />
+                        <TextBlock Text="{Binding BpmUnit}" FontSize="22" Margin="10,0,0,14" VerticalAlignment="Bottom"
+                                   Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding MeasuredText}" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="·" Margin="10,0" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBlock Text="{Binding StatusText}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrandBlueBrush}" />
+                    </StackPanel>
+
+                    <!-- Sin datos del reloj / sin enlace -->
+                    <Border Margin="0,12,0,0" Padding="12,8" CornerRadius="8" Background="{DynamicResource BrandRedSoftBrush}"
+                            Visibility="{Binding ShowNoDataNotice, Converter={StaticResource BoolToVisibility}}"
+                            AutomationProperties.AutomationId="WatchNoData">
+                        <TextBlock Text="{Binding NoDataNoticeText}" TextWrapping="Wrap" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource BrandRedBrush}" />
+                    </Border>
+
+                    <views:HeartRateLine Samples="{Binding Samples}" Height="220" Margin="0,16,0,0" ClipToBounds="True" />
+                </StackPanel>
+            </ContentControl>
+
+            <!-- ===== Samsung Health ===== -->
+            <StackPanel Visibility="{Binding IsHealthTab, Converter={StaticResource BoolToVisibility}}">
+                <DockPanel Margin="0,0,0,8">
+                    <Button DockPanel.Dock="Right" Content="{loc:Loc watch.refresh}" Style="{StaticResource LinkButtonStyle}"
+                            Command="{Binding RefreshHealthCommand}" />
+                    <TextBlock Text="{Binding SyncText}" Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center" />
+                </DockPanel>
+
+                <TextBlock Text="{Binding HealthLoadingText}" Style="{StaticResource CaptionTextStyle}" Margin="0,0,0,8"
+                           Visibility="{Binding IsHealthLoading, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Text="{Binding HealthErrorText}" Foreground="{DynamicResource BrandRedBrush}" FontWeight="SemiBold"
+                           TextWrapping="Wrap" Margin="0,0,0,8"
+                           Visibility="{Binding HasHealthError, Converter={StaticResource BoolToVisibility}}" />
+
+                <TextBlock Text="{loc:Loc watch.latest}" Style="{StaticResource SectionHeadingStyle}" Margin="0,8,0,8" />
+                <ItemsControl ItemsSource="{Binding HealthCards}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ContentControl Style="{StaticResource HoverCardStyle}" Width="224" Margin="0,0,12,12" Padding="14">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding Value}" FontSize="24" FontWeight="Bold" Margin="0,6,0,4"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding Measured}" Style="{StaticResource CaptionTextStyle}" />
+                                </StackPanel>
+                            </ContentControl>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="{loc:Loc watch.activity}" Style="{StaticResource SectionHeadingStyle}" Margin="0,12,0,8" />
+                <ContentControl Style="{StaticResource HoverCardStyle}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="{Binding StepsTodayText}" Style="{StaticResource BodyTextStyle}" Margin="0,0,0,10" />
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{loc:Loc watch.col.date}" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBlock Grid.Column="1" Text="{loc:Loc watch.col.steps}" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBlock Grid.Column="2" Text="{loc:Loc watch.col.distance}" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBlock Grid.Column="3" Text="{loc:Loc watch.col.calories}" Style="{StaticResource FieldLabelStyle}" />
+                            <TextBlock Grid.Column="4" Text="{loc:Loc watch.col.minutes}" Style="{StaticResource FieldLabelStyle}" />
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding ActivityRows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Date}" FontSize="12.5" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Steps}" FontSize="12.5" FontWeight="SemiBold" />
+                                        <TextBlock Grid.Column="2" Text="{Binding Distance}" FontSize="12.5" />
+                                        <TextBlock Grid.Column="3" Text="{Binding ActiveCalories}" FontSize="12.5" />
+                                        <TextBlock Grid.Column="4" Text="{Binding ActiveMinutes}" FontSize="12.5" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ContentControl>
+
+                <TextBlock Text="{loc:Loc watch.lastNight}" Style="{StaticResource SectionHeadingStyle}" Margin="0,4,0,8" />
+                <ContentControl Style="{StaticResource HoverCardStyle}">
+                    <StackPanel>
+                        <TextBlock Text="{Binding SleepText}" Style="{StaticResource BodyTextStyle}" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding SleepStagesText}" Style="{StaticResource CaptionTextStyle}" Margin="0,4,0,0"
+                                   TextWrapping="Wrap"
+                                   Visibility="{Binding SleepStagesText, Converter={StaticResource NonEmptyToVisibility}}" />
+                    </StackPanel>
+                </ContentControl>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

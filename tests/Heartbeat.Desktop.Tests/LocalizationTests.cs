@@ -41,7 +41,7 @@ public sealed partial class LocalizationTableTests
     public void Texts_that_must_differ_between_languages_do()
     {
         // Una traducción que se quedó copiada del otro idioma suele ser un olvido (se permiten nombres propios y símbolos).
-        string[] same = ["Dashboard", "Check-up", "Normal", "Abdomen"];
+        string[] same = ["Dashboard", "Check-up", "Normal", "Abdomen", "Galaxy Watch 5", "Samsung Health", "Error {0}: {1}"];
         List<string> untranslated = Strings.All
             .Where(p => p.Value.En == p.Value.Es && p.Value.En.Length > 12 && !same.Contains(p.Value.En) && !p.Key.StartsWith("report.", StringComparison.Ordinal))
             .Select(p => p.Key)
@@ -183,13 +183,13 @@ public sealed class LanguageSwitchTests : IDisposable
     {
         LocalizationManager.Instance.SetLanguage(AppLanguage.English);
 
-        Assert.Equal(["Dashboard", "Check-up", "History", "Messages", "Radiation", "Vision", "Profile"], _window.NavigationItems.Select(i => i.Title));
+        Assert.Equal(["Dashboard", "Check-up", "History", "Messages", "Radiation", "Vision", "Watch", "Profile"], _window.NavigationItems.Select(i => i.Title));
         Assert.Equal("Self-assessment tool, not a medical diagnosis", _window.DisclaimerText);
         Assert.Equal("ES", _window.LanguageButtonText);
 
         _window.ToggleLanguageCommand.Execute(null);
 
-        Assert.Equal(["Dashboard", "Check-up", "Historial", "Mensajes", "Radiación", "Visión", "Perfil"], _window.NavigationItems.Select(i => i.Title));
+        Assert.Equal(["Dashboard", "Check-up", "Historial", "Mensajes", "Radiación", "Visión", "Reloj", "Perfil"], _window.NavigationItems.Select(i => i.Title));
         Assert.Equal("Herramienta de autoevaluación, no diagnóstico médico", _window.DisclaimerText);
         Assert.Equal("EN", _window.LanguageButtonText);
     }

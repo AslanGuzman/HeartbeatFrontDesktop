@@ -48,6 +48,12 @@
                     <TextBlock Text="{Binding ChartSummary}" Style="{StaticResource SectionHeadingStyle}" Margin="0,0,0,8" />
                     <views:TrendChart Model="{Binding Chart}" Height="280"
                                       AutomationProperties.Name="{Binding ChartSummary}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0"
+                                Visibility="{Binding Chart.HasWatchPoints, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Text="&#xE916;" Style="{StaticResource IconTextStyle}" FontSize="13"
+                                   Foreground="{DynamicResource BrandBlueBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="{loc:Loc watch.legend}" Style="{StaticResource CaptionTextStyle}" Margin="8,0,0,0" />
+                    </StackPanel>
                     <TextBlock Text="{loc:Loc hist.chartHint}"
                                Style="{StaticResource CaptionTextStyle}" Margin="0,10,0,0" TextWrapping="Wrap" />
                 </StackPanel>
@@ -93,6 +99,11 @@
                                                        Foreground="{DynamicResource TextPrimaryBrush}" />
                                             <TextBlock Text="{Binding StatusText}" FontSize="12.5" FontWeight="SemiBold"
                                                        Foreground="{Binding Status, Converter={StaticResource StatusToBrush}, ConverterParameter=Text}" />
+                                            <TextBlock Text="&#xE916;" Style="{StaticResource IconTextStyle}" FontSize="13" Margin="10,0,0,0"
+                                                       Foreground="{DynamicResource BrandBlueBrush}" VerticalAlignment="Center"
+                                                       Visibility="{Binding FromWatch, Converter={StaticResource BoolToVisibility}}"
+                                                       ToolTip="{loc:Loc watch.readingFromWatch}"
+                                                       AutomationProperties.Name="{loc:Loc watch.readingFromWatch}" />
                                         </DockPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
