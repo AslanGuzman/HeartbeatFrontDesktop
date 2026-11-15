@@ -36,12 +36,15 @@ internal sealed class TestWorld : IDisposable
         Connectivity = new FakeConnectivityService(online);
         Presenter = new FakeIndicatorInfoPresenter();
         Session = new SessionContext();
+        ReminderSettings = new FakeReminderSettings(CheckUpReminderSettings.Disabled);
+        Notification = new FakeCheckUpNotification();
+        Reminder = new CheckUpReminder(ReminderSettings, Store, Session, Notification, Clock);
         Sync = demoSync ? new InstantSyncStatusProvider(Store, ProfileStore, Connectivity, Clock) : null!;
 
         Navigation = new RecordingNavigation(type =>
             type == typeof(CheckUpResultViewModel) ? new CheckUpResultViewModel(Navigation!, Store, Session, Info, Presenter, Connectivity)
             : type == typeof(CheckUpViewModel) ? NewCheckUp()
-            : type == typeof(DashboardViewModel) ? new DashboardViewModel(Store, Session, Info, Presenter, Navigation!, Clock)
+            : type == typeof(DashboardViewModel) ? new DashboardViewModel(Store, Session, Info, Presenter, Navigation!, Clock, Reminder)
             : type == typeof(HistoryViewModel) ? new HistoryViewModel(Store, Session, Info)
             : new PlainPageViewModel());
 
@@ -121,6 +124,12 @@ internal sealed class TestWorld : IDisposable
     public FakeIndicatorInfoPresenter Presenter { get; }
 
     public SessionContext Session { get; }
+
+    public FakeReminderSettings ReminderSettings { get; }
+
+    public FakeCheckUpNotification Notification { get; }
+
+    public CheckUpReminder Reminder { get; }
 
     public InstantSyncStatusProvider Sync { get; }
 }

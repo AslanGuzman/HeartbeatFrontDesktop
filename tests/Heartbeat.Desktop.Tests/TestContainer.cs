@@ -1,4 +1,5 @@
 using Heartbeat.Desktop.Data;
+using Heartbeat.Desktop.Services;
 using Heartbeat.Desktop.Services.Auth;
 
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,10 @@ internal static class TestContainer
 
         // El id del equipo no se escribe en %LOCALAPPDATA% durante las pruebas.
         services.AddSingleton<IDeviceIdProvider>(new FixedDeviceId("equipo-de-pruebas"));
+
+        // El recordatorio no toca el archivo ni el área de notificación reales.
+        services.AddSingleton<ICheckUpReminderSettingsStore>(new FakeReminderSettings(CheckUpReminderSettings.Disabled));
+        services.AddSingleton<ICheckUpNotification>(new FakeCheckUpNotification());
 
         // El último registro gana: se sustituye la base de %LOCALAPPDATA% por la temporal.
         services.AddDbContext<LocalDbContext>(o => o.UseSqlite(connectionString));

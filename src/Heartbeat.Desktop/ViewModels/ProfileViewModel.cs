@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -19,13 +20,19 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
     private readonly IProfileStore _store;
     private readonly ISessionContext _session;
     private readonly TimeProvider _clock;
+    private readonly ICheckUpReminderSettingsStore _reminderSettings;
     private AstronautProfile? _loaded;
 
-    public ProfileViewModel(IProfileStore store, ISessionContext session, TimeProvider clock)
+    public ProfileViewModel(
+        IProfileStore store,
+        ISessionContext session,
+        TimeProvider clock,
+        ICheckUpReminderSettingsStore reminderSettings)
     {
         _store = store;
         _session = session;
         _clock = clock;
+        _reminderSettings = reminderSettings;
 
         DisplayName = string.Empty;
         CallSign = string.Empty;
@@ -35,6 +42,10 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
         MissionDayText = string.Empty;
         SyncText = string.Empty;
         UpdatedText = string.Empty;
+
+        CheckUpReminderSettings reminder = _reminderSettings.Get();
+        ReminderEnabled = reminder.Enabled;
+        ReminderTimeText = reminder.Time.ToString("HH:mm", CultureInfo.InvariantCulture);
 
         Load();
         _store.Changed += OnStoreChanged;
@@ -94,6 +105,20 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
             || Notes.Trim() != (_loaded.Notes ?? string.Empty));
 
     public bool CanSave => IsDirty && DisplayNameError is null && CallSignError is null && NotesError is null;
+
+    // ---- Recordatorio diario de check-up (P2-REMIND) ----
+
+    [ObservableProperty]
+    public partial bool ReminderEnabled { get; set; }
+
+    [ObservableProperty]
+    public partial string ReminderTimeText { get; set; }
+
+    [ObservableProperty]
+    public partial string? ReminderError { get; private set; }
+
+    [ObservableProperty]
+    public partial string? ReminderSavedText { get; private set; }
 
     // ---- Estado ----
 
@@ -161,11 +186,49 @@ public sealed partial class ProfileViewModel : PageViewModel, IDisposable
         }
     }
 
+    /// <summary>Guarda el horario del recordatorio en este equipo.</summary>
+    [RelayCommand]
+    private void SaveReminder()
+    {
+        ReminderError = null;
+        ReminderSavedText = null;
+
+        if (!TimeOnly.TryParseExact(
+                ReminderTimeText.Trim(),
+                ["H:mm", "HH:mm"],
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.None,
+                out TimeOnly time))
+        {
+            ReminderError = "Escribe la hora en formato HH:mm, por ejemplo 09:00.";
+            return;
+        }
+
+        try
+        {
+            _reminderSettings.Save(new CheckUpReminderSettings(ReminderEnabled, time));
+            ReminderTimeText = time.ToString("HH:mm", CultureInfo.InvariantCulture);
+            ReminderSavedText = "Recordatorio guardado.";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ReminderError = "No se pudo guardar el recordatorio en este equipo.";
+        }
+    }
+
     partial void OnDisplayNameChanged(string value) => UpdateCommandState();
 
     partial void OnCallSignChanged(string value) => UpdateCommandState();
 
     partial void OnNotesChanged(string value) => UpdateCommandState();
+
+    partial void OnReminderEnabledChanged(bool value) => ReminderSavedText = null;
+
+    partial void OnReminderTimeTextChanged(string value)
+    {
+        ReminderError = null;
+        ReminderSavedText = null;
+    }
 
     private void UpdateCommandState()
     {

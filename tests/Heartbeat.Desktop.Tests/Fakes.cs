@@ -118,6 +118,22 @@ internal sealed class InstantSyncStatusProvider : ISyncStatusProvider
     }
 }
 
+internal sealed class FakeReminderSettings(CheckUpReminderSettings settings) : ICheckUpReminderSettingsStore
+{
+    public CheckUpReminderSettings Settings { get; set; } = settings;
+
+    public CheckUpReminderSettings Get() => Settings;
+
+    public void Save(CheckUpReminderSettings value) => Settings = value;
+}
+
+internal sealed class FakeCheckUpNotification : ICheckUpNotification
+{
+    public int Shown { get; private set; }
+
+    public void Show() => Shown++;
+}
+
 internal sealed class FakeUrlLauncher(bool succeeds = true) : IUrlLauncher
 {
     public List<Uri> Opened { get; } = [];

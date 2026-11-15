@@ -7,7 +7,7 @@ namespace Heartbeat.Desktop.Tests;
 public sealed class DashboardViewModelTests
 {
     private static DashboardViewModel Create(TestWorld world) =>
-        new(world.Store, world.Session, world.Info, world.Presenter, world.Navigation, world.Clock);
+        new(world.Store, world.Session, world.Info, world.Presenter, world.Navigation, world.Clock, world.Reminder);
 
     private static void Add(TestWorld world, string user, params ReadingInput[] inputs) =>
         world.Store.AddCheckUp(TestWorld.IdOf(user), inputs, world.Evaluator.Evaluate(inputs));
@@ -221,6 +221,44 @@ public sealed class DashboardViewModelTests
         Assert.True(luis.HasCritical);
         Assert.Equal("Glucosa", luis.CriticalNames);
         Assert.False(Create(new TestWorld("ana")).HasCritical);
+    }
+
+    // ---- Check-up de hoy pendiente (P2-REMIND) ----
+
+    [Fact]
+    public void Without_a_check_up_today_the_dashboard_says_it_is_pending()
+    {
+        TestWorld world = new("ana");
+        world.ReminderSettings.Settings = new CheckUpReminderSettings(true, new TimeOnly(9, 0));
+
+        DashboardViewModel dashboard = Create(world);
+
+        Assert.True(dashboard.IsCheckUpPending);
+        Assert.Contains("09:00", dashboard.PendingCheckUpText);
+    }
+
+    [Fact]
+    public void With_a_check_up_today_there_is_no_pending_banner()
+    {
+        TestWorld world = new("ana");
+        Add(world, "ana", new ReadingInput(IndicatorType.HeartRate, 70));
+
+        Assert.False(Create(world).IsCheckUpPending);
+    }
+
+    [Fact]
+    public void Without_a_reminder_the_pending_banner_points_to_the_profile()
+    {
+        DashboardViewModel dashboard = Create(new TestWorld("ana"));
+
+        Assert.True(dashboard.IsCheckUpPending);
+        Assert.Contains("perfil", dashboard.PendingCheckUpText);
+    }
+
+    [Fact]
+    public void Without_a_session_there_is_no_pending_banner()
+    {
+        Assert.False(Create(new TestWorld(signedInUser: null)).IsCheckUpPending);
     }
 
     // ---- Botón "Nuevo check-up" ----

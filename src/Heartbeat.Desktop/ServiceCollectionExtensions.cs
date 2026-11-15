@@ -34,6 +34,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ISessionContext, SessionContext>();
 
+        // Recordatorio diario de check-up (P2-REMIND): horario guardado en el equipo y aviso de Windows.
+        services.AddSingleton<ICheckUpReminderSettingsStore, FileCheckUpReminderSettingsStore>();
+        services.AddSingleton<ICheckUpNotification, WindowsCheckUpNotification>();
+        services.AddSingleton<CheckUpReminder>();
+        services.AddHostedService<CheckUpReminderService>();
+
         // Conectividad: la red real más el interruptor "Enlace con la Tierra" para demostrar el modo offline.
         services.AddSingleton<NetworkConnectivityService>();
         services.AddSingleton<SimulatedLinkService>();

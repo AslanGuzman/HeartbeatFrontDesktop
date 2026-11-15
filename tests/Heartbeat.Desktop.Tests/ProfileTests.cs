@@ -309,7 +309,8 @@ public sealed class LocalProfileStoreTests
 
 public sealed class ProfileViewModelTests
 {
-    private static ProfileViewModel Create(TestWorld world) => new(world.ProfileStore, world.Session, world.Clock);
+    private static ProfileViewModel Create(TestWorld world) =>
+        new(world.ProfileStore, world.Session, world.Clock, world.ReminderSettings);
 
     // ---- Ver ----
 
@@ -533,6 +534,58 @@ public sealed class ProfileViewModelTests
         UpdateProfileRequest pending = world.ProfileStore.GetPendingEdit(TestWorld.IdOf("ana"))!;
         Assert.Null(pending.CallSign);
         Assert.Null(pending.Notes);
+    }
+
+    // ---- Recordatorio diario de check-up (P2-REMIND) ----
+
+    [Fact]
+    public void The_reminder_schedule_is_shown_and_saved()
+    {
+        TestWorld world = new("ana");
+        ProfileViewModel profile = Create(world);
+
+        Assert.False(profile.ReminderEnabled);
+        Assert.Equal("09:00", profile.ReminderTimeText);
+
+        profile.ReminderEnabled = true;
+        profile.ReminderTimeText = "7:30";
+        profile.SaveReminderCommand.Execute(null);
+
+        Assert.Null(profile.ReminderError);
+        Assert.Equal("Recordatorio guardado.", profile.ReminderSavedText);
+        Assert.Equal("07:30", profile.ReminderTimeText);
+        Assert.Equal(new CheckUpReminderSettings(true, new TimeOnly(7, 30)), world.ReminderSettings.Settings);
+    }
+
+    [Fact]
+    public void A_saved_reminder_is_shown_again_when_the_profile_opens()
+    {
+        TestWorld world = new("ana");
+        world.ReminderSettings.Settings = new CheckUpReminderSettings(true, new TimeOnly(21, 15));
+
+        ProfileViewModel profile = Create(world);
+
+        Assert.True(profile.ReminderEnabled);
+        Assert.Equal("21:15", profile.ReminderTimeText);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("25:00")]
+    [InlineData("9")]
+    [InlineData("nueve")]
+    public void An_invalid_reminder_time_is_an_error_and_is_not_saved(string text)
+    {
+        TestWorld world = new("ana");
+        ProfileViewModel profile = Create(world);
+        profile.ReminderEnabled = true;
+        profile.ReminderTimeText = text;
+
+        profile.SaveReminderCommand.Execute(null);
+
+        Assert.NotNull(profile.ReminderError);
+        Assert.Null(profile.ReminderSavedText);
+        Assert.False(world.ReminderSettings.Settings.Enabled);
     }
 
     // ---- Solo el propio perfil ----
