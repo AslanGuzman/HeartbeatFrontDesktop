@@ -1,9 +1,9 @@
 using System.Net.Http;
 using System.Net;
-using System.Text.Json;
 
 using Heartbeat.Client;
 using Heartbeat.Desktop.Data;
+using Heartbeat.Desktop.Services.Profile;
 using Heartbeat.Shared;
 
 using Microsoft.EntityFrameworkCore;
@@ -25,8 +25,6 @@ namespace Heartbeat.Desktop.Services.Auth;
 /// </summary>
 public sealed class AuthService : IAuthService
 {
-    private static readonly JsonSerializerOptions ProfileJson = new(JsonSerializerDefaults.Web);
-
     private readonly ICrewApiClient _client;
     private readonly IConnectivityService _connectivity;
     private readonly ISessionContext _session;
@@ -103,6 +101,7 @@ public sealed class AuthService : IAuthService
     private async Task<SignInResult> CompleteOnlineAsync(string password, CrewLoginResponse response)
     {
         AstronautProfile profile = response.Profile;
+        CachedProfile merged;
 
         // El hash cuesta decenas de milisegundos: fuera del hilo de la interfaz.
         (string hash, string salt) = await Task.Run(() => LocalPasswordHasher.Hash(password));
@@ -128,7 +127,10 @@ public sealed class AuthService : IAuthService
             account.PasswordHash = hash;
             account.Salt = salt;
             account.LastOnlineLoginAt = _clock.GetUtcNow();
-            account.ProfileJson = JsonSerializer.Serialize(profile, ProfileJson);
+
+            // Una edición local aún sin sincronizar que sea más reciente que el perfil del servidor se conserva.
+            merged = ProfileCache.MergeServerProfile(account.ProfileJson, profile);
+            account.ProfileJson = ProfileCache.Write(merged);
 
             TokenCache? tokens = db.TokenCache.FirstOrDefault(t => t.AstronautId == profile.Id);
             if (tokens is null)
@@ -144,7 +146,7 @@ public sealed class AuthService : IAuthService
             db.SaveChanges();
         }
 
-        SessionUser user = new(profile.Id, profile.UserName, profile.DisplayName);
+        SessionUser user = new(profile.Id, profile.UserName, merged.Effective.DisplayName);
         _session.SignIn(user, offline: false);
         return SignInResult.Success(user, offline: false);
     }
@@ -170,7 +172,7 @@ public sealed class AuthService : IAuthService
             return SignInResult.Fail(SignInFailure.InvalidCredentials);
         }
 
-        string displayName = ReadProfile(account)?.DisplayName ?? account.UserName;
+        string displayName = ProfileCache.Read(account.ProfileJson)?.Effective.DisplayName ?? account.UserName;
         LoadTokensIntoClient(account.AstronautId);
 
         SessionUser user = new(account.AstronautId, account.UserName, displayName);
@@ -194,23 +196,6 @@ public sealed class AuthService : IAuthService
         if (access is not null && refresh is not null)
         {
             _client.SetTokens(access, refresh, _device.DeviceId);
-        }
-    }
-
-    private static AstronautProfile? ReadProfile(LocalAccount account)
-    {
-        if (string.IsNullOrWhiteSpace(account.ProfileJson))
-        {
-            return null;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<AstronautProfile>(account.ProfileJson, ProfileJson);
-        }
-        catch (JsonException)
-        {
-            return null;
         }
     }
 

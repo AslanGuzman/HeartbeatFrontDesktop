@@ -19,6 +19,9 @@ public interface ISessionContext
 
     void SignIn(SessionUser user, bool offline = false);
 
+    /// <summary>Cambia los datos del usuario con la sesión abierta (por ejemplo, su nombre tras editar el perfil) sin cerrar la sesión.</summary>
+    void Update(SessionUser user);
+
     void SignOut();
 }
 
@@ -35,6 +38,18 @@ public sealed class SessionContext : ISessionContext
         ArgumentNullException.ThrowIfNull(user);
         CurrentUser = user;
         IsOfflineSession = offline;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void Update(SessionUser user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+        if (CurrentUser is null || CurrentUser.Id != user.Id)
+        {
+            throw new InvalidOperationException("Solo se puede actualizar al usuario con la sesión abierta.");
+        }
+
+        CurrentUser = user;
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
